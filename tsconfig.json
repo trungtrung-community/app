@@ -8,7 +8,9 @@
     "verbatimModuleSyntax": false,
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    "types": ["node", "react"],
+    "resolveJsonModule": true
   },
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules", "scripts"]

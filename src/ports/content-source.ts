@@ -29,12 +29,25 @@ export type VocabId = string & {readonly __brand: 'VocabId'};
  */
 export type VocabularyItem = {
   readonly id: VocabId;
+  readonly slug: string;
   readonly district: string;
+  readonly districtNumber: number;
   readonly bo: string;
   readonly roman: string;
   readonly en: string;
+  readonly enDefinition: string | null;
   readonly wylie: string | null;
   readonly thl: string | null;
+  /** The one place THL is allowed to surface: the word sheet's "also written" row. */
+  readonly thlNote: string | null;
+  readonly pos: string | null;
+  /** Drawn by WordRow as the register marker. */
+  readonly register: string | null;
+  /**
+   * Clip ids, not URIs. Turning one into something playable is `AudioSource`'s job,
+   * which is what lets audio move behind a network later without touching content.
+   */
+  readonly audio: {readonly natural: string | null; readonly slow: string | null};
 };
 
 export type ContentSource = {

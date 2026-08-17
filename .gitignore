@@ -39,3 +39,9 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Compiled content artifact — copied in by `npm run sync:content` from the
+# design-system pipeline. A binary that changes wholesale on every content build,
+# so git would keep every version forever. `npm run check:content` fails if it is
+# missing or stale.
+assets/content.db
