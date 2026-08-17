@@ -1,4 +1,10 @@
-# Fast enough that nobody reaches for --no-verify. Measured 2026-08-17: about 9s.
+# Measured 2026-08-17: 13.9s on a clean pass, ~2s to reject (lint-staged fails first).
+#
+# That is within a second of pre-push, which is worth knowing: almost all of it is
+# vitest's 6.7s and lint-staged's ~3s. Vitest is here because it was asked for, and the
+# trade is deliberate — a commit that cannot pass its own tests is worth catching before
+# it is written down. Drop `npm run test` from this file if the wait ever starts earning
+# --no-verify; pre-push still runs it.
 #
 # What is here and what is not, deliberately:
 #

@@ -1,6 +1,7 @@
-# The full gate. Measured 2026-08-17: about 14s.
+# The full gate. Measured 2026-08-17: 19.3s.
 #
-# At that price there is no reason to run a subset. It is also the only place that
+# It was 13.1s before check:test-shape and depcruise joined validate. At this price there
+# is still no reason to run a subset. It is also the only place that
 # catches a drifted token lockfile — sync:design, check:content and sync:cards each
 # compare a sha against the design-system export, and a stale one reaching the remote is
 # the failure the whole generated-code pipeline exists to prevent.
