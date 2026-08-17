@@ -42,6 +42,8 @@ import {Radio} from './forms/radio';
 import {SearchField} from './forms/search-field';
 import {Select} from './forms/select';
 import {Switch} from './forms/switch';
+import {AnswerBand} from './learning/answer-band';
+import {AnswerChoice} from './learning/answer-choice';
 import {AudioButton} from './learning/audio-button';
 import {CircuitRing} from './learning/circuit-ring';
 import {LetterTile} from './learning/letter-tile';
@@ -49,6 +51,7 @@ import {ProgressBar} from './learning/progress-bar';
 import {SectionHeader} from './learning/section-header';
 import {StatPill} from './learning/stat-pill';
 import {SyllableChip} from './learning/syllable-chip';
+import {WordRow} from './learning/word-row';
 import {TibetanText} from './learning/tibetan-text';
 
 /** A row of specimens that belong side by side. */
@@ -1232,6 +1235,167 @@ export const PORTED: Record<string, PortedComponent> = {
             <AudioButton size="md" onPress={noop} />
             <AudioButton size="lg" onPress={noop} />
           </Row>
+        ),
+      },
+    ],
+  },
+
+  AnswerChoice: {
+    specimens: [
+      {
+        label: 'the five states',
+        note: 'Never a Radio: an answer takes a correct/wrong state and a shortcut number, neither of which a radio can express — and a radio promises that pressing again deselects, which is wrong once an answer has been judged.',
+        render: () => (
+          <Stack>
+            <AnswerChoice index={1} tibetan="བཀྲ་ཤིས" roman="trashi" onPress={noop} />
+            <AnswerChoice index={2} tibetan="ཐུགས་" roman="thuk" state="selected" onPress={noop} />
+            <AnswerChoice index={3} state="correct" roman="de lek">
+              well-being
+            </AnswerChoice>
+            <AnswerChoice index={4} state="wrong" roman="chutsö">
+              hour
+            </AnswerChoice>
+            <AnswerChoice index={5} state="disabled">
+              not this one
+            </AnswerChoice>
+          </Stack>
+        ),
+      },
+      {
+        label: 'the index badge is the row’s own ink at 14%',
+        note: 'The board writes color-mix(in oklab, currentColor 14%, transparent). There is no color-mix in React Native and no currentColor, and the value depends on the state, so it cannot be a token — it is derived from the state colour at render.',
+        render: () => (
+          <Stack>
+            <AnswerChoice index={1} state="correct">
+              correct ink
+            </AnswerChoice>
+            <AnswerChoice index={2} state="wrong">
+              wrong ink
+            </AnswerChoice>
+          </Stack>
+        ),
+      },
+      {
+        label: 'without an index, and with a spelling line',
+        render: () => (
+          <Stack>
+            <AnswerChoice tibetan="སྤྱི་སྤྱོད་རླངས་འཁོར" roman="chi chö lang khor" onPress={noop} />
+            <AnswerChoice tibetan="ཐུགས་" roman="thuk" wylie="thugs" onPress={noop} />
+          </Stack>
+        ),
+      },
+    ],
+  },
+
+  AnswerBand: {
+    specimens: [
+      {
+        label: 'two tones and no third',
+        note: 'The fill is the only red: the copy stays neutral ink, because a miss is information and not a scolding. Shown unpinned — on a frame the band pins itself to the bottom.',
+        render: () => (
+          <Stack>
+            <AnswerBand tone="correct" roman="trashi delek" pinned={false} onAction={noop}>
+              བཀྲ་ཤིས་བདེ་ལེགས
+            </AnswerBand>
+            <AnswerBand tone="wrong" roman="chutsö" pinned={false} onAction={noop}>
+              ཆུ་ཚོད་
+            </AnswerBand>
+          </Stack>
+        ),
+      },
+      {
+        label: 'reason binds only where the rule is the lesson',
+        note: 'Optional, and a band without one is correct rather than degraded (amended 2026-08-16). On a recognition drill the band names the answer instead — a sentence about a rule the screen never showed is pollution. When used it comes from the exercise record, never authored on a frame.',
+        render: () => (
+          <AnswerBand
+            tone="wrong"
+            reason="ར་ under a letter builds a stack; the base keeps its own sound."
+            pinned={false}
+            onAction={noop}
+          >
+            ཀྲ
+          </AnswerBand>
+        ),
+      },
+      {
+        label: 'the one count a correct band may carry',
+        note: 'The run inside this set, worded as the product words it. Two rules belong to the caller: it appears only from three in a row, and it never reaches the profile — the streak lives once and quietly on P1.',
+        render: () => (
+          <AnswerBand tone="correct" roman="thuk" mark="4 in a row" pinned={false} onAction={noop}>
+            ཐུགས་
+          </AnswerBand>
+        ),
+      },
+      {
+        label: 'without audio',
+        render: () => (
+          <AnswerBand
+            tone="correct"
+            audio={false}
+            pinned={false}
+            onAction={noop}
+            actionLabel="Keep going"
+          >
+            Well done
+          </AnswerBand>
+        ),
+      },
+    ],
+  },
+
+  WordRow: {
+    specimens: [
+      {
+        label: 'the status dot is the whole vocabulary of knowing',
+        note: 'known solid teal, met solid grey — seen but not yet reliable — new hollow, and coming hollow and faint, where the row sits on ground and audio is off. It matches the progression model exactly.',
+        render: () => (
+          <Stack>
+            <WordRow bo="ཐུགས་" roman="thuk" en="mind" status="known" />
+            <WordRow bo="ཆུ་ཚོད་" roman="chutsö" en="hour, o’clock" status="met" />
+            <WordRow bo="བཀྲ་ཤིས་" roman="trashi" en="auspicious" status="new" />
+            <WordRow bo="སྤྱི་སྤྱོད་རླངས་འཁོར" roman="chi chö lang khor" en="bus" status="coming" />
+          </Stack>
+        ),
+      },
+      {
+        label: 'the markers that appear only when they apply',
+        note: 'register only when the word is honorific, so it reads as information about that word rather than chrome on every row. slow adds the reduced-rate control beside the natural one — the same clip, played slower.',
+        render: () => (
+          <Stack>
+            <WordRow
+              bo="ཐུགས་"
+              roman="thuk"
+              en="mind"
+              status="known"
+              register="honorific"
+              slow
+              artifact
+            />
+            <WordRow
+              bo="ཆུ་ཚོད་"
+              roman="chutsö"
+              en="hour"
+              romanNote="The ö is close to French deux, not English toe."
+              wylie="chu tshod"
+            />
+            <WordRow
+              bo="བཀྲ་ཤིས་བདེ་ལེགས"
+              roman="trashi delek"
+              en="hello"
+              literal="auspicious well-being"
+              missed="Missed twice this week."
+            />
+          </Stack>
+        ),
+      },
+      {
+        label: 'no Lhasa form found yet',
+        note: 'Drawn by hand on three frames before it lived here. The gap is stated in words, the English carries the row, and there is nothing to play.',
+        render: () => (
+          <Stack>
+            <WordRow en="prayer wheel" noScript />
+            <WordRow en="butter lamp" noScript="Recorded in Amdo, not yet confirmed for Lhasa." />
+          </Stack>
         ),
       },
     ],
