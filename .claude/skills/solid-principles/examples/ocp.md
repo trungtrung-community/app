@@ -19,9 +19,15 @@ class PaymentProcessor {
     }
   }
 
-  private processCreditCard(payment: Payment): Promise<PaymentResult> { /* ... */ }
-  private processPaypal(payment: Payment): Promise<PaymentResult> { /* ... */ }
-  private processApplePay(payment: Payment): Promise<PaymentResult> { /* ... */ }
+  private processCreditCard(payment: Payment): Promise<PaymentResult> {
+    /* ... */
+  }
+  private processPaypal(payment: Payment): Promise<PaymentResult> {
+    /* ... */
+  }
+  private processApplePay(payment: Payment): Promise<PaymentResult> {
+    /* ... */
+  }
 }
 ```
 

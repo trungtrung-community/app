@@ -8,7 +8,7 @@ The full standard for JSDoc and comments. The governing idea: **prefer improving
 ## JSDoc vs line comments
 
 - `/** ... */` (JSDoc) documents exported / public functions, classes, methods, and properties. Tools and editors surface it at call sites.
-- `//` line comments explain non-obvious implementation details *inside* a body or on private members.
+- `//` line comments explain non-obvious implementation details _inside_ a body or on private members.
 - Don't use JSDoc (`/** */`) for inline implementation notes, and don't use `//` where an API needs documented JSDoc.
 
 ## When JSDoc is required, and when to omit it
@@ -27,12 +27,14 @@ The full standard for JSDoc and comments. The governing idea: **prefer improving
 
 ## Document why, not what
 
-The code already says *what* it does. The comment earns its place by saying *why*.
+The code already says _what_ it does. The comment earns its place by saying _why_.
 
 ```ts
 // BAD — restates the code
 // loop over users and push active ones
-for (const user of users) { if (user.active) active.push(user); }
+for (const user of users) {
+  if (user.active) active.push(user);
+}
 
 // GOOD — explains the why, or says nothing at all
 // Billing only counts users active at month end; suspended trials are excluded upstream.
@@ -40,7 +42,7 @@ for (const user of users) { if (user.active) active.push(user); }
 
 ## Write for a reader without your context
 
-The reader arrives with none of the context you have now. Don't reference a feature, module, or acronym they can't resolve from here — say what it *is*.
+The reader arrives with none of the context you have now. Don't reference a feature, module, or acronym they can't resolve from here — say what it _is_.
 
 ```ts
 // BAD — names an internal mode the reader here can't resolve
@@ -52,7 +54,7 @@ The reader arrives with none of the context you have now. Don't reference a feat
 
 ## Make it scannable — one idea per sentence
 
-Accurate and *readable* are different bars. A comment can be technically perfect yet hard to absorb because it packs several ideas into one long sentence. Optimize for a quick skim: one idea per sentence, related ideas grouped into short paragraphs, and distinct responsibilities kept in distinct sentences (e.g. what a consumer does vs. what the use case it calls does).
+Accurate and _readable_ are different bars. A comment can be technically perfect yet hard to absorb because it packs several ideas into one long sentence. Optimize for a quick skim: one idea per sentence, related ideas grouped into short paragraphs, and distinct responsibilities kept in distinct sentences (e.g. what a consumer does vs. what the use case it calls does).
 
 AI-drafted JSDoc skews this way by default — long sentences, stacked clauses, ideas fused behind punctuation. This section is the counterweight.
 
@@ -72,7 +74,7 @@ AI-drafted JSDoc skews this way by default — long sentences, stacked clauses, 
 
 A semicolon- or comma-separated list embedded in prose usually reads better as a Markdown bullet list (blank line, then `- item`).
 
-**Don't over-correct.** This is one idea per *sentence*, not one clause per sentence. If a split leaves two <5-word fragments that only make sense together, it was one idea — keep it. Scanability never means dropping information: preserve every documented invariant, failure mode, and rationale, and don't flatten intent into generic prose.
+**Don't over-correct.** This is one idea per _sentence_, not one clause per sentence. If a split leaves two <5-word fragments that only make sense together, it was one idea — keep it. Scanability never means dropping information: preserve every documented invariant, failure mode, and rationale, and don't flatten intent into generic prose.
 
 ## Purpose, not incident
 

@@ -2,7 +2,7 @@
 
 High-level policy (which alarms matter, how to render them) must not depend on low-level
 mechanism (Mongoose, `fetch`, `localStorage`). Both depend on a port. The same move works on the
-backend and the frontend — the only difference is *where you wire the concretes together*.
+backend and the frontend — the only difference is _where you wire the concretes together_.
 
 `Alarm` below is a plain domain type shared by both halves.
 
@@ -14,17 +14,17 @@ backend and the frontend — the only difference is *where you wire the concrete
 
 ```typescript
 // resolvers.ts — business logic welded to Mongoose + an HTTP SDK
-import { AlarmModel } from '../models/alarm';
-import { Analytics } from '@segment/analytics-node';
+import {AlarmModel} from '../models/alarm';
+import {Analytics} from '@segment/analytics-node';
 
-const analytics = new Analytics({ writeKey: process.env.SEGMENT_KEY! });
+const analytics = new Analytics({writeKey: process.env.SEGMENT_KEY!});
 
 export const resolvers = {
   Query: {
-    activeAlarms: async (_: unknown, { facilityId }: { facilityId: string }) => {
-      const alarms = await AlarmModel.find({ facilityId, status: 'active' }).lean();
-      analytics.track({ event: 'alarms_viewed', userId: facilityId });
-      return alarms.filter((a) => a.severity >= 3);
+    activeAlarms: async (_: unknown, {facilityId}: {facilityId: string}) => {
+      const alarms = await AlarmModel.find({facilityId, status: 'active'}).lean();
+      analytics.track({event: 'alarms_viewed', userId: facilityId});
+      return alarms.filter(a => a.severity >= 3);
     },
   },
 };
@@ -54,15 +54,15 @@ export class GetActiveAlarms {
 
   async execute(facilityId: string): Promise<Alarm[]> {
     const active = await this.alarms.findActive(facilityId);
-    this.analytics.track('alarms_viewed', { facilityId });
-    return active.filter((a) => a.severity >= 3);
+    this.analytics.track('alarms_viewed', {facilityId});
+    return active.filter(a => a.severity >= 3);
   }
 }
 
 // adapter — the only place Mongoose is named
 export class MongoAlarmRepository implements AlarmRepository {
   findActive(facilityId: string): Promise<Alarm[]> {
-    return AlarmModel.find({ facilityId, status: 'active' }).lean();
+    return AlarmModel.find({facilityId, status: 'active'}).lean();
   }
 }
 
@@ -75,7 +75,7 @@ const getActiveAlarms = new GetActiveAlarms(
 // resolver becomes a thin delegate
 export const resolvers = {
   Query: {
-    activeAlarms: (_: unknown, { facilityId }: { facilityId: string }) =>
+    activeAlarms: (_: unknown, {facilityId}: {facilityId: string}) =>
       getActiveAlarms.execute(facilityId),
   },
 };
@@ -92,19 +92,25 @@ no network. The composition root is the only file that mentions Mongoose or Segm
 
 ```tsx
 // AlarmList.tsx — component welded to fetch + localStorage
-export function AlarmList({ facilityId }: { facilityId: string }) {
+export function AlarmList({facilityId}: {facilityId: string}) {
   const [alarms, setAlarms] = useState<Alarm[]>([]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     fetch(`/api/facilities/${facilityId}/alarms`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {Authorization: `Bearer ${token}`},
     })
-      .then((r) => r.json())
+      .then(r => r.json())
       .then(setAlarms);
   }, [facilityId]);
 
-  return <ul>{alarms.map((a) => <li key={a.id}>{a.name}</li>)}</ul>;
+  return (
+    <ul>
+      {alarms.map(a => (
+        <li key={a.id}>{a.name}</li>
+      ))}
+    </ul>
+  );
 }
 ```
 
@@ -127,13 +133,19 @@ export const useAlarmApi = () => {
 };
 
 // component depends on the port via context — no fetch, no localStorage
-export function AlarmList({ facilityId }: { facilityId: string }) {
+export function AlarmList({facilityId}: {facilityId: string}) {
   const api = useAlarmApi();
   const [alarms, setAlarms] = useState<Alarm[]>([]);
   useEffect(() => {
     api.listActive(facilityId).then(setAlarms);
   }, [api, facilityId]);
-  return <ul>{alarms.map((a) => <li key={a.id}>{a.name}</li>)}</ul>;
+  return (
+    <ul>
+      {alarms.map(a => (
+        <li key={a.id}>{a.name}</li>
+      ))}
+    </ul>
+  );
 }
 
 // adapter — HTTP details live here, in one place
@@ -141,7 +153,7 @@ export class HttpAlarmApi implements AlarmApi {
   constructor(private readonly getToken: () => string | null) {}
   async listActive(facilityId: string): Promise<Alarm[]> {
     const res = await fetch(`/api/facilities/${facilityId}/alarms`, {
-      headers: { Authorization: `Bearer ${this.getToken()}` },
+      headers: {Authorization: `Bearer ${this.getToken()}`},
     });
     return res.json();
   }
@@ -153,7 +165,7 @@ export class HttpAlarmApi implements AlarmApi {
 </AlarmApiContext.Provider>;
 
 // in a test or Storybook, inject a fake — no network
-<AlarmApiContext.Provider value={{ listActive: async () => fakeAlarms }}>
+<AlarmApiContext.Provider value={{listActive: async () => fakeAlarms}}>
   <AlarmList facilityId="f1" />
 </AlarmApiContext.Provider>;
 ```

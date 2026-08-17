@@ -92,7 +92,7 @@ The ticket isn't repeated here — it rides on the MR title (see Ampere reality)
 
 - Explain the problem, the prior behavior, what was wrong, and why you solved it
   this way.
-- Leave out the *how* — the diff and source comments cover that.
+- Leave out the _how_ — the diff and source comments cover that.
 - Wrap at 72 so `git log`'s indentation stays under 80 columns.
 
 ```
@@ -105,19 +105,19 @@ directly; this also removes now-dead code in good() and clear().
 
 ## Common mistakes
 
-| Mistake | Fix |
-|---|---|
-| Subject and body run together | Insert a blank line — `log`/`rebase` rely on it |
-| Capitalized CC description (`fix: Prevent…`) | Lowercase the type and description |
-| No type, or a vague one (`update: …`) | Use `feat`/`fix`/`refactor`/… as fits |
-| `TCK-1234:` prefix on a branch commit | Drop it — the MR title carries the ticket (squash-merge) |
-| Body explains *how* | Delete it; explain *why* instead |
-| One commit doing many things | Split into atomic commits |
+| Mistake                                      | Fix                                                      |
+| -------------------------------------------- | -------------------------------------------------------- |
+| Subject and body run together                | Insert a blank line — `log`/`rebase` rely on it          |
+| Capitalized CC description (`fix: Prevent…`) | Lowercase the type and description                       |
+| No type, or a vague one (`update: …`)        | Use `feat`/`fix`/`refactor`/… as fits                    |
+| `TCK-1234:` prefix on a branch commit        | Drop it — the MR title carries the ticket (squash-merge) |
+| Body explains _how_                          | Delete it; explain _why_ instead                         |
+| One commit doing many things                 | Split into atomic commits                                |
 
 ## Ampere reality
 
 - **Feature-branch commits use pure Conventional Commits** — `type(scope):
-  description`, no ticket prefix. The **MR title carries the ticket**
+description`, no ticket prefix. The **MR title carries the ticket**
   (`TCK-1234: <title>`, per **git-flow** / `CLAUDE.md`), and squash-on-merge
   folds the branch commits into that single titled commit on `develop`/`main`.
   So the ticket is captured once, at merge.

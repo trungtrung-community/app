@@ -27,7 +27,7 @@ Reference for the language rules. The most common ones are summarised in `SKILL.
 - Don't reach around visibility with `obj['privateThing']`.
 - Mark fields never reassigned after construction `readonly`. Prefer TypeScript parameter properties over hand-written constructor assignment. Initialise non-parameter properties where they're declared.
 - Omit empty constructors or ones that only delegate to `super`; keep a constructor that declares parameter properties or decorators even if its body is empty.
-- No semicolons after a class *declaration*; a statement holding a class *expression* ends with a semicolon. Don't put semicolons between methods; separate methods with one blank line.
+- No semicolons after a class _declaration_; a statement holding a class _expression_ ends with a semicolon. Don't put semicolons between methods; separate methods with one blank line.
 - Getters must be pure (no observable side effects). Don't add pass-through accessors that only wrap a field — make the field `public`/`readonly` instead. Don't define accessors via `Object.defineProperty`.
 - Don't manipulate `prototype` directly (framework code is the rare exception). Consider making private methods into non-exported module functions.
 

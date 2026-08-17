@@ -15,7 +15,7 @@ class UserService {
 
     // HTTP logic
     const response = await fetch(`/api/users/${id}`, {
-      headers: { 'Authorization': `Bearer ${this.getToken()}` }
+      headers: {Authorization: `Bearer ${this.getToken()}`},
     });
     const user = await response.json();
 
@@ -31,8 +31,12 @@ class UserService {
     return user;
   }
 
-  private getToken(): string { /* ... */ }
-  private trackUserFetch(id: string): void { /* ... */ }
+  private getToken(): string {
+    /* ... */
+  }
+  private trackUserFetch(id: string): void {
+    /* ... */
+  }
 }
 ```
 
@@ -43,7 +47,7 @@ class UserService {
 class UserRepository {
   constructor(
     private readonly httpClient: HttpClient,
-    private readonly cache: CachePort
+    private readonly cache: CachePort,
   ) {}
 
   async getById(id: string): Promise<User> {
@@ -62,7 +66,7 @@ class UserValidator {
     const errors: string[] = [];
     if (!user.email) errors.push('Email required');
     if (!user.name) errors.push('Name required');
-    return { isValid: errors.length === 0, errors };
+    return {isValid: errors.length === 0, errors};
   }
 }
 
@@ -71,7 +75,7 @@ class GetUserUseCase {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly validator: UserValidator,
-    private readonly analytics: AnalyticsPort
+    private readonly analytics: AnalyticsPort,
   ) {}
 
   async execute(id: string): Promise<User> {
@@ -80,7 +84,7 @@ class GetUserUseCase {
     if (!validation.isValid) {
       throw new ValidationError(validation.errors);
     }
-    this.analytics.track('user_fetched', { userId: id });
+    this.analytics.track('user_fetched', {userId: id});
     return user;
   }
 }

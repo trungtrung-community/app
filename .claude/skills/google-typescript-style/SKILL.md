@@ -2,12 +2,12 @@
 name: google-typescript-style
 description: Google TypeScript Style Guide standards for writing, reviewing, and refactoring TypeScript and JavaScript — naming, named exports, language features (===, const/let, as/unknown, no var), and a purpose-first documentation standard (JSDoc with @param/@returns/@example; comments that state why code exists, never the bug-fix incident, written to scan — one idea per sentence). Apply Google rules to new code; match existing local conventions when editing — never rename files to snake_case or convert existing default exports. Use when writing a new function, class, or module, adding JSDoc, naming things, reviewing a diff for style, or asked "is this idiomatic", "follow our standards", or "clean this up".
 paths:
-  - "**/*.ts"
-  - "**/*.tsx"
-  - "**/*.js"
-  - "**/*.jsx"
-  - "**/*.mjs"
-  - "**/*.cjs"
+  - '**/*.ts'
+  - '**/*.tsx'
+  - '**/*.js'
+  - '**/*.jsx'
+  - '**/*.mjs'
+  - '**/*.cjs'
 ---
 
 # Google TypeScript Style
@@ -30,7 +30,7 @@ These are standing rules for the whole task, not one-time steps.
 
 ## Self-check (scan the diff before finishing)
 
-- In code you're writing, could a rename or a smaller function make a comment unnecessary? Do that, then delete it. (Don't restructure *existing* code for this.)
+- In code you're writing, could a rename or a smaller function make a comment unnecessary? Do that, then delete it. (Don't restructure _existing_ code for this.)
 - Would an engineer who doesn't know this subsystem understand every name and comment? (precise terms, no unexplained jargon)
 - `const` / `===` / named exports for new modules / `throw new Error`; no unrelated churn in files you touched.
 
@@ -46,11 +46,11 @@ These are standing rules for the whole task, not one-time steps.
 
 ## Naming
 
-| Identifier | Case | Example |
-|---|---|---|
-| Variables, parameters, properties, functions, methods | `lowerCamelCase` | `userCount`, `getUserName()` |
+| Identifier                                                     | Case             | Example                                    |
+| -------------------------------------------------------------- | ---------------- | ------------------------------------------ |
+| Variables, parameters, properties, functions, methods          | `lowerCamelCase` | `userCount`, `getUserName()`               |
 | Classes, interfaces, types, enums, type parameters, decorators | `UpperCamelCase` | `UserAccount`, `HttpResponse`, `<KeyType>` |
-| Module-level constants, enum values | `CONSTANT_CASE` | `MAX_RETRIES`, `Status.ACTIVE` |
+| Module-level constants, enum values                            | `CONSTANT_CASE`  | `MAX_RETRIES`, `Status.ACTIVE`             |
 
 - **Be descriptive and precise.** Names must be clear to a new reader and use the correct term — a near-but-wrong word misleads more than a vague one. Single-letter names only for variables scoped to ~10 lines or fewer.
 - **Acronyms are words:** `loadHttpUrl`, not `loadHTTPUrl`.
@@ -70,7 +70,7 @@ Good docs and comments are the highest-value part of this standard. **Prefer imp
 - `@param` / `@returns` only when they add information beyond the type (units, constraints, what "empty" means). Omit `@returns` for `void`.
 - **`@example`** for any non-obvious API — show a real call and its result.
 - `@deprecated` carries the migration path; `@fileoverview` at the top of a file states its purpose.
-- **Make documentation scannable — one idea per sentence.** Split a sentence that fuses two+ ideas. Prefer a separate sentence over a colon, em-dash, or long parenthetical that carries a second idea; group related ideas into short paragraphs; keep distinct responsibilities in distinct sentences. Don't over-split into choppy fragments — one idea per *sentence*, not per clause. AI-drafted JSDoc skews long and idea-dense; this is the counterweight.
+- **Make documentation scannable — one idea per sentence.** Split a sentence that fuses two+ ideas. Prefer a separate sentence over a colon, em-dash, or long parenthetical that carries a second idea; group related ideas into short paragraphs; keep distinct responsibilities in distinct sentences. Don't over-split into choppy fragments — one idea per _sentence_, not per clause. AI-drafted JSDoc skews long and idea-dense; this is the counterweight.
 
 → See [reference/comments-and-jsdoc.md](reference/comments-and-jsdoc.md) for the full JSDoc rules, the sentence-split test, examples, good/bad comment pairs, and the purpose-not-incident rule.
 

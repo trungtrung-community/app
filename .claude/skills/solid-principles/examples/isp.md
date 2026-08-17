@@ -18,17 +18,35 @@ interface UserPort {
 
 // ReadOnlyUserRepository.ts — forced to stub methods it doesn't need
 class ReadOnlyUserRepository implements UserPort {
-  async getById(id: string): Promise<User> { /* ... */ }
-  async getAll(): Promise<User[]> { /* ... */ }
-  async getByEmail(email: string): Promise<User | null> { /* ... */ }
-  async search(query: string): Promise<User[]> { /* ... */ }
+  async getById(id: string): Promise<User> {
+    /* ... */
+  }
+  async getAll(): Promise<User[]> {
+    /* ... */
+  }
+  async getByEmail(email: string): Promise<User | null> {
+    /* ... */
+  }
+  async search(query: string): Promise<User[]> {
+    /* ... */
+  }
 
   // ISP violations — methods that don't belong
-  async create(): Promise<User> { throw new Error('Read-only'); }
-  async update(): Promise<User> { throw new Error('Read-only'); }
-  async delete(): Promise<void> { throw new Error('Read-only'); }
-  async exportToCsv(): Promise<string> { throw new Error('Not supported'); }
-  async importFromCsv(): Promise<void> { throw new Error('Not supported'); }
+  async create(): Promise<User> {
+    throw new Error('Read-only');
+  }
+  async update(): Promise<User> {
+    throw new Error('Read-only');
+  }
+  async delete(): Promise<void> {
+    throw new Error('Read-only');
+  }
+  async exportToCsv(): Promise<string> {
+    throw new Error('Not supported');
+  }
+  async importFromCsv(): Promise<void> {
+    throw new Error('Not supported');
+  }
 }
 ```
 
@@ -62,10 +80,18 @@ interface UserExportPort {
 
 // ReadOnlyUserRepository.ts — implements only what it needs
 class ReadOnlyUserRepository implements UserReadPort, UserSearchPort {
-  async getById(id: string): Promise<User> { /* ... */ }
-  async getByEmail(email: string): Promise<User | null> { /* ... */ }
-  async search(query: string): Promise<User[]> { /* ... */ }
-  async getAll(): Promise<User[]> { /* ... */ }
+  async getById(id: string): Promise<User> {
+    /* ... */
+  }
+  async getByEmail(email: string): Promise<User | null> {
+    /* ... */
+  }
+  async search(query: string): Promise<User[]> {
+    /* ... */
+  }
+  async getAll(): Promise<User[]> {
+    /* ... */
+  }
 }
 
 // GetUserUseCase.ts — depends only on UserReadPort

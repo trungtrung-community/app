@@ -4,23 +4,23 @@ Full naming rules from the Google TypeScript Style Guide. The quick table lives 
 
 ## Case by identifier type
 
-| Identifier type | Style |
-|---|---|
-| Variables, parameters, properties | `lowerCamelCase` |
-| Functions, methods | `lowerCamelCase` |
-| Classes, interfaces, type aliases, enums | `UpperCamelCase` |
-| Type parameters (generics) | `UpperCamelCase` — `<T>`, `<KeyType>` |
-| Decorators | `UpperCamelCase` — `@Component` |
-| Module-level / global constants | `CONSTANT_CASE` |
-| Enum values | `CONSTANT_CASE` |
-| Module namespace imports | `lowerCamelCase` — `import * as fooBar from ...` |
+| Identifier type                          | Style                                            |
+| ---------------------------------------- | ------------------------------------------------ |
+| Variables, parameters, properties        | `lowerCamelCase`                                 |
+| Functions, methods                       | `lowerCamelCase`                                 |
+| Classes, interfaces, type aliases, enums | `UpperCamelCase`                                 |
+| Type parameters (generics)               | `UpperCamelCase` — `<T>`, `<KeyType>`            |
+| Decorators                               | `UpperCamelCase` — `@Component`                  |
+| Module-level / global constants          | `CONSTANT_CASE`                                  |
+| Enum values                              | `CONSTANT_CASE`                                  |
+| Module namespace imports                 | `lowerCamelCase` — `import * as fooBar from ...` |
 
 A "module-level constant" is `CONSTANT_CASE` only when it is both deeply immutable and module-scoped. A `const` local that just happens not to be reassigned stays `lowerCamelCase`.
 
 ## Descriptiveness
 
 - Names MUST be descriptive and clear to a new reader — favour clarity over brevity.
-- Be **precise**, not just descriptive — use the term that is actually correct for the thing. A near-but-wrong word (a config named `...Manager`, a value named `...Handler`) misleads *more* than a vague one, because it asserts something false.
+- Be **precise**, not just descriptive — use the term that is actually correct for the thing. A near-but-wrong word (a config named `...Manager`, a value named `...Handler`) misleads _more_ than a vague one, because it asserts something false.
 - Short names (including single letters) MAY be used only for variables in scope for ~10 lines or fewer (loop indices, short-lived locals).
 - Names MUST NOT be decorated with information that the type already carries: use `name`, not `nameString`; `users`, not `userArray`.
 
@@ -31,7 +31,7 @@ A "module-level constant" is `CONSTANT_CASE` only when it is both deeply immutab
 
 ## Forbidden affixes and markers
 
-- No `_` as a prefix or suffix on identifiers, and `_` alone is not a valid identifier. (Underscores are allowed *inside* `CONSTANT_CASE` and inside structured test method names.)
+- No `_` as a prefix or suffix on identifiers, and `_` alone is not a valid identifier. (Underscores are allowed _inside_ `CONSTANT_CASE` and inside structured test method names.)
 - No `I` prefix on interfaces — `UserService`, not `IUserService`. Don't mark interfaces specially at all.
 - No `opt_` prefix for optional parameters — use TypeScript's `?` (`name?: string`).
 - No `private_`-style name mangling — use the `private` / `protected` visibility modifiers instead.
