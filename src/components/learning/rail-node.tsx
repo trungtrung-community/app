@@ -318,13 +318,21 @@ const BADGE: ViewStyle = {
   backgroundColor: color.ground000,
 };
 
-/** Vertically centred on the node without a percentage transform. */
+/**
+ * Vertically centred on the node without a percentage transform.
+ *
+ * The design system caps this at 84 with `width: max-content`, which lets a single long
+ * word overflow rather than break. React Native has neither, and a `Text` narrower than one
+ * word breaks *inside* it — "THE MONASTERY" came out as "THE MONASTER / Y". 104 holds the
+ * longest single word in the district set at this size, and anything longer still breaks at
+ * a space or a hyphen, which is where it should.
+ */
 const SIDE_LABEL: ViewStyle = {
   position: 'absolute',
   top: 0,
   bottom: 0,
   justifyContent: 'center',
-  maxWidth: 84,
+  maxWidth: 104,
 };
 const SIDE_LEFT: ViewStyle = {right: '100%', marginRight: space['3']};
 const SIDE_RIGHT: ViewStyle = {left: '100%', marginLeft: space['3']};

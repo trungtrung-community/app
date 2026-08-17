@@ -16,7 +16,7 @@
  */
 
 import {useState, type ReactNode} from 'react';
-import {Text, View} from 'react-native';
+import {Pressable, Text, View} from 'react-native';
 
 import {Badge} from './core/badge';
 import {Button} from './core/button';
@@ -44,19 +44,29 @@ import {Select} from './forms/select';
 import {Switch} from './forms/switch';
 import {AnswerBand} from './learning/answer-band';
 import {AnswerChoice} from './learning/answer-choice';
+import {ArtifactCard} from './learning/artifact-card';
 import {AudioButton} from './learning/audio-button';
 import {CapabilityList} from './learning/capability-list';
 import {ChangeRow} from './learning/change-row';
 import {ChipTray} from './learning/chip-tray';
 import {CircuitRing} from './learning/circuit-ring';
+import {FlashCard} from './learning/flash-card';
+import {HeadRail} from './learning/head-rail';
 import {LetterTile} from './learning/letter-tile';
 import {ModeCard} from './learning/mode-card';
+import {PairBoard} from './learning/pair-board';
+import {PlaybackRow} from './learning/playback-row';
 import {RailNode} from './learning/rail-node';
+import {RatingButtons} from './learning/rating-buttons';
+import {RecordButton} from './learning/record-button';
+import {ShareCard} from './learning/share-card';
+import {StackDiagram} from './learning/stack-diagram';
 import {TranscriptRow} from './learning/transcript-row';
 import {ProgressBar} from './learning/progress-bar';
 import {SectionHeader} from './learning/section-header';
 import {StatPill} from './learning/stat-pill';
 import {SyllableChip} from './learning/syllable-chip';
+import {WordCard} from './learning/word-card';
 import {WordRow} from './learning/word-row';
 import {TibetanText} from './learning/tibetan-text';
 
@@ -99,6 +109,9 @@ export type PortedComponent = {
 
 /** For an action that has to exist so the control renders, but has nowhere to go here. */
 function noop() {}
+
+/** The same, for the handlers that are told which item was picked. */
+function noop2(_a: unknown, _b: unknown) {}
 
 /** Real records, so the specimens read like the product rather than like a test. */
 const TRASHI = 'བཀྲ་ཤིས་བདེ་ལེགས';
@@ -1754,6 +1767,406 @@ export const PORTED: Record<string, PortedComponent> = {
               onPress={noop}
             />
             <ModeCard absentBecause="Just listen is off while exercises without sound is on." />
+          </Ground>
+        ),
+      },
+    ],
+  },
+
+  RatingButtons: {
+    specimens: [
+      {
+        label: 'two buttons, never four',
+        note: 'Self-grading on a four-point scale is a study-app convention that asks a beginner to judge something they cannot yet judge. Again or got it; the scheduler infers the rest.',
+        render: () => <RatingButtons onAgain={noop} onGotIt={noop} />,
+      },
+      {
+        label: 'without the prompt',
+        note: 'For a screen that has already said what the two answers do.',
+        render: () => <RatingButtons prompt="" onAgain={noop} onGotIt={noop} />,
+      },
+      {
+        label: 'in the flashcard’s own words',
+        render: () => (
+          <RatingButtons
+            prompt="Could you say it before you turned it over?"
+            againLabel="Not yet"
+            gotItLabel="Said it"
+            onAgain={noop}
+            onGotIt={noop}
+          />
+        ),
+      },
+    ],
+  },
+
+  RecordButton: {
+    specimens: [
+      {
+        label: 'record, play back, done',
+        note: 'No scoring and no waveform matching. The product lets a learner hear their own take beside a native one and draws no conclusion, because a pronunciation score a beginner cannot interpret only discourages. Ported from the bundle — RecordButton ships no .jsx.',
+        render: () => (
+          <Row>
+            <RecordButton state="idle" onPress={noop} />
+            <RecordButton state="recording" onPress={noop} />
+            <RecordButton state="playback" onPress={noop} />
+            <RecordButton state="playback" playing onPress={noop} />
+          </Row>
+        ),
+      },
+      {
+        label: 'sizes',
+        note: 'The recording ring takes --record-ring-width, added to the design system when this component was ported: it was the last raw line weight in the elevation group.',
+        render: () => (
+          <Row>
+            <RecordButton state="recording" size="sm" onPress={noop} />
+            <RecordButton state="recording" size="md" onPress={noop} />
+            <RecordButton state="recording" size="lg" onPress={noop} />
+          </Row>
+        ),
+      },
+    ],
+  },
+
+  PlaybackRow: {
+    specimens: [
+      {
+        label: 'the native take above the learner’s own',
+        note: 'The learner’s row is teal and the native row is ink, and that is the only thing separating them — neither is the standard the other is marked against.',
+        render: () => (
+          <Ground>
+            <PlaybackRow source="native" onPlay={noop} />
+            <PlaybackRow source="you" onPlay={noop} />
+            <PlaybackRow source="you" playing duration="0:03" onPlay={noop} />
+            <PlaybackRow source="native" label="Slowly" duration="0:04" onPlay={noop} />
+          </Ground>
+        ),
+      },
+    ],
+  },
+
+  ArtifactCard: {
+    specimens: [
+      {
+        label: 'found, and not found yet',
+        note: 'The text is the same triple either way. An unfound card still names its word properly: the thing withheld is the picture, not the language.',
+        render: () => (
+          <Ground>
+            <View className="flex-row gap-3">
+              <View className="flex-1">
+                <ArtifactCard name="The churn" bo="མདོང་མོ་" roman="dongmo" onPress={noop} />
+              </View>
+              <View className="flex-1">
+                <ArtifactCard name="Thangka" bo="ཐང་ཀ་" roman="thangka" found={false} />
+              </View>
+            </View>
+          </Ground>
+        ),
+      },
+      {
+        label: 'thumbnails — found, found, found, not yet, not yet',
+        note: 'The silhouette lives in the component so it cannot drift between the grid, the detail sheet and the 44pt thumbnail.',
+        render: () => (
+          <Row>
+            <ArtifactCard variant="thumb" />
+            <ArtifactCard variant="thumb" />
+            <ArtifactCard variant="thumb" />
+            <ArtifactCard variant="thumb" found={false} />
+            <ArtifactCard variant="thumb" found={false} />
+          </Row>
+        ),
+      },
+    ],
+  },
+
+  ShareCard: {
+    specimens: [
+      {
+        label: 'no URL, no call to action, no border',
+        note: 'The wordmark sits small in a corner and nothing else asks anything of whoever receives it — which is the only reason a card like this gets sent on. On the app ground, never white. The box is a fixed export size and the design system’s own numbers overflow it, so the art band yields instead of the copy — the one deviation from the board.',
+        render: () => (
+          <ShareCard
+            bo="བོད་ཇ།"
+            roman="phööcha"
+            en="butter tea"
+            note="Churned with salt and butter, drunk all day. A guest’s cup is never left empty."
+          >
+            Butter tea, a wooden churn
+          </ShareCard>
+        ),
+      },
+      {
+        label: 'the story format',
+        render: () => (
+          <ShareCard format="story" bo="བོད་ཇ།" roman="phööcha" en="butter tea">
+            Butter tea, a wooden churn
+          </ShareCard>
+        ),
+      },
+    ],
+  },
+
+  StackDiagram: {
+    specimens: [
+      {
+        label: 'five parts, one syllable',
+        note: 'The Read track’s one structural picture, and a syllable is only ever a syllable. On the app ground, because an idle chip is a white keycap and a white keycap on a white card is only its edge.',
+        render: () => (
+          <Ground>
+            <StackDiagram
+              stack="བསྒྲུབས"
+              roman="drup"
+              parts={[
+                {glyph: 'བ', role: 'prefix'},
+                {glyph: 'ས', role: 'superscript'},
+                {glyph: 'ག', role: 'root'},
+                {glyph: 'ྲ', role: 'subscript'},
+                {glyph: 'ས', role: 'suffix'},
+              ]}
+              note="The root carries the sound; everything else changes it."
+            />
+          </Ground>
+        ),
+      },
+      {
+        label: 'roles hidden — for a list where the parts are the point',
+        render: () => (
+          <Ground>
+            <StackDiagram
+              size="sm"
+              stack="རྐ"
+              roman="ka"
+              showRoles={false}
+              parts={[
+                {glyph: 'ར', role: 'superscript'},
+                {glyph: 'ཀ', role: 'root'},
+              ]}
+            />
+          </Ground>
+        ),
+      },
+      {
+        label: 'empty slots — the builder, RB12',
+        note: 'An empty part is a slot waiting to be filled, which is what makes the builder possible without inventing a second component.',
+        render: () => (
+          <Ground>
+            <StackDiagram
+              parts={[
+                {empty: true, role: 'prefix'},
+                {glyph: 'ས', role: 'superscript'},
+                {empty: true, role: 'root'},
+                {empty: true, role: 'subscript'},
+                {glyph: 'ས', role: 'suffix'},
+              ]}
+            />
+          </Ground>
+        ),
+      },
+      {
+        label: 'additive — a subscript is added, and the sum is the reading',
+        render: () => (
+          <Ground>
+            <Stack>
+              <StackDiagram
+                layout="additive"
+                base={{glyph: 'ཀ', roman: 'ka'}}
+                combiner={{bo: 'ར་བཏགས་', roman: 'ra-tak'}}
+                stack="ཀྲ"
+                roman="tra"
+              />
+              <StackDiagram
+                layout="additive"
+                base={{glyph: 'པ', roman: 'pa'}}
+                combiner={{bo: 'ཡ་བཏགས་', roman: 'ya-tak'}}
+                stack="པྱ"
+                roman="cha"
+              />
+            </Stack>
+          </Ground>
+        ),
+      },
+      {
+        label: 'procedural — a superscript is silent, so it is spelled aloud',
+        note: 'Writing “ར + ཀ = རྐ” would state something false. The procedure says it instead: say ར, then ཀ, now say ka.',
+        render: () => (
+          <Ground>
+            <Stack>
+              <StackDiagram layout="procedural" stack="རྐ" head="ར" base="ཀ" roman="ka" />
+              <StackDiagram layout="procedural" stack="སྔ" head="ས" base="ང" roman="ngha" />
+            </Stack>
+          </Ground>
+        ),
+      },
+    ],
+  },
+
+  PairBoard: {
+    specimens: [
+      {
+        label: 'mid-board — two pairs cleared, one selected, one wrong',
+        note: 'No timer, no combo, no score. A right pair clears; a wrong pair shakes once, neutrally, and stays. The board just empties. A cleared tile stays in place at reduced strength so the board does not reflow under the learner’s finger.',
+        render: () => (
+          <PairBoard
+            onPick={noop2}
+            left={[
+              {bo: 'སྤོས་', roman: 'pö', state: 'cleared'},
+              {bo: 'མཆོད་མེ་', roman: 'chöme', state: 'selected'},
+              {bo: 'ཁ་བཏགས་', roman: 'khatak'},
+              {bo: 'འཁོར་ལོ་', roman: 'khorlo', state: 'cleared'},
+              {bo: 'དར་ལྕོག་', roman: 'darchok'},
+            ]}
+            right={[
+              {en: 'prayer wheel', state: 'cleared'},
+              {en: 'ceremonial scarf'},
+              {en: 'incense', state: 'cleared'},
+              {en: 'prayer flag', state: 'wrong'},
+              {en: 'butter lamp'},
+            ]}
+          />
+        ),
+      },
+    ],
+  },
+
+  FlashCard: {
+    specimens: [
+      {
+        label: 'front and back',
+        note: 'Both faces set Tibetan through TibetanText — the back demotes it rather than dropping it, so the script is present every time the word is. Tap to turn.',
+        render: () => (
+          <Ground>
+            <Live initial={true}>
+              {(front, set) => (
+                <Pressable onPress={() => set(!front)} style={{height: 340}} className="w-full">
+                  <FlashCard
+                    face={front ? 'front' : 'back'}
+                    bo="སྤོས་"
+                    roman="pö"
+                    en="incense"
+                    def="Juniper or herb incense, burnt as an offering at a shrine or on a pass."
+                  />
+                </Pressable>
+              )}
+            </Live>
+          </Ground>
+        ),
+      },
+    ],
+  },
+
+  HeadRail: {
+    specimens: [
+      {
+        label: 'winding — the journey between districts',
+        note: 'Named for the head line Tibetan letters hang from. Labels alternate sides so they clear the connector path, and the done colour stops at the current stop rather than at the end of the rail.',
+        render: () => (
+          <Ground>
+            <HeadRail
+              width={330}
+              nodeSize={56}
+              gap={36}
+              amplitude={120}
+              onSelect={noop2}
+              nodes={[
+                {id: 'a', state: 'done', icon: 'check', label: 'First Words'},
+                {id: 'b', state: 'done', icon: 'check', label: 'The Tea House'},
+                {id: 'c', state: 'current', icon: 'message-circle', label: 'Market Talk'},
+                {id: 'd', state: 'locked', label: 'The Monastery'},
+              ]}
+            />
+          </Ground>
+        ),
+      },
+      {
+        label: 'straight — inside one district',
+        note: 'Letters hang off a head line, labels below.',
+        render: () => (
+          <Ground>
+            <HeadRail
+              variant="straight"
+              width={330}
+              nodeSize={56}
+              gap={30}
+              onSelect={noop2}
+              nodes={[
+                {id: 'ka', state: 'done', glyph: 'ཀ', label: 'ka'},
+                {id: 'kha', state: 'current', glyph: 'ཁ', label: 'kha'},
+                {id: 'ga', state: 'locked', glyph: 'ག', label: 'ga'},
+              ]}
+            />
+          </Ground>
+        ),
+      },
+    ],
+  },
+
+  WordCard: {
+    specimens: [
+      {
+        label: 'the first meeting with a word',
+        note: 'The most-seen surface in the product. The learner decides nothing here — the one button, Continue, lives on the screen rather than in the card.',
+        render: () => (
+          <Ground>
+            <WordCard
+              eyebrow="New word · Offerings"
+              illustration
+              bo="སྤོས་"
+              roman="pö"
+              en="incense"
+              playing
+            />
+          </Ground>
+        ),
+      },
+      {
+        label: 'without an illustration',
+        render: () => (
+          <Ground>
+            <WordCard eyebrow="New word · First Words" bo="ཏོག་ཙམ་" roman="toktsam" en="a little" />
+          </Ground>
+        ),
+      },
+      {
+        label: 'no Lhasa form found yet — 78 records',
+        note: 'No padlock and no skeleton. The English carries the card and the gap is stated in words, using WordRow’s own wording so the two surfaces cannot drift.',
+        render: () => (
+          <Ground>
+            <WordCard
+              eyebrow="New word · First Words"
+              en="hello (casual)"
+              note="What you say walking into a shop."
+              noScript="Lhasa has no everyday hello apart from trashi delek — no form is invented here."
+            />
+          </Ground>
+        ),
+      },
+      {
+        label: 'a second attested form — 146 records',
+        render: () => (
+          <Ground>
+            <WordCard
+              eyebrow="New word · First Words"
+              bo="དགོངས་དག"
+              roman="gong da"
+              en="sorry"
+              variantBo="དགོངས་པ་མ་ཚོམ"
+              variantRoman="gongpa matsom"
+            />
+          </Ground>
+        ),
+      },
+      {
+        label: 'the register marker — proposal (a)',
+        note: 'Leaving it off everywhere is proposal (b), which is why it is a prop rather than a rule.',
+        render: () => (
+          <Ground>
+            <WordCard
+              eyebrow="New word · First Words"
+              bo="ག་ལེར་ཕེབས"
+              roman="khaaler phep"
+              en="goodbye — to someone leaving"
+              registerMark="the polite form of “go” — it honours the one going"
+            />
           </Ground>
         ),
       },

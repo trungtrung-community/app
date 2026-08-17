@@ -16,7 +16,7 @@
  * typography.css     sha256 40e31d0387891a99
  * spacing.css        sha256 370106530fa291ce
  * radius.css         sha256 bf7c9fc6407960c6
- * elevation.css      sha256 f7a0e2e44db44127
+ * elevation.css      sha256 72ba898f30abdb59
  * motion.css         sha256 5b4555d58335a92d
  * base.css           sha256 605d0bcece7fa9be
  */
@@ -208,6 +208,7 @@ export const elevation = {
   dividerHairline: 1, // the one sanctioned line: a half-width rule inside a single card
   outlineMascot: 3, // illustration stroke weight
   focusRingWidth: 3, // the focus ring's weight — base.css and every field's focus state
+  recordRingWidth: 3, // the recording pulse's ring — RecordButton, and nothing else pulses
 } as const;
 
 /** Durations in milliseconds, easing curves as CSS strings, and the press constants. */

@@ -66,4 +66,6 @@ export const duration = {
   fast: motion.durFast,
   base: motion.durBase,
   slow: motion.durSlow,
+  /** The rail's draw-on. Far longer than the rest, and used by exactly one component. */
+  rail: motion.durRail,
 };
