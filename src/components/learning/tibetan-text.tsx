@@ -19,9 +19,11 @@
  *
  * - `lineHeight` is absolute, not a ratio, so it is computed per size.
  * - `fontWeight` does nothing on a bundled family, so weight is a family name.
- * - The font's own line box is ~2.8x the size, making 2.1 leading a compression: ink
- *   overflows by ~0.35x. Verified safe on iOS and web, and the reason anything placed
- *   directly under Tibetan needs headroom.
+ * - The font *declares* a line box of ~2.8x the size, so 2.1 leading compresses it. The
+ *   0.35x that hangs outside is half-leading and contains no ink: the tallest stacks
+ *   measure well inside the 2.1 box. See `DECLARED_LINE_BOX` below, and the dated
+ *   correction in the spike — the first reading of this had it as ink overflowing, which
+ *   makes every fixed-height Tibetan box a third taller than it needs to be.
  * - `--measure-tibetan` is 34ch, which has no point equivalent and on a phone is always
  *   wider than the screen. Omitted rather than guessed at.
  */

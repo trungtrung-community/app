@@ -11,10 +11,10 @@
  */
 
 /** The syllable separator. A Tibetan word ends in one. */
-export const TSHEG = '་';
+export const TSHEG = '\u0F0B';
 
 /** Zero-width space. Tibetan may break after a tsheg and nowhere else. */
-export const ZWSP = '​';
+export const ZWSP = '\u200B';
 
 /**
  * Every code point below is written as an escape on purpose.
@@ -26,7 +26,7 @@ export const ZWSP = '​';
  */
 
 /** Tibetan ends a syllable on a consonant or a subjoined letter. */
-const TIB_LETTER_END = /[ཀ-ྼ]$/;
+const TIB_LETTER_END = /[\u0F40-\u0FBC]$/;
 
 /**
  * Characters that attach to the letter before them.
@@ -35,13 +35,13 @@ const TIB_LETTER_END = /[ཀ-ྼ]$/;
  * than starting a new one. Then the marks above and below, the vowel signs
  * (U+0F71–U+0F87) and the subjoined consonants (U+0F8D–U+0FBC).
  */
-const TIB_ATTACH = /[་-༎ཱ༹༵༷-྇ྍ-ྼ]/;
+const TIB_ATTACH = /[\u0F0B-\u0F0E\u0F35\u0F37\u0F39\u0F71-\u0F87\u0F8D-\u0FBC]/;
 
 /** The whole Tibetan block. */
-const TIB_ANY = /[ༀ-࿿]/;
+const TIB_ANY = /[\u0F00-\u0FFF]/;
 
 /** One or more Tibetan glyphs, plus the separators between a list of them. */
-const TIB_RUN = /([ༀ-࿿]+(?:[ ·•·]+[ༀ-࿿]+)*)/g;
+const TIB_RUN = /([\u0F00-\u0FFF]+(?:[ \u00B7\u2022]+[\u0F00-\u0FFF]+)*)/g;
 
 /** True when the string carries any Tibetan. */
 export function hasTibetan(value: string): boolean {
@@ -71,6 +71,29 @@ export function lineLetters(value: string): string[] {
     out.push(current);
   }
   return out;
+}
+
+/**
+ * Characters that stack above or below the letter they belong to.
+ *
+ * `TIB_ATTACH` without the tsheg and the other punctuation, because those two questions
+ * have different answers: the tsheg closes the reading position before it, so it is not a
+ * line letter of its own — but it does advance the pen, so it does take width.
+ */
+const TIB_STACKING = /[\u0F71-\u0F87\u0F8D-\u0FBC]/g;
+
+/**
+ * How many positions a run of Tibetan advances across the page.
+ *
+ * Base letters and the tsheg each take one; vowel signs and subjoined letters stack and
+ * take none. This is what a fixed-width slot has to be sized by — `lineLetters` counts
+ * something different and would size `ཡང་བསྐྱར་` two positions short.
+ *
+ * @example advanceUnits('བསྒྲིབས') // 4 — the same as its line letters
+ * @example advanceUnits('ཡང་བསྐྱར་') // 7 — two more, because both tshegs take width
+ */
+export function advanceUnits(value: string): number {
+  return value.replace(TIB_STACKING, '').length;
 }
 
 /** Insert a break opportunity after every tsheg, and nowhere else. */

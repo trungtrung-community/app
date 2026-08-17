@@ -45,8 +45,14 @@ import {Switch} from './forms/switch';
 import {AnswerBand} from './learning/answer-band';
 import {AnswerChoice} from './learning/answer-choice';
 import {AudioButton} from './learning/audio-button';
+import {CapabilityList} from './learning/capability-list';
+import {ChangeRow} from './learning/change-row';
+import {ChipTray} from './learning/chip-tray';
 import {CircuitRing} from './learning/circuit-ring';
 import {LetterTile} from './learning/letter-tile';
+import {ModeCard} from './learning/mode-card';
+import {RailNode} from './learning/rail-node';
+import {TranscriptRow} from './learning/transcript-row';
 import {ProgressBar} from './learning/progress-bar';
 import {SectionHeader} from './learning/section-header';
 import {StatPill} from './learning/stat-pill';
@@ -62,6 +68,21 @@ function Row({children}: {children: ReactNode}) {
 /** A column of specimens that read top to bottom. */
 function Stack({children}: {children: ReactNode}) {
   return <View className="gap-3">{children}</View>;
+}
+
+/**
+ * A column on the pale app ground, for components that are themselves white cards.
+ *
+ * The gallery draws every specimen on `surface-card`, which is right for a control and
+ * wrong for a card: a white card on a white card has no edge, and the specimen shows one
+ * undifferentiated block. These sit where they actually sit instead.
+ *
+ * The inset is deliberately small. Every point of padding here is a point the specimen is
+ * narrower than the screen the component was drawn for, and a full gutter inside the
+ * gallery's own gutter was enough to wrap ModeCard's body onto four lines.
+ */
+function Ground({children}: {children: ReactNode}) {
+  return <View className="gap-3 rounded-lg bg-surface-app p-2">{children}</View>;
 }
 
 export type Specimen = {
@@ -85,6 +106,39 @@ const BUS = 'སྤྱི་སྤྱོད་རླངས་འཁོར';
 const STACK = 'བསྒྲིབས';
 /** A partial query, as the SearchField specimen on the board types it. */
 const THUK = 'ཐུགས་';
+
+/**
+ * "Please say it again slowly", in its four chunks — plus two chunks from another phrase
+ * in the same district that differ in meaning.
+ *
+ * The board's own E8 card uses these. Neither decoy is a copula, which `validate.py`'s
+ * rule 16b fails the content build over: the learner reproduces the copula they just
+ * heard, and nothing competes with it.
+ */
+const CHUNKS = [
+  {glyph: 'ཡང་བསྐྱར་', roman: 'yangkyar'},
+  {glyph: 'ག་ལེར་', roman: 'khaaler'},
+  {glyph: 'གསུངས་', roman: 'sung'},
+  {glyph: 'རོགས་གནང་', roman: 'roknhang'},
+];
+const DECOYS = [
+  {glyph: 'ཞུ་', roman: 'zhu'},
+  {glyph: 'སྙིང་', roman: 'nying'},
+];
+
+/** The same two phrases, cut at the tsheg instead — which is what a transcript shows. */
+const HELLO_SYLLABLES = [
+  {bo: 'བཀྲ་', roman: 'ta'},
+  {bo: 'ཤིས་', roman: 'shi'},
+  {bo: 'བདེ་', roman: 'de'},
+  {bo: 'ལེགས།', roman: 'lek'},
+];
+const TEA_SYLLABLES = [
+  {bo: 'ཇ་', roman: 'ja'},
+  {bo: 'གཅིག་', roman: 'chik'},
+  {bo: 'གནང་', roman: 'nang'},
+  {bo: 'རོགས།', roman: 'rok'},
+];
 
 /**
  * A form control drawn with live state.
@@ -941,10 +995,10 @@ export const PORTED: Record<string, PortedComponent> = {
         note: 'No mascot art exists in this repo yet — the design system points at assets/mascot-crane.png, which has never been drawn. Without a source it renders the bubble alone rather than a broken-image gap. Shown on the app ground, because a white bubble on a white card is invisible — and the single pointed corner, the whole substitute for a speech tail, is the thing to look at.',
         render: () => (
           // On the pale app ground, which is where it actually sits.
-          <View className="gap-3 rounded-lg bg-surface-app p-4">
+          <Ground>
             <MascotSpeech>Two more stops and the district opens.</MascotSpeech>
             <MascotSpeech side="right">That is the third time today. It is sticking.</MascotSpeech>
-          </View>
+          </Ground>
         ),
       },
     ],
@@ -1396,6 +1450,311 @@ export const PORTED: Record<string, PortedComponent> = {
             <WordRow en="prayer wheel" noScript />
             <WordRow en="butter lamp" noScript="Recorded in Amdo, not yet confirmed for Lhasa." />
           </Stack>
+        ),
+      },
+    ],
+  },
+
+  RailNode: {
+    specimens: [
+      {
+        label: 'done, current, locked',
+        note: 'A locked node is the same button greyed — same size, same fill logic, same edge. No padlock and no hollow outline: the map never refuses, the stop simply has not been walked yet.',
+        render: () => (
+          <Row>
+            <RailNode state="done" glyph="ཀ" label="Letter ka" onPress={noop} />
+            <RailNode state="current" glyph="ཁ" label="Letter kha" onPress={noop} />
+            <RailNode state="locked" label="Market talk" />
+          </Row>
+        ),
+      },
+      {
+        label: 'browse-only',
+        note: 'The district is there, named, and cannot be started — what a learner with no connection sees. Not locked: nothing has to be finished first, so it carries its own icon rather than a padlock.',
+        render: () => (
+          <Row>
+            <RailNode state="browse" icon="map-pin" label="The Kora" />
+            <RailNode state="browse" glyph="ཅ" label="The cha row" />
+          </Row>
+        ),
+      },
+      {
+        label: '48pt, an icon instead of a glyph',
+        note: 'The board’s own card draws these unnamed. They carry names here because a button with no accessible name is a button a screen reader cannot announce, and every stop on a real map has one.',
+        render: () => (
+          <Row>
+            <RailNode state="done" size={48} icon="check" label="Tea, done" onPress={noop} />
+            <RailNode
+              state="current"
+              size={48}
+              icon="message-circle"
+              label="Small talk"
+              onPress={noop}
+            />
+            <RailNode state="locked" size={48} label="The bakery" />
+          </Row>
+        ),
+      },
+      {
+        label: 'the second circuit',
+        note: 'A thin outer arc over a walk already made, never a reset — the node keeps its finished fill.',
+        render: () => (
+          <Row>
+            <RailNode state="done" circuit={2} icon="check" label="The Monastery" onPress={noop} />
+            <RailNode
+              state="current"
+              circuit={2}
+              icon="message-circle"
+              label="The Tea House"
+              onPress={noop}
+            />
+          </Row>
+        ),
+      },
+      {
+        label: 'twoDoor — the map’s only structural exception',
+        note: 'One building holding two districts, Men-Tsee-Khang 15 and 16. Wider than any other node, two doorways under one label, so the map never has to pretend one building is two places.',
+        render: () => (
+          <Row>
+            <RailNode variant="twoDoor" state="current" label="Men-Tsee-Khang" onPress={noop} />
+            <RailNode variant="twoDoor" state="locked" label="Men-Tsee-Khang" />
+          </Row>
+        ),
+      },
+      {
+        label: 'labels beside the node',
+        note: 'The winding rail alternates sides, so a label has to clear the connector path. A side label is positioned absolutely and cannot move the stop it names.',
+        render: () => (
+          <View className="flex-row justify-center gap-20 py-2">
+            <RailNode state="done" labelSide="left" glyph="ག" label="Letter ga" onPress={noop} />
+            <RailNode
+              state="current"
+              labelSide="right"
+              glyph="ང"
+              label="Letter nga"
+              onPress={noop}
+            />
+          </View>
+        ),
+      },
+    ],
+  },
+
+  ChipTray: {
+    specimens: [
+      {
+        label: 'partial — one placed, five in the tray, four slots',
+        note: 'The chunks are words cut at the settled boundaries, never at the tsheg: ordering syllables would drill spelling rhythm rather than word order. slots is the authority on how many places the answer row has, so the tray is free to be longer.',
+        render: () => (
+          <ChipTray
+            answer={CHUNKS.slice(0, 1)}
+            tray={[DECOYS[0]!, CHUNKS[2]!, CHUNKS[3]!, DECOYS[1]!, CHUNKS[1]!]}
+            slots={4}
+          />
+        ),
+      },
+      {
+        label: 'checked — a decoy left in the tray is not an error',
+        note: 'It carries no marking and sits in its ordinary idle tone, because leaving it there was right. Only a decoy the learner placed slides back, and the band names why.',
+        render: () => (
+          <ChipTray
+            answer={CHUNKS}
+            tray={[DECOYS[1]!, DECOYS[0]!]}
+            slots={4}
+            answerLabel="The order you heard"
+          />
+        ),
+      },
+      {
+        label: 'resolved — the misplaced chunks slid into place',
+        render: () => (
+          <ChipTray
+            answer={[
+              CHUNKS[0]!,
+              CHUNKS[1]!,
+              {...CHUNKS[2]!, slid: true},
+              {...CHUNKS[3]!, slid: true},
+            ]}
+            tray={[]}
+            slots={4}
+            answerLabel="The order you heard"
+          />
+        ),
+      },
+    ],
+  },
+
+  TranscriptRow: {
+    specimens: [
+      {
+        label: 'a phrase, syllable by syllable',
+        note: 'What a slow take gives you by ear, in text: the shape of the utterance is visible without hearing it. Cut at the tsheg, unlike ChipTray’s chunks — here the syllable division is the point.',
+        render: () => <TranscriptRow syllables={HELLO_SYLLABLES} />,
+      },
+      {
+        label: 'syllable 3 playing',
+        render: () => <TranscriptRow syllables={TEA_SYLLABLES} active={2} />,
+      },
+      {
+        label: 'small — inside a word row or a sheet',
+        render: () => <TranscriptRow syllables={TEA_SYLLABLES} size="sm" />,
+      },
+    ],
+  },
+
+  CapabilityList: {
+    specimens: [
+      {
+        label: 'what the learner can now do',
+        note: 'Abilities in plain language, never counts. A list that said “12 words” would be a score, and this is the screen that exists so a session ends in something the learner recognises as their own. Shown on the app ground: the list is itself a card, and a white card on a white card has no edge.',
+        render: () => (
+          <Ground>
+            <CapabilityList
+              items={[
+                {
+                  capability: 'Greet someone and be greeted back',
+                  example: 'བཀྲ་ཤིས་བདེ་ལེགས · trashi delek',
+                },
+                {
+                  capability: 'Ask for one tea',
+                  example: 'ཇ་གཅིག་གནང་རོགས། · ja chik nang rok',
+                },
+                {capability: 'Hear the difference between ཀ and ཁ'},
+              ]}
+            />
+          </Ground>
+        ),
+      },
+      {
+        label: 'come back to these',
+        note: 'The same component with a hollow ring. An unmet capability is one the learner has not reached yet, not one they failed — which is why it is not a second component with a red mark.',
+        render: () => (
+          <Ground>
+            <CapabilityList
+              marker="ring"
+              items={[
+                {capability: 'Ask how much something costs', example: 'ག་ཚོད་རེད། · katsö re'},
+                {capability: 'Say where you are from'},
+              ]}
+            />
+          </Ground>
+        ),
+      },
+      {
+        label: 'a mixed list',
+        note: 'A per-item marker overrides the list’s default, so one card can carry both.',
+        render: () => (
+          <Ground>
+            <CapabilityList
+              items={[
+                {capability: 'Count to ten', example: 'གཅིག་ ནས་ བཅུ་ · chik ne chu'},
+                {capability: 'Count past twenty', marker: 'ring'},
+              ]}
+            />
+          </Ground>
+        ),
+      },
+    ],
+  },
+
+  ChangeRow: {
+    specimens: [
+      {
+        label: 'what a letter in front does',
+        note: 'The Read track’s tips used to narrate this in prose. A row shows it instead, and the learner can hear both forms.',
+        render: () => (
+          <Stack>
+            <ChangeRow bare="ཀུ" bareRoman="ku" to="དཀུ" toRoman="ku" change="no change" />
+            <ChangeRow bare="གུ" bareRoman="khuu" to="དགུ" toRoman="gu" change="change" />
+          </Stack>
+        ),
+      },
+      {
+        label: 'rise — the one case where position carries meaning',
+        note: 'A syllable that goes up in pitch is drawn higher than the one it came from. Only pitch earns the offset; nothing else on the row moves, or the rise stops meaning anything.',
+        render: () => (
+          <Stack>
+            <ChangeRow
+              bare="ངུ"
+              bareRoman="ngu"
+              to="དངུ"
+              toRoman="nghu"
+              change="higher pitch"
+              rise
+            />
+            <ChangeRow bare="བུ" bareRoman="phuu" to="དབུ" toRoman="u" change="the བ vanishes" />
+          </Stack>
+        ),
+      },
+    ],
+  },
+
+  ModeCard: {
+    specimens: [
+      {
+        label: 'the ways to practise',
+        note: 'count always carries its unit. A bare number beside a pool size reads as a contradiction, and a mode with no fixed length carries none at all. On the app ground, because the modes are white cards and their edges are the picker.',
+        render: () => (
+          <Ground>
+            <ModeCard
+              title="Flashcards"
+              body="See the word, say it, turn it over."
+              icon="play"
+              onPress={noop}
+            />
+            <ModeCard
+              title="Listen and pick"
+              body="Hear it. Choose what it means."
+              icon="volume-2"
+              count="52 phrases"
+              onPress={noop}
+            />
+            <ModeCard
+              title="Say it"
+              body="Record yourself. Compare."
+              icon="mic"
+              count="3 boards"
+              onPress={noop}
+            />
+          </Ground>
+        ),
+      },
+      {
+        label: 'a mode that cannot run says why',
+        note: 'The point of the component, and the reason it sits beside a running mode here: disabled changes the fill and never the opacity, so it reads as not available rather than as broken.',
+        render: () => (
+          <Ground>
+            <ModeCard
+              title="Listen and pick"
+              body="Hear it. Choose what it means."
+              icon="volume-2"
+              count="52 phrases"
+              onPress={noop}
+            />
+            <ModeCard
+              title="Match the picture"
+              body="For the words that have one."
+              icon="sparkles"
+              disabled
+              reason="Needs four pictures. This district has two."
+            />
+          </Ground>
+        ),
+      },
+      {
+        label: 'a mode the learner switched off',
+        note: 'There is no card to disable, because the mode is gone. One subtle line names the setting that removed it — never show someone a locked thing they chose to lock.',
+        render: () => (
+          <Ground>
+            <ModeCard
+              title="Say it"
+              body="Record yourself. Compare."
+              icon="mic"
+              count="3 boards"
+              onPress={noop}
+            />
+            <ModeCard absentBecause="Just listen is off while exercises without sound is on." />
+          </Ground>
         ),
       },
     ],

@@ -72,7 +72,10 @@ export function SyllableChip({
       // The romanization is the name: a screen reader reading the glyph itself produces
       // either silence or nonsense, which is the whole reason TibetanText carries `roman`.
       accessibilityLabel={roman}
-      aria-selected={tone === 'selected'}
+      // Only a chip that can be chosen claims to be chosen. `ChipTray` borrows this tone
+      // for a chunk the app slid into place on reveal, which is not the learner selecting
+      // anything — announcing "selected" there would describe a choice they never made.
+      aria-selected={onPress ? tone === 'selected' : undefined}
       disabled={!onPress}
       onPress={onPress}
       style={({pressed}) => [

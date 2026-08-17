@@ -12,7 +12,15 @@
 
 import {describe, expect, it} from 'vitest';
 
-import {hasTibetan, lineLetters, needsTsheg, splitRuns, tshegBreaks, withTsheg} from './tibetan';
+import {
+  advanceUnits,
+  hasTibetan,
+  lineLetters,
+  needsTsheg,
+  splitRuns,
+  tshegBreaks,
+  withTsheg,
+} from './tibetan';
 
 const ZWSP = '​';
 
@@ -38,6 +46,29 @@ describe('lineLetters', () => {
     // The reason the rule exists: character-splitting བསྒྲིབས would produce seven
     // pieces and highlighting index 1 would light up part of a stack.
     expect(lineLetters('བསྒྲིབས').length).toBeLessThan(Array.from('བསྒྲིབས').length);
+  });
+});
+
+describe('advanceUnits', () => {
+  it('counts a stack as one position however deep it is', () => {
+    expect(advanceUnits('བསྒྲིབས')).toBe(4);
+  });
+
+  it('counts the tsheg, which lineLetters does not', () => {
+    // The two questions have different answers, and this is where they part: the tsheg
+    // closes the reading position before it, so it is not a line letter — but it does
+    // advance the pen, so a slot sized by line letters comes out two positions short.
+    expect(advanceUnits('ཡང་བསྐྱར་')).toBe(7);
+    expect(lineLetters('ཡང་བསྐྱར་')).toHaveLength(5);
+  });
+
+  it('is unmoved by a vowel sign', () => {
+    expect(advanceUnits('སྐུ')).toBe(1);
+    expect(advanceUnits('ཀྲ')).toBe(1);
+  });
+
+  it('leaves Latin alone, so a mixed chunk is still measurable', () => {
+    expect(advanceUnits('ka')).toBe(2);
   });
 });
 
