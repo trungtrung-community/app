@@ -344,8 +344,8 @@ type SourceHash = {file: string; sha256: string; bytes: number};
  * `--font-tibetan`, and duplicating its faces under a second name would double
  * the surface for no gain.
  */
-function familyVariants(): Array<{name: string; family: string}> {
-  const out: Array<{name: string; family: string}> = [];
+function familyVariants(): {name: string; family: string}[] {
+  const out: {name: string; family: string}[] = [];
   for (const [token, entry] of Object.entries(FAMILIES)) {
     if ('alias' in entry || 'literal' in entry) {
       continue;
@@ -366,7 +366,12 @@ function familyVariants(): Array<{name: string; family: string}> {
   return out;
 }
 
-function emitCss(mapped: Mapped[], dropped: Decl[], sources: SourceHash[], byName: Map<string, string>): string {
+function emitCss(
+  mapped: Mapped[],
+  dropped: Decl[],
+  sources: SourceHash[],
+  byName: Map<string, string>,
+): string {
   const lookup = new Map(mapped.map(d => [d.name, d.target]));
   const L: string[] = [];
 
@@ -539,12 +544,12 @@ function emitCss(mapped: Mapped[], dropped: Decl[], sources: SourceHash[], byNam
  * `fontSize.md` rather than `fontSize.textMd`. Keys that stop being valid
  * identifiers once stripped are quoted.
  */
-const TS_GROUPS: Array<{
+const TS_GROUPS: {
   name: string;
   doc: string;
   test: (d: Decl) => boolean;
   strip?: RegExp;
-}> = [
+}[] = [
   {
     name: 'color',
     doc: 'Every palette and semantic colour, flattened to a literal.',

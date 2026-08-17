@@ -89,7 +89,12 @@ function tshegBreaks(text: string): string {
   return text.split(TSHEG).join(TSHEG + ZWSP);
 }
 
-function Section({n, title, asks, children}: {
+function Section({
+  n,
+  title,
+  asks,
+  children,
+}: {
   n: number;
   title: string;
   asks: string;
@@ -115,16 +120,18 @@ export default function TibetanSpike() {
         paddingTop: insets.top + 16,
         paddingBottom: insets.bottom + 48,
         paddingHorizontal: 20,
-      }}>
+      }}
+    >
       <Text style={styles.h1}>Tibetan rendering spike</Text>
       <Text style={styles.meta}>
-        {`platform: ${Platform.OS}  ·  RN 0.86.2  ·  Noto Serif Tibetan 400/500/700`}
+        {`platform: ${Platform.OS}  ·  RN 0.86.2  ·  Noto Serif Tibetan 400/500`}
       </Text>
 
       <Section
         n={1}
         title="Stacks"
-        asks="Does each specimen render as ONE stacked unit with the stated line-letter count? A broken shaper shows subjoined letters side by side instead of below.">
+        asks="Does each specimen render as ONE stacked unit with the stated line-letter count? A broken shaper shows subjoined letters side by side instead of below."
+      >
         {STACKS.map(s => (
           <View key={s.bo} style={styles.stackRow}>
             <View style={styles.tintBox}>
@@ -133,7 +140,9 @@ export default function TibetanSpike() {
               </Text>
             </View>
             <View style={styles.stackMeta}>
-              <Text style={styles.label}>{`${s.letters} line letter${s.letters > 1 ? 's' : ''}`}</Text>
+              <Text
+                style={styles.label}
+              >{`${s.letters} line letter${s.letters > 1 ? 's' : ''}`}</Text>
               <Text style={styles.note}>{s.note}</Text>
             </View>
           </View>
@@ -143,12 +152,17 @@ export default function TibetanSpike() {
       <Section
         n={2}
         title="Leading 2.1 — clipping"
-        asks="The tinted box is the Text's own box. Any glyph crossing the tint edge is being clipped. Compare each size against the no-lineHeight control below it.">
+        asks="The tinted box is the Text's own box. Any glyph crossing the tint edge is being clipped. Compare each size against the no-lineHeight control below it."
+      >
         {TIB_SIZES.map(([name, size]) => (
           <View key={name} style={styles.leadingRow}>
-            <Text style={styles.label}>{`tib-${name}  ${size}px  ·  lineHeight ${Math.round(size * LEADING_TIBETAN)}`}</Text>
+            <Text
+              style={styles.label}
+            >{`tib-${name}  ${size}px  ·  lineHeight ${Math.round(size * LEADING_TIBETAN)}`}</Text>
             <View style={styles.tintBox}>
-              <Text style={{fontFamily: TIBETAN, fontSize: size, lineHeight: size * LEADING_TIBETAN}}>
+              <Text
+                style={{fontFamily: TIBETAN, fontSize: size, lineHeight: size * LEADING_TIBETAN}}
+              >
                 {'བསྒྲིབས ཧྲཱིཿ སྐུ'}
               </Text>
             </View>
@@ -163,7 +177,8 @@ export default function TibetanSpike() {
       <Section
         n={3}
         title="Tsheg-only line breaking"
-        asks="Both columns are 140px wide. The RIGHT column has a zero-width space after every tsheg. It must break ONLY at tsheg boundaries; the left is the untreated control.">
+        asks="Both columns are 140px wide. The RIGHT column has a zero-width space after every tsheg. It must break ONLY at tsheg boundaries; the left is the untreated control."
+      >
         <View style={styles.breakRow}>
           <View style={styles.breakCol}>
             <Text style={styles.label}>raw (control)</Text>
@@ -191,7 +206,8 @@ export default function TibetanSpike() {
       <Section
         n={4}
         title="fontWeight vs per-weight family"
-        asks="Rows A and B ask for a heavier face two different ways. If A looks identical to the regular control, React Native is ignoring fontWeight and every weight must be addressed by family name — which decides how the composed --type-* tokens are emitted.">
+        asks="Rows A and B ask for a heavier face two different ways. If A looks identical to the regular control, React Native is ignoring fontWeight and every weight must be addressed by family name — which decides how the composed --type-* tokens are emitted."
+      >
         <Text style={styles.label}>control · tibetanRegular, no fontWeight</Text>
         <View style={styles.tintBox}>
           <Text
@@ -199,7 +215,8 @@ export default function TibetanSpike() {
               fontFamily: TIBETAN,
               fontSize: fontSize.tibXl,
               lineHeight: fontSize.tibXl * LEADING_TIBETAN,
-            }}>
+            }}
+          >
             {'བཀྲ་ཤིས'}
           </Text>
         </View>
@@ -211,7 +228,8 @@ export default function TibetanSpike() {
               fontWeight: '500',
               fontSize: fontSize.tibXl,
               lineHeight: fontSize.tibXl * LEADING_TIBETAN,
-            }}>
+            }}
+          >
             {'བཀྲ་ཤིས'}
           </Text>
         </View>
@@ -222,7 +240,8 @@ export default function TibetanSpike() {
               fontFamily: TIBETAN_MEDIUM,
               fontSize: fontSize.tibXl,
               lineHeight: fontSize.tibXl * LEADING_TIBETAN,
-            }}>
+            }}
+          >
             {'བཀྲ་ཤིས'}
           </Text>
         </View>
@@ -231,15 +250,19 @@ export default function TibetanSpike() {
       <Section
         n={5}
         title="letterSpacing is px, not em"
-        asks="--tracking-caps is 0.08em, which at 12px is 0.96px. --tracking-tibetan is 0 and must stay 0: letter-spacing breaks stacks.">
-        <Text style={styles.label}>{`Latin label · ${fontSize['2xs']}px · letterSpacing ${CAPS_TRACKING}`}</Text>
+        asks="--tracking-caps is 0.08em, which at 12px is 0.96px. --tracking-tibetan is 0 and must stay 0: letter-spacing breaks stacks."
+      >
+        <Text
+          style={styles.label}
+        >{`Latin label · ${fontSize['2xs']}px · letterSpacing ${CAPS_TRACKING}`}</Text>
         <Text
           style={{
             fontFamily: fontFamily.bodyBold,
             fontSize: fontSize['2xs'],
             letterSpacing: CAPS_TRACKING,
             textTransform: 'uppercase',
-          }}>
+          }}
+        >
           days walking
         </Text>
         <Text style={styles.label}>Tibetan · letterSpacing 2 — EXPECTED TO LOOK WRONG</Text>
@@ -253,7 +276,8 @@ export default function TibetanSpike() {
       <Section
         n={6}
         title="The keycap edge"
-        asks="The design system's button is a solid 4px bottom edge that compresses to 2px when pressed. A uses RN boxShadow; B stacks two Views. Press each.">
+        asks="The design system's button is a solid 4px bottom edge that compresses to 2px when pressed. A uses RN boxShadow; B stacks two Views. Press each."
+      >
         <Pressable
           onPressIn={() => setPressed(true)}
           onPressOut={() => setPressed(false)}
@@ -266,7 +290,8 @@ export default function TibetanSpike() {
             boxShadow: `0 ${pressed ? elevation.edgeDepthPressed : elevation.edgeDepth}px 0 0 ${color.teal800}`,
             transform: [{translateY: pressed ? 2 : 0}],
             marginBottom: 8 + (pressed ? 2 : 0),
-          }}>
+          }}
+        >
           <Text style={buttonLabel}>A · boxShadow</Text>
         </Pressable>
         <View
@@ -274,7 +299,8 @@ export default function TibetanSpike() {
             backgroundColor: color.teal800,
             borderRadius: radius.pill,
             paddingBottom: elevation.edgeDepth,
-          }}>
+          }}
+        >
           <View
             style={{
               height: layout.touchMin,
@@ -282,7 +308,8 @@ export default function TibetanSpike() {
               backgroundColor: color.surfaceAccent,
               alignItems: 'center',
               justifyContent: 'center',
-            }}>
+            }}
+          >
             <Text style={buttonLabel}>B · two Views</Text>
           </View>
         </View>
@@ -291,7 +318,8 @@ export default function TibetanSpike() {
       <Section
         n={7}
         title="Uniwind"
-        asks="Does className work at all, and does an arbitrary unitless leading resolve against font size? If leading-[2.1] does not match the StyleSheet control, the token pipeline must emit computed px line-heights.">
+        asks="Does className work at all, and does an arbitrary unitless leading resolve against font size? If leading-[2.1] does not match the StyleSheet control, the token pipeline must emit computed px line-heights."
+      >
         <Text className="text-base font-bold text-teal-700">
           className works if this is bold and teal
         </Text>
@@ -303,9 +331,7 @@ export default function TibetanSpike() {
         </View>
         <Text style={styles.label}>{'uniwind · text-[22px] leading-[2.1]'}</Text>
         <View style={styles.tintBox}>
-          <Text
-            className="text-[22px] leading-[2.1]"
-            style={{fontFamily: TIBETAN}}>
+          <Text className="text-[22px] leading-[2.1]" style={{fontFamily: TIBETAN}}>
             {tshegBreaks('བཀྲ་ཤིས་བདེ་ལེགས')}
           </Text>
         </View>
@@ -329,7 +355,8 @@ export default function TibetanSpike() {
       <Section
         n={8}
         title="The naming triple"
-        asks="Tibetan, then the romanization, then the English gloss — the order the design system requires everywhere. Checks the italic medium face resolves.">
+        asks="Tibetan, then the romanization, then the English gloss — the order the design system requires everywhere. Checks the italic medium face resolves."
+      >
         {PHRASES.map(p => (
           <View key={p.bo} style={{marginBottom: 16}}>
             <View style={styles.tintBox}>

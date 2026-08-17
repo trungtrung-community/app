@@ -232,7 +232,7 @@ export const WEIGHT_VALUES: Record<string, number> = {
  * The design system's readme states the palette codename must never appear as
  * user-facing text, and a comment in a shipped artefact is readable by anyone.
  */
-export const SCRUB: Array<[RegExp, string]> = [[/:?\s*High Plateau/g, '']];
+export const SCRUB: [RegExp, string][] = [[/:?\s*High Plateau/g, '']];
 
 /** Resolve a token to its rule. Returns null when no rule matches. */
 export function resolve(
@@ -279,11 +279,7 @@ export function realFamily(familyToken: string): {token: string; entry: FamilyEn
  * @example resolveFamily('font-body', 600) // 'PlusJakartaSans_600SemiBold'
  * @example resolveFamily('font-body', 500, true) // 'PlusJakartaSans_500Medium_Italic'
  */
-export function resolveFamily(
-  familyToken: string,
-  weight?: number,
-  italic = false,
-): string | null {
+export function resolveFamily(familyToken: string, weight?: number, italic = false): string | null {
   const real = realFamily(familyToken);
   if (!real) {
     return null;
@@ -309,8 +305,8 @@ export function resolveFamily(
 }
 
 /** Every face the bundle must register, as `{importName, package}`. */
-export function bundledFaces(): Array<{importName: string; package: string}> {
-  const out: Array<{importName: string; package: string}> = [];
+export function bundledFaces(): {importName: string; package: string}[] {
+  const out: {importName: string; package: string}[] = [];
   for (const entry of Object.values(FAMILIES)) {
     if ('alias' in entry || 'literal' in entry) {
       continue;

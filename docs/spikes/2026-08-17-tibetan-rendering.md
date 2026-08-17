@@ -1,8 +1,8 @@
 # Phase 0 spike — Tibetan rendering in React Native
 
-*Run 2026-08-17. Expo SDK 57.0.13 · React Native 0.86.2 · Noto Serif Tibetan 400/500/700
+_Run 2026-08-17. Expo SDK 57.0.13 · React Native 0.86.2 · Noto Serif Tibetan 400/500
 · uniwind 1.11.0. Specimen screen: `app/index.tsx` (throwaway; becomes a dev route or
-is deleted once the results below are absorbed).*
+is deleted once the results below are absorbed)._
 
 **Status: web leg complete. iOS and Android legs NOT RUN — this machine has no Xcode
 and no Android SDK.** The two native legs are the ones that can still change the
@@ -26,24 +26,24 @@ is blocked on script support.
 `lineHeight` unset:
 
 | size | natural line box | ratio |
-|---|---|---|
-| 14 | 40 | 2.86 |
-| 17 | 48 | 2.82 |
-| 22 | 62 | 2.82 |
-| 30 | 84 | 2.80 |
-| 44 | 124 | 2.82 |
+| ---- | ---------------- | ----- |
+| 14   | 40               | 2.86  |
+| 17   | 48               | 2.82  |
+| 22   | 62               | 2.82  |
+| 30   | 84               | 2.80  |
+| 44   | 124              | 2.82  |
 
-So `--leading-tibetan: 2.1` sets the line box *tighter* than the font asks for. With
+So `--leading-tibetan: 2.1` sets the line box _tighter_ than the font asks for. With
 2.1 applied, ink exceeds the line box by a consistent **≈0.35 × font size**:
 
 | size | box (2.1×) | ink | overflow |
-|---|---|---|---|
-| 14 | 29 | 34 | +4 |
-| 17 | 36 | 41 | +5 |
-| 22 | 46 | 54 | +7 |
-| 30 | 63 | 73 | +10 |
-| 44 | 92 | 108 | +15 |
-| 68 | 143 | 167 | +24 |
+| ---- | ---------- | --- | -------- |
+| 14   | 29         | 34  | +4       |
+| 17   | 36         | 41  | +5       |
+| 22   | 46         | 54  | +7       |
+| 30   | 63         | 73  | +10      |
+| 44   | 92         | 108 | +15      |
+| 68   | 143        | 167 | +24      |
 
 **No glyph is clipped on web** — overflow is visible, and every stack draws in full at
 every size. Multi-line blocks at hero size separate cleanly with no collision.
@@ -57,11 +57,11 @@ This is a padding rule to apply deliberately, not a bug to fix.
 
 Three renderings of `བཀྲ་ཤིས` at 44px:
 
-| variant | measured width |
-|---|---|
-| control — `400Regular`, no `fontWeight` | 123px |
-| A — `400Regular` + `fontWeight: '700'` | **123px** |
-| B — `700Bold` family, no `fontWeight` | **132px** |
+| variant                                 | measured width |
+| --------------------------------------- | -------------- |
+| control — `400Regular`, no `fontWeight` | 123px          |
+| A — `400Regular` + `fontWeight: '700'`  | **123px**      |
+| B — `700Bold` family, no `fontWeight`   | **132px**      |
 
 A is pixel-identical to the control. React Native selects a face by family name and
 does not synthesise weight, so **every weight must be addressed as its own family**.
@@ -84,7 +84,7 @@ regardless of Noto Sans Tibetan not being published.
 `className="text-[22px] leading-[2.1]"` produced a 46.2px line box, identical to the
 StyleSheet control `lineHeight: 22 * 2.1`. `className` itself works.
 
-**This revises the plan.** Phase 2 does *not* need to emit computed px line-heights;
+**This revises the plan.** Phase 2 does _not_ need to emit computed px line-heights;
 `--leading-latin: 1.55` and `--leading-tibetan: 2.1` can stay unitless as the design
 system writes them. One less transform, one less place to drift.
 
@@ -97,7 +97,7 @@ Two results, one good and one not:
   identically. `བཀྲ་ཤིས་བདེ་ལེགས`, `བརྩོན་འགྲུས་ཆེན་པོ` and `དུས་ཚོད་ཀྱི་རེའུ་མིག`
   all broke correctly after a tsheg in both columns.
 - **A long phrase overflowed instead of wrapping.** `སྤྱི་སྤྱོད་རླངས་འཁོར` at 22px in
-  a 140px column stayed on one line and ran past the box edge — in *both* columns.
+  a 140px column stayed on one line and ran past the box edge — in _both_ columns.
   Breaking at its final tsheg would still leave line one over 140px, so a correct
   greedy break should have come one syllable earlier. It did not.
 
