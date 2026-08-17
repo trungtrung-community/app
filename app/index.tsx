@@ -15,27 +15,53 @@ import {ScrollView, StyleSheet, Text, View, Platform, Pressable} from 'react-nat
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useState} from 'react';
 
-const TIBETAN = 'NotoSerifTibetan_400Regular';
-const TIBETAN_BOLD = 'NotoSerifTibetan_700Bold';
-const BODY = 'PlusJakartaSans_400Regular';
-const BODY_ITALIC = 'PlusJakartaSans_500Medium_Italic';
-const DISPLAY = 'Gabarito_800ExtraBold';
+import {
+  color,
+  elevation,
+  fontFamily,
+  fontSize,
+  layout,
+  leading,
+  radius,
+  tracking,
+} from '../src/theme/tokens.generated';
+
+// Reading families, colours and lengths from the generated module rather than as
+// literals doubles as a check that the token pipeline emits usable values.
+const TIBETAN = fontFamily.tibetanRegular;
+const TIBETAN_MEDIUM = fontFamily.tibetanMedium;
+const BODY = fontFamily.bodyRegular;
+const BODY_ITALIC = fontFamily.bodyMediumItalic;
+const DISPLAY = fontFamily.displayExtrabold;
+
+/**
+ * `--tracking-caps` is 0.08em, and React Native measures letterSpacing in points,
+ * so the em has to be resolved against the size of the role using it. This is the
+ * conversion the generated `tracking` group documents but cannot perform.
+ */
+const CAPS_TRACKING = parseFloat(tracking.caps) * fontSize['2xs'];
+
+const buttonLabel = {
+  color: color.textOnAccent,
+  fontFamily: fontFamily.bodyBold,
+  fontSize: fontSize.md,
+} as const;
 
 /** Zero-width space. Tibetan may only break after the tsheg (་), never mid-syllable. */
 const ZWSP = '​';
 const TSHEG = '་';
 
-/** The design system's Tibetan size ramp, rem resolved at 16px. */
+/** The design system's Tibetan size ramp, straight from the generated tokens. */
 const TIB_SIZES = [
-  ['xs', 14],
-  ['sm', 17],
-  ['md', 22],
-  ['lg', 30],
-  ['xl', 44],
-  ['hero', 68],
+  ['xs', fontSize.tibXs],
+  ['sm', fontSize.tibSm],
+  ['md', fontSize.tibMd],
+  ['lg', fontSize.tibLg],
+  ['xl', fontSize.tibXl],
+  ['hero', fontSize.tibHero],
 ] as const;
 
-const LEADING_TIBETAN = 2.1;
+const LEADING_TIBETAN = leading.tibetan;
 
 /**
  * A line letter is a position the eye reads, not a character: a base consonant plus
@@ -165,28 +191,38 @@ export default function TibetanSpike() {
       <Section
         n={4}
         title="fontWeight vs per-weight family"
-        asks="Rows A and B request bold two different ways. If A looks identical to the regular control, React Native is ignoring fontWeight and every weight must be addressed by family name — which decides how the composed --type-* tokens are emitted.">
-        <Text style={styles.label}>control · 400Regular family, no fontWeight</Text>
-        <View style={styles.tintBox}>
-          <Text style={{fontFamily: TIBETAN, fontSize: 44, lineHeight: 44 * LEADING_TIBETAN}}>
-            {'བཀྲ་ཤིས'}
-          </Text>
-        </View>
-        <Text style={styles.label}>A · 400Regular family + fontWeight 700</Text>
+        asks="Rows A and B ask for a heavier face two different ways. If A looks identical to the regular control, React Native is ignoring fontWeight and every weight must be addressed by family name — which decides how the composed --type-* tokens are emitted.">
+        <Text style={styles.label}>control · tibetanRegular, no fontWeight</Text>
         <View style={styles.tintBox}>
           <Text
             style={{
               fontFamily: TIBETAN,
-              fontWeight: '700',
-              fontSize: 44,
-              lineHeight: 44 * LEADING_TIBETAN,
+              fontSize: fontSize.tibXl,
+              lineHeight: fontSize.tibXl * LEADING_TIBETAN,
             }}>
             {'བཀྲ་ཤིས'}
           </Text>
         </View>
-        <Text style={styles.label}>B · 700Bold family, no fontWeight</Text>
+        <Text style={styles.label}>A · tibetanRegular + fontWeight 500</Text>
         <View style={styles.tintBox}>
-          <Text style={{fontFamily: TIBETAN_BOLD, fontSize: 44, lineHeight: 44 * LEADING_TIBETAN}}>
+          <Text
+            style={{
+              fontFamily: TIBETAN,
+              fontWeight: '500',
+              fontSize: fontSize.tibXl,
+              lineHeight: fontSize.tibXl * LEADING_TIBETAN,
+            }}>
+            {'བཀྲ་ཤིས'}
+          </Text>
+        </View>
+        <Text style={styles.label}>B · tibetanMedium, no fontWeight</Text>
+        <View style={styles.tintBox}>
+          <Text
+            style={{
+              fontFamily: TIBETAN_MEDIUM,
+              fontSize: fontSize.tibXl,
+              lineHeight: fontSize.tibXl * LEADING_TIBETAN,
+            }}>
             {'བཀྲ་ཤིས'}
           </Text>
         </View>
@@ -196,19 +232,21 @@ export default function TibetanSpike() {
         n={5}
         title="letterSpacing is px, not em"
         asks="--tracking-caps is 0.08em, which at 12px is 0.96px. --tracking-tibetan is 0 and must stay 0: letter-spacing breaks stacks.">
-        <Text style={styles.label}>Latin label · 12px · letterSpacing 0.96</Text>
+        <Text style={styles.label}>{`Latin label · ${fontSize['2xs']}px · letterSpacing ${CAPS_TRACKING}`}</Text>
         <Text
           style={{
-            fontFamily: 'PlusJakartaSans_700Bold',
-            fontSize: 12,
-            letterSpacing: 0.96,
+            fontFamily: fontFamily.bodyBold,
+            fontSize: fontSize['2xs'],
+            letterSpacing: CAPS_TRACKING,
             textTransform: 'uppercase',
           }}>
           days walking
         </Text>
         <Text style={styles.label}>Tibetan · letterSpacing 2 — EXPECTED TO LOOK WRONG</Text>
         <View style={styles.tintBox}>
-          <Text style={{fontFamily: TIBETAN, fontSize: 44, letterSpacing: 2}}>{'བསྒྲིབས'}</Text>
+          <Text style={{fontFamily: TIBETAN, fontSize: fontSize.tibXl, letterSpacing: 2}}>
+            {'བསྒྲིབས'}
+          </Text>
         </View>
       </Section>
 
@@ -220,31 +258,32 @@ export default function TibetanSpike() {
           onPressIn={() => setPressed(true)}
           onPressOut={() => setPressed(false)}
           style={{
-            height: 48,
-            borderRadius: 999,
-            backgroundColor: '#1F8A90',
+            height: layout.touchMin,
+            borderRadius: radius.pill,
+            backgroundColor: color.surfaceAccent,
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: `0 ${pressed ? 2 : 4}px 0 0 #12595E`,
+            boxShadow: `0 ${pressed ? elevation.edgeDepthPressed : elevation.edgeDepth}px 0 0 ${color.teal800}`,
             transform: [{translateY: pressed ? 2 : 0}],
             marginBottom: 8 + (pressed ? 2 : 0),
           }}>
-          <Text style={{color: '#fff', fontFamily: 'PlusJakartaSans_700Bold', fontSize: 16}}>
-            A · boxShadow
-          </Text>
+          <Text style={buttonLabel}>A · boxShadow</Text>
         </Pressable>
-        <View style={{backgroundColor: '#12595E', borderRadius: 999, paddingBottom: 4}}>
+        <View
+          style={{
+            backgroundColor: color.teal800,
+            borderRadius: radius.pill,
+            paddingBottom: elevation.edgeDepth,
+          }}>
           <View
             style={{
-              height: 48,
-              borderRadius: 999,
-              backgroundColor: '#1F8A90',
+              height: layout.touchMin,
+              borderRadius: radius.pill,
+              backgroundColor: color.surfaceAccent,
               alignItems: 'center',
               justifyContent: 'center',
             }}>
-            <Text style={{color: '#fff', fontFamily: 'PlusJakartaSans_700Bold', fontSize: 16}}>
-              B · two Views
-            </Text>
+            <Text style={buttonLabel}>B · two Views</Text>
           </View>
         </View>
       </Section>
@@ -270,6 +309,21 @@ export default function TibetanSpike() {
             {tshegBreaks('བཀྲ་ཤིས་བདེ་ལེགས')}
           </Text>
         </View>
+
+        <Text style={styles.label}>
+          generated theme · type-tibetan (family, size and leading all from the token)
+        </Text>
+        <View style={styles.tintBox}>
+          <Text className="type-tibetan">{tshegBreaks('བཀྲ་ཤིས་བདེ་ལེགས')}</Text>
+        </View>
+
+        <Text style={styles.label}>generated theme · type-heading text-fg-heading</Text>
+        <Text className="type-heading text-fg-heading">Gabarito bold, 22px</Text>
+
+        <Text style={styles.label}>generated theme · bg-surface-accent-soft rounded-card p-4</Text>
+        <View className="bg-surface-accent-soft rounded-card p-4">
+          <Text className="type-body text-fg-accent">a card fill and radius from tokens</Text>
+        </View>
       </Section>
 
       <Section
@@ -283,8 +337,12 @@ export default function TibetanSpike() {
                 {tshegBreaks(p.bo)}
               </Text>
             </View>
-            <Text style={{fontFamily: BODY_ITALIC, fontSize: 16, color: '#196F74'}}>{p.roman}</Text>
-            <Text style={{fontFamily: BODY, fontSize: 16, color: '#6B838B'}}>{p.en}</Text>
+            <Text style={{fontFamily: BODY_ITALIC, fontSize: fontSize.md, color: color.textAccent}}>
+              {p.roman}
+            </Text>
+            <Text style={{fontFamily: BODY, fontSize: fontSize.md, color: color.textMuted}}>
+              {p.en}
+            </Text>
           </View>
         ))}
       </Section>
@@ -293,23 +351,38 @@ export default function TibetanSpike() {
 }
 
 const styles = StyleSheet.create({
-  screen: {flex: 1, backgroundColor: '#EDF2F3'},
-  h1: {fontFamily: DISPLAY, fontSize: 28, color: '#12222A'},
-  meta: {fontFamily: BODY, fontSize: 12, color: '#6B838B', marginBottom: 24},
-  section: {backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, marginBottom: 20},
-  sectionTitle: {fontFamily: 'Gabarito_700Bold', fontSize: 20, color: '#12222A'},
-  asks: {fontFamily: BODY, fontSize: 13, color: '#4E666E', marginTop: 4, marginBottom: 16},
+  screen: {flex: 1, backgroundColor: color.surfaceApp},
+  h1: {fontFamily: DISPLAY, fontSize: fontSize['2xl'], color: color.textHeading},
+  meta: {fontFamily: BODY, fontSize: fontSize['2xs'], color: color.textMuted, marginBottom: 24},
+  section: {
+    backgroundColor: color.surfaceCard,
+    borderRadius: radius.card,
+    padding: 16,
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontFamily: fontFamily.displayBold,
+    fontSize: fontSize.lg,
+    color: color.textHeading,
+  },
+  asks: {
+    fontFamily: BODY,
+    fontSize: fontSize.xs,
+    color: color.ink500,
+    marginTop: 4,
+    marginBottom: 16,
+  },
   label: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 11,
-    color: '#6B838B',
+    fontFamily: fontFamily.bodySemibold,
+    fontSize: fontSize['3xs'],
+    color: color.textMuted,
     marginTop: 12,
     marginBottom: 4,
   },
-  note: {fontFamily: BODY, fontSize: 12, color: '#8DA2A8'},
+  note: {fontFamily: BODY, fontSize: fontSize['2xs'], color: color.textSubtle},
   // A visible box around the Text so a clipped glyph is obvious.
-  tintBox: {backgroundColor: '#DCF0F1', alignSelf: 'flex-start', marginBottom: 4},
-  tintBoxAlt: {backgroundColor: '#FBE3E1', alignSelf: 'flex-start', marginBottom: 4},
+  tintBox: {backgroundColor: color.surfaceAccentSoft, alignSelf: 'flex-start', marginBottom: 4},
+  tintBoxAlt: {backgroundColor: color.surfaceAlert, alignSelf: 'flex-start', marginBottom: 4},
   stackRow: {flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 12},
   stackMeta: {flex: 1},
   leadingRow: {marginBottom: 8},
