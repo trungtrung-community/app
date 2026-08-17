@@ -2,7 +2,8 @@
  * @fileoverview AudioButton — the circular play control.
  *
  * All audio in this product is human-recorded and already on the device, which is what
- * shapes the states: ready, playing, downloading, and unavailable. `docs/01` commits to no
+ * shapes the states: ready, playing, downloading, and unavailable. `speed` is not a
+ * different recording — see the prop's own note. `docs/01` commits to no
  * in-app downloads ever, so `downloading` and `unavailable` describe the install-time
  * delivery of an audio pack rather than anything a learner waits on mid-lesson.
  *
@@ -20,6 +21,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, {Circle, G} from 'react-native-svg';
 
+import {SLOW_RATE_LABEL} from '../../domain/audio';
 import {type IconName, Icon} from '../core/icon';
 import {easing} from '../core/motion';
 import {pressScale} from '../core/press';
@@ -42,7 +44,13 @@ export type AudioButtonProps = {
   state?: AudioButtonState;
   /** 0–1, shown as the ring while `downloading`. */
   progress?: number;
-  /** `slow` adds the half-speed badge. Never changes the icon. */
+  /**
+   * `slow` adds the reduced-rate badge. Never changes the icon.
+   *
+   * There is one recording per item; slow is that clip at a reduced rate with pitch
+   * correction rather than a second file. The badge prints the rate from
+   * `src/domain/audio`, so it cannot promise a speed the player does not deliver.
+   */
   speed?: 'natural' | 'slow';
   size?: AudioButtonSize;
   /** Overrides the state's own name. */
@@ -136,8 +144,10 @@ export function AudioButton({
         {downloading ? <DownloadRing px={px} progress={progress} /> : null}
       </Pressable>
       {speed === 'slow' && !inert ? (
+        // Hidden from assistive tech: the button's own name already says what pressing
+        // it does, and "0.65 times" read aloud after it is noise.
         <View aria-hidden style={BADGE}>
-          <Text style={BADGE_TEXT}>½×</Text>
+          <Text style={BADGE_TEXT}>{SLOW_RATE_LABEL}</Text>
         </View>
       ) : null}
     </View>
@@ -212,6 +222,10 @@ const BADGE: ViewStyle = {
  *
  * Using the token instead: a 1pt difference inside a 22pt badge is invisible, and a raw px
  * where a token nearly fits is how a scale stops being a scale.
+ *
+ * The board's badge read `½×`, which was ported here literally and was wrong the moment the
+ * slow variant became a playback rate: the player runs at 0.65x, deliberately, because half
+ * speed smears vowels badly enough to change what a learner hears.
  */
 const BADGE_TEXT: TextStyle = {
   fontFamily: fontFamily.bodyBold,

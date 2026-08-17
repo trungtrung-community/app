@@ -1202,8 +1202,8 @@ export const PORTED: Record<string, PortedComponent> = {
   AudioButton: {
     specimens: [
       {
-        label: 'ready, playing, and the half-speed badge',
-        note: 'The pulse runs only while sound is actually coming out — a paused button that keeps pulsing says the wrong thing. It holds still under reduced motion.',
+        label: 'ready, playing, and the reduced-rate badge',
+        note: 'The pulse runs only while sound is actually coming out — a paused button that keeps pulsing says the wrong thing. It holds still under reduced motion. The badge prints the real rate from src/domain/audio: there is one recording per item, and slow is that clip at 0.65× with pitch correction rather than a second file.',
         render: () => (
           <Row>
             <AudioButton onPress={noop} />
