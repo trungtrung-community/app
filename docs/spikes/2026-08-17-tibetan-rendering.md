@@ -4,9 +4,17 @@ _Run 2026-08-17. Expo SDK 57.0.13 · React Native 0.86.2 · Noto Serif Tibetan 4
 · uniwind 1.11.0. Specimen screen: `app/index.tsx` (throwaway; becomes a dev route or
 is deleted once the results below are absorbed)._
 
-**Status: web leg complete. iOS and Android legs NOT RUN — this machine has no Xcode
-and no Android SDK.** The two native legs are the ones that can still change the
-answer on clipping, line breaking and `boxShadow`; see "Outstanding" below.
+**Status: web and iOS complete. Android not run.**
+
+iOS was checked by Thosam on a device build. Shaping is correct and nothing is
+clipped — the pale teal box behind every Tibetan run is the spike's own clipping
+detector, so a glyph crossing its edge would have been obvious. That closes the
+finding-2 worry on iOS, where being 25% under the font's natural metrics turned out
+to be safe.
+
+Android remains unrun, and remains the platform most likely to differ: it clips tall
+glyphs where iOS lets them overflow. Treat finding 2's headroom rule as required
+rather than optional until it is checked.
 
 Specimens are real records from `content/vocabulary.json`, never hand-typed strings —
 a typed stack can be malformed in ways a pipeline record is not.
