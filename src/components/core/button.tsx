@@ -18,7 +18,7 @@ import {Pressable, Text, type StyleProp, type ViewStyle} from 'react-native';
 
 import {color} from '../../theme/tokens.generated';
 import {Icon, type IconName} from './icon';
-import {EDGE_DEPTH, EDGE_DEPTH_PRESSED, pressScale} from './press';
+import {keycap} from './press';
 
 /**
  * Fill, label colour and edge per variant.
@@ -87,8 +87,9 @@ export function Button({
 }: ButtonProps) {
   const {fill, label, edge} = VARIANTS[variant];
   const {box, text, icon} = SIZES[size];
+  // A disabled button loses its edge along with its fill: a dead control does not
+  // promise it can be pressed.
   const hasEdge = edge !== null && !disabled;
-  const sink = EDGE_DEPTH - EDGE_DEPTH_PRESSED;
 
   return (
     <Pressable
@@ -102,17 +103,7 @@ export function Button({
         fullWidth ? 'w-full' : 'self-start',
         disabled ? 'bg-ground-200' : fill,
       ].join(' ')}
-      style={({pressed}) => [
-        // The footprint stays constant: the control travels down by exactly what the
-        // edge loses, so nothing below it shifts.
-        hasEdge && {
-          boxShadow: `0 ${pressed ? EDGE_DEPTH_PRESSED : EDGE_DEPTH}px 0 0 ${edge}`,
-          transform: [{translateY: pressed ? sink : 0}],
-          marginBottom: pressed ? sink : 0,
-        },
-        !hasEdge && pressed ? pressScale : null,
-        style,
-      ]}
+      style={({pressed}) => [keycap(hasEdge ? edge : null, pressed), style]}
     >
       {iconLeft ? <Icon name={iconLeft} size={icon} /> : null}
       <Text className={[text, disabled ? 'text-fg-subtle' : label].join(' ')} numberOfLines={1}>

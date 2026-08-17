@@ -36,3 +36,31 @@ export const EDGE_DEPTH_PRESSED = elevation.edgeDepthPressed;
 export function edgeReserve(pressed: boolean): number {
   return EDGE_DEPTH - (pressed ? EDGE_DEPTH_PRESSED : EDGE_DEPTH);
 }
+
+/** How far a keycap travels: exactly what its edge loses. */
+export const SINK = EDGE_DEPTH - EDGE_DEPTH_PRESSED;
+
+/**
+ * A keycap control's whole press behaviour: the edge, the travel, and the reserve.
+ *
+ * The three have to move together or the footprint changes, which is why they are one
+ * function rather than three exports. Button, SyllableChip, LetterTile, AnswerChoice and
+ * RailNode all draw this edge; the design system's own sources animate the shadow and the
+ * transform but not the margin, so on the board those controls do shift what is under them
+ * by 2pt. Here they do not.
+ *
+ * `boxShadow` carries geometry and colour in one string, so the edge colour arrives as a
+ * value rather than a class.
+ *
+ * @example style={({pressed}) => [keycap(color.teal800, pressed), style]}
+ */
+export function keycap(edge: string | null, pressed: boolean): ViewStyle | null {
+  if (edge === null) {
+    return pressed ? pressScale : null;
+  }
+  return {
+    boxShadow: `0 ${pressed ? EDGE_DEPTH_PRESSED : EDGE_DEPTH}px 0 0 ${edge}`,
+    transform: [{translateY: pressed ? SINK : 0}],
+    marginBottom: pressed ? SINK : 0,
+  };
+}
