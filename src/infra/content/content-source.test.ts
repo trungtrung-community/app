@@ -10,6 +10,10 @@
  * database and the two-district fixture that `build_db.py` emitted together.
  * `node:sqlite` opens the database here, which is why the SQLite adapter takes a
  * two-method query interface rather than expo-sqlite.
+ *
+ * Phases are marked per `docs/11-testing-conventions.md`. Where a query is asserted
+ * with `expect(...).resolves` or inside a loop, act and assert are one statement and
+ * the block is marked `// Then`.
  */
 
 import {DatabaseSync} from 'node:sqlite';
@@ -57,7 +61,13 @@ const adapters: [string, () => ContentSource][] = [
 
 describe.each(adapters)('%s', (_name, make) => {
   it('reads a record and maps it to domain shape', async () => {
-    const item = await make().getVocabulary(SHARED_ID);
+    // Given
+    const source = make();
+
+    // When
+    const item = await source.getVocabulary(SHARED_ID);
+
+    // Then
     expect(item).toMatchObject({
       id: SHARED_ID,
       slug: 'tashi-delek',
@@ -70,31 +80,54 @@ describe.each(adapters)('%s', (_name, make) => {
   });
 
   it('exposes audio as a clip id, not a URI', async () => {
-    const item = await make().getVocabulary(SHARED_ID);
     // The shape is the contract, not the value. Resolving a clip to something
     // playable belongs to AudioSource, and there is exactly one clip per item —
     // a slower reading is this one played at a reduced rate, never a second
     // recording. Asserting the key rather than `null` keeps this test true on
     // the day recordings actually land.
+
+    // Given
+    const source = make();
+
+    // When
+    const item = await source.getVocabulary(SHARED_ID);
+
+    // Then
     expect(Object.keys(item.audio)).toEqual(['natural']);
     expect(item.audio.natural === null || typeof item.audio.natural === 'string').toBe(true);
   });
 
   it('uses camelCase domain keys, never database column names', async () => {
-    const item = await make().getVocabulary(SHARED_ID);
+    // Given
+    const source = make();
+
+    // When
+    const item = await source.getVocabulary(SHARED_ID);
+
+    // Then
     expect(item).toHaveProperty('districtNumber');
     expect(item).not.toHaveProperty('district_number');
     expect(item).not.toHaveProperty('en_definition');
   });
 
   it('throws a named error for a missing record', async () => {
-    await expect(make().getVocabulary('vocab.core.nope' as VocabId)).rejects.toThrow(
+    // Given
+    const source = make();
+
+    // Then
+    await expect(source.getVocabulary('vocab.core.nope' as VocabId)).rejects.toThrow(
       /no vocabulary record/,
     );
   });
 
   it('lists a district in teaching order', async () => {
-    const items = await make().listVocabularyByDistrict(SHARED_DISTRICT);
+    // Given
+    const source = make();
+
+    // When
+    const items = await source.listVocabularyByDistrict(SHARED_DISTRICT);
+
+    // Then
     expect(items.length).toBeGreaterThan(5);
     expect(items.every(i => i.district === SHARED_DISTRICT)).toBe(true);
     const slugs = items.map(i => i.slug);
@@ -102,18 +135,37 @@ describe.each(adapters)('%s', (_name, make) => {
   });
 
   it('finds a record by its romanization', async () => {
-    const hits = await make().searchVocabulary('delek');
+    // Given
+    const source = make();
+
+    // When
+    const hits = await source.searchVocabulary('delek');
+
+    // Then
     expect(hits.map(h => h.id)).toContain(SHARED_ID);
   });
 
   it('finds a record by its English gloss', async () => {
-    const hits = await make().searchVocabulary('greetings');
+    // Given
+    const source = make();
+
+    // When
+    const hits = await source.searchVocabulary('greetings');
+
+    // Then
     expect(hits.map(h => h.id)).toContain(SHARED_ID);
   });
 
   it('finds a record by a Tibetan prefix', async () => {
     // The learner types the first syllable of བཀྲ་ཤིས་བདེ་ལེགས.
-    const hits = await make().searchVocabulary('བཀྲ');
+
+    // Given
+    const source = make();
+
+    // When
+    const hits = await source.searchVocabulary('བཀྲ');
+
+    // Then
     expect(hits.map(h => h.id)).toContain(SHARED_ID);
   });
 
@@ -125,31 +177,61 @@ describe.each(adapters)('%s', (_name, make) => {
     // the tokenizer needs the Mark categories added. Telling one stack from another
     // is the whole subject of the glyph drills, so a sloppy match here is wrong in
     // the way that matters most.
-    const hits = (await make().searchVocabulary('བཀྲ', 100)).map(h => h.id);
+
+    // Given
+    const source = make();
+
+    // When
+    const hits = (await source.searchVocabulary('བཀྲ', 100)).map(h => h.id);
+
+    // Then
     expect(hits).toContain('vocab.core.tashi-delek');
     expect(hits).not.toContain('vocab.core.to-ask');
   });
 
   it('returns nothing for an empty or punctuation-only query', async () => {
-    expect(await make().searchVocabulary('')).toEqual([]);
-    expect(await make().searchVocabulary('   ')).toEqual([]);
-    expect(await make().searchVocabulary('"*(')).toEqual([]);
+    // Given
+    const source = make();
+
+    // Then
+    expect(await source.searchVocabulary('')).toEqual([]);
+    expect(await source.searchVocabulary('   ')).toEqual([]);
+    expect(await source.searchVocabulary('"*(')).toEqual([]);
   });
 
   it('does not throw on FTS syntax a learner might type', async () => {
     // Unescaped, each of these is an FTS5 syntax error rather than a search.
-    for (const query of ['"', 'NEAR', 'a AND', '*', 'foo^bar', "it's"]) {
-      await expect(make().searchVocabulary(query)).resolves.toBeInstanceOf(Array);
+
+    // Given
+    const source = make();
+    const queries = ['"', 'NEAR', 'a AND', '*', 'foo^bar', "it's"];
+
+    // Then
+    for (const query of queries) {
+      await expect(source.searchVocabulary(query)).resolves.toBeInstanceOf(Array);
     }
   });
 
   it('honours the result limit', async () => {
-    const hits = await make().searchVocabulary('a', 3);
+    // Given
+    const source = make();
+
+    // When
+    const hits = await source.searchVocabulary('a', 3);
+
+    // Then
     expect(hits.length).toBeLessThanOrEqual(3);
   });
 
   it('reports the content version it is serving', async () => {
-    expect(await make().contentVersion()).toBe(fixture.content_version);
+    // Given
+    const source = make();
+
+    // When
+    const version = await source.contentVersion();
+
+    // Then
+    expect(version).toBe(fixture.content_version);
   });
 });
 
@@ -158,14 +240,25 @@ describe('the two adapters agree', () => {
   const [, makeJson] = adapters[1] as [string, () => ContentSource];
 
   it('return identical records for a shared id', async () => {
-    expect(await makeSqlite().getVocabulary(SHARED_ID)).toEqual(
-      await makeJson().getVocabulary(SHARED_ID),
-    );
+    // Given
+    const sqlite = makeSqlite();
+    const json = makeJson();
+
+    // When
+    const fromSqlite = await sqlite.getVocabulary(SHARED_ID);
+    const fromJson = await json.getVocabulary(SHARED_ID);
+
+    // Then
+    expect(fromSqlite).toEqual(fromJson);
   });
 
   it('agree about which records a search finds within the fixture districts', async () => {
+    // Given
     const inFixture = new Set(fixture.vocabulary.map(r => r.id));
-    for (const query of ['delek', 'tea', 'བཀྲ', 'butter']) {
+    const queries = ['delek', 'tea', 'བཀྲ', 'butter'];
+
+    // Then
+    for (const query of queries) {
       const sqlite = (await makeSqlite().searchVocabulary(query, 100))
         .filter(i => inFixture.has(i.id))
         .map(i => i.id)
@@ -178,26 +271,52 @@ describe('the two adapters agree', () => {
 
 describe('toFtsPrefixQuery', () => {
   it('quotes each token and makes it a prefix', () => {
-    expect(toFtsPrefixQuery('butter tea')).toBe('"butter"* "tea"*');
+    // Given
+    const typed = 'butter tea';
+
+    // When
+    const query = toFtsPrefixQuery(typed);
+
+    // Then
+    expect(query).toBe('"butter"* "tea"*');
   });
 
   it('splits on the tsheg, which separates Tibetan words', () => {
-    expect(toFtsPrefixQuery('བཀྲ་ཤིས')).toBe('"བཀྲ"* "ཤིས"*');
+    // Given
+    const typed = 'བཀྲ་ཤིས';
+
+    // When
+    const query = toFtsPrefixQuery(typed);
+
+    // Then
+    expect(query).toBe('"བཀྲ"* "ཤིས"*');
   });
 
   it('strips the FTS operators that would otherwise be a syntax error', () => {
-    expect(toFtsPrefixQuery('"quoted" *star*')).toBe('"quoted"* "star"*');
+    // Given
+    const typed = '"quoted" *star*';
+
+    // When
+    const query = toFtsPrefixQuery(typed);
+
+    // Then
+    expect(query).toBe('"quoted"* "star"*');
   });
 
   it('is null when nothing searchable remains', () => {
-    expect(toFtsPrefixQuery('')).toBeNull();
-    expect(toFtsPrefixQuery('  ')).toBeNull();
-    expect(toFtsPrefixQuery('***')).toBeNull();
+    // Given
+    const typed = ['', '  ', '***'];
+
+    // Then
+    for (const value of typed) {
+      expect(toFtsPrefixQuery(value)).toBeNull();
+    }
   });
 });
 
 describe('the schema contract', () => {
   it('refuses to read a database built against a different schema', async () => {
+    // Given
     const lying: ContentDatabase = {
       async getFirstAsync<T>(source: string) {
         if (source.includes('schema_version')) {
@@ -209,6 +328,8 @@ describe('the schema contract', () => {
         return [] as T[];
       },
     };
+
+    // Then
     await expect(new SqliteContentSource(lying).getVocabulary(SHARED_ID)).rejects.toThrow(
       /content schema mismatch/,
     );
