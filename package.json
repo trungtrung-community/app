@@ -8,10 +8,12 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p scripts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "validate": "npm run typecheck && npm run test"
+    "sync:design": "node scripts/sync-design.ts",
+    "sync": "npm run sync:design",
+    "validate": "npm run typecheck && npm run sync:design -- --check"
   },
   "dependencies": {
     "@expo-google-fonts/gabarito": "^0.4.2",
@@ -43,6 +45,7 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@types/node": "^26.2.0",
     "@types/react": "~19.2.2",
     "typescript": "~6.0.3"
   }

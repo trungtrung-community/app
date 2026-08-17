@@ -1,8 +1,8 @@
 /* Uniwind entry. This file's location is the class-scanning root for the project.
  *
- * The design-system theme is NOT hand-written here. Phase 2 adds
- * `@import './src/theme/theme.generated.css'`, emitted by scripts/sync-design.ts
- * from the design system's tokens/*.css. Until then this is bare Tailwind so the
- * Phase 0 spike can isolate script rendering from theming. */
+ * The theme is generated, never hand-written: `npm run sync:design` reads the
+ * design system's tokens/*.css and emits src/theme/theme.generated.css. Edit
+ * scripts/token-map.ts to change how a token family maps, never the output. */
 @import 'tailwindcss';
 @import 'uniwind';
+@import './src/theme/theme.generated.css';
