@@ -15,7 +15,7 @@
  * database.
  */
 
-import type {ReactNode} from 'react';
+import {useState, type ReactNode} from 'react';
 import {Text, View} from 'react-native';
 
 import {Badge} from './core/badge';
@@ -28,6 +28,12 @@ import {ListRow} from './core/list-row';
 import {SegmentedControl} from './core/segmented-control';
 import {TabBar} from './core/tab-bar';
 import {Tag} from './core/tag';
+import {Checkbox} from './forms/checkbox';
+import {Input} from './forms/input';
+import {Radio} from './forms/radio';
+import {SearchField} from './forms/search-field';
+import {Select} from './forms/select';
+import {Switch} from './forms/switch';
 import {TibetanText} from './learning/tibetan-text';
 
 /** A row of specimens that belong side by side. */
@@ -56,6 +62,27 @@ export type PortedComponent = {
 const TRASHI = 'བཀྲ་ཤིས་བདེ་ལེགས';
 const BUS = 'སྤྱི་སྤྱོད་རླངས་འཁོར';
 const STACK = 'བསྒྲིབས';
+/** A partial query, as the SearchField specimen on the board types it. */
+const THUK = 'ཐུགས་';
+
+/**
+ * A form control drawn with live state.
+ *
+ * Every form specimen below is interactive rather than a picture of a state, because these
+ * are the components whose whole behaviour is the transition between two states — a Switch
+ * that cannot be flipped tells you nothing about the one thing it does. The board's own
+ * SearchField card makes the same choice, ending with an "Interactive" row.
+ */
+function Live<T>({
+  initial,
+  children,
+}: {
+  initial: T;
+  children: (value: T, set: (next: T) => void) => ReactNode;
+}) {
+  const [value, setValue] = useState(initial);
+  return <>{children(value, setValue)}</>;
+}
 
 /**
  * Components that have been ported, keyed by their design-system name.
@@ -509,6 +536,280 @@ export const PORTED: Record<string, PortedComponent> = {
         label: 'labelled, for a bare icon button',
         note: 'Decoration by default and hidden from assistive tech; a label is passed only when the icon is the sole carrier of meaning.',
         render: () => <Icon name="x" label="Leave the lesson" size={28} />,
+      },
+    ],
+  },
+
+  Switch: {
+    specimens: [
+      {
+        label: 'off, on, and with a description',
+        note: 'Reanimated drives the thumb on --ease-settle, which overshoots once and comes back. The track colour is clamped so it cannot overshoot past teal-600 into a colour the palette does not hold.',
+        render: () => (
+          <Stack>
+            <Live initial={false}>
+              {(on, set) => <Switch label="Haptics" checked={on} onChange={set} />}
+            </Live>
+            <Live initial={true}>
+              {(on, set) => <Switch label="Autoplay audio" checked={on} onChange={set} />}
+            </Live>
+            <Live initial={true}>
+              {(on, set) => (
+                <Switch
+                  label="Daily reminder"
+                  description="A nudge at 19:00, and nothing if you have already walked today."
+                  checked={on}
+                  onChange={set}
+                />
+              )}
+            </Live>
+          </Stack>
+        ),
+      },
+      {
+        label: 'disabled',
+        note: 'Grey track, no movement. A dead control still needs a reason beside it on a real screen.',
+        render: () => (
+          <Stack>
+            <Switch label="Sync to account" description="Available once you sign in." disabled />
+            <Switch label="Sync to account" checked disabled />
+          </Stack>
+        ),
+      },
+    ],
+  },
+
+  Checkbox: {
+    specimens: [
+      {
+        label: 'unchecked, checked, described',
+        note: 'A square corner and a mark. Unlike Switch, nothing happens until a button is pressed.',
+        render: () => (
+          <Stack>
+            <Live initial={false}>
+              {(on, set) => <Checkbox label="Show Wylie spelling" checked={on} onChange={set} />}
+            </Live>
+            <Live initial={true}>
+              {(on, set) => (
+                <Checkbox label="Include phrases in review" checked={on} onChange={set} />
+              )}
+            </Live>
+            <Live initial={false}>
+              {(on, set) => (
+                <Checkbox
+                  label="Practise reading"
+                  description="Uchen script drills alongside the spoken stops."
+                  checked={on}
+                  onChange={set}
+                />
+              )}
+            </Live>
+          </Stack>
+        ),
+      },
+      {
+        label: 'disabled',
+        render: () => (
+          <Stack>
+            <Checkbox
+              label="Download audio"
+              description="Everything is already offline."
+              disabled
+            />
+            <Checkbox label="Download audio" checked disabled />
+          </Stack>
+        ),
+      },
+    ],
+  },
+
+  Radio: {
+    specimens: [
+      {
+        label: 'a group of three',
+        note: 'Round, so picking one un-picks the others. The dot scales in on the settling curve; pressing the checked one does nothing, exactly as a DOM radio does not.',
+        render: () => (
+          <Live initial="speak">
+            {(mode, set) => (
+              <Stack>
+                <Radio
+                  label="Speak first"
+                  description="Start with the spoken track and add script later."
+                  value="speak"
+                  checked={mode === 'speak'}
+                  onChange={next => set(next ?? 'speak')}
+                />
+                <Radio
+                  label="Read first"
+                  description="Start with uchen and the thirty letters."
+                  value="read"
+                  checked={mode === 'read'}
+                  onChange={next => set(next ?? 'speak')}
+                />
+                <Radio
+                  label="Both together"
+                  value="both"
+                  checked={mode === 'both'}
+                  onChange={next => set(next ?? 'speak')}
+                />
+              </Stack>
+            )}
+          </Live>
+        ),
+      },
+      {
+        label: 'disabled',
+        render: () => (
+          <Stack>
+            <Radio label="Lhasa dialect" checked disabled />
+            <Radio label="Amdo dialect" description="Not in this release." disabled />
+          </Stack>
+        ),
+      },
+    ],
+  },
+
+  Input: {
+    specimens: [
+      {
+        label: 'label, hint, icon',
+        note: 'Sunken fill and no border. Focus is a teal ring drawn as a box-shadow, so gaining focus costs no layout and the field does not move.',
+        render: () => (
+          <Stack>
+            <Live initial="">
+              {(text, set) => (
+                <Input
+                  label="What should we call you?"
+                  placeholder="Your name"
+                  value={text}
+                  onChange={set}
+                />
+              )}
+            </Live>
+            <Live initial="">
+              {(text, set) => (
+                <Input
+                  label="Email"
+                  hint="Only used to restore your progress."
+                  icon="user"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={text}
+                  onChange={set}
+                />
+              )}
+            </Live>
+          </Stack>
+        ),
+      },
+      {
+        label: 'error outranks focus',
+        note: 'A field can be focused and wrong at once. Teal over red would hide the thing that needs fixing, so the error wins and the message takes the same colour.',
+        render: () => (
+          <Live initial="thugs">
+            {(text, set) => (
+              <Input
+                label="Romanization"
+                error="Trungtrung spells this thuk — THL spellings are not accepted here."
+                value={text}
+                onChange={set}
+              />
+            )}
+          </Live>
+        ),
+      },
+      {
+        label: 'tibetan',
+        note: 'The one sanctioned exception to routing Tibetan through TibetanText: there is nothing to wrap in a field being typed into. The field is 62pt tall rather than 52 because a 22pt stack needs that much room for its ink.',
+        render: () => (
+          <Live initial={THUK}>
+            {(text, set) => (
+              <Input label="Type what you hear" tibetan value={text} onChange={set} />
+            )}
+          </Live>
+        ),
+      },
+      {
+        label: 'disabled',
+        render: () => <Input label="Account" value="Signed out" disabled />,
+      },
+    ],
+  },
+
+  SearchField: {
+    specimens: [
+      {
+        label: 'empty',
+        render: () => (
+          <Live initial="">
+            {(q, set) => <SearchField value={q} onChange={set} onClear={() => set('')} />}
+          </Live>
+        ),
+      },
+      {
+        label: 'typed',
+        note: 'The clear button exists only when there is something to clear.',
+        render: () => (
+          <Live initial="thuk">
+            {(q, set) => <SearchField value={q} onChange={set} onClear={() => set('')} />}
+          </Live>
+        ),
+      },
+      {
+        label: 'typed in Tibetan',
+        note: 'The face flips to Noto Serif Tibetan the moment the query contains Tibetan. React Native has no font fallback, so left in the body face these glyphs would be tofu — the board only gets away with it because a browser substitutes silently.',
+        render: () => (
+          <Live initial={THUK}>
+            {(q, set) => <SearchField value={q} onChange={set} onClear={() => set('')} />}
+          </Live>
+        ),
+      },
+    ],
+  },
+
+  Select: {
+    specimens: [
+      {
+        label: 'closed, with a value',
+        note: 'The only control with no React Native equivalent at all: the web original is a real <select> the browser draws. The trigger matches the drawn control; the options panel below it is provisional until Sheet is ported.',
+        render: () => (
+          <Stack>
+            <Live initial="19:00">
+              {(time, set) => (
+                <Select
+                  label="Reminder"
+                  hint="We will not send one on a day you have already walked."
+                  value={time}
+                  options={['08:00', '12:30', '19:00', '21:00']}
+                  onChange={set}
+                />
+              )}
+            </Live>
+            <Live initial="normal">
+              {(speed, set) => (
+                <Select
+                  label="Playback"
+                  value={speed}
+                  options={[
+                    {value: 'slow', label: 'Slow'},
+                    {value: 'normal', label: 'Natural'},
+                  ]}
+                  onChange={set}
+                />
+              )}
+            </Live>
+          </Stack>
+        ),
+      },
+      {
+        label: 'nothing chosen, and disabled',
+        note: 'An unset value shows an em dash rather than an invented placeholder — the prop contract has no placeholder in it.',
+        render: () => (
+          <Stack>
+            <Select label="District" options={['Barkhor', 'Teahouse']} />
+            <Select label="Dialect" value="Lhasa" options={['Lhasa']} disabled />
+          </Stack>
+        ),
       },
     ],
   },

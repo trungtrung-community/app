@@ -43,6 +43,29 @@ const TIB_SIZES = {
 
 export type TibetanSize = keyof typeof TIB_SIZES;
 
+/**
+ * Noto Serif Tibetan's natural line box, as a multiple of font size.
+ *
+ * Measured at five sizes in docs/spikes/2026-08-17-tibetan-rendering.md, where the ratio
+ * held between 2.80 and 2.86. `--leading-tibetan: 2.1` is therefore a compression of
+ * about 25%, and ink overflows the line box by roughly 0.35x the font size.
+ */
+const NATURAL_LINE_BOX = 2.8;
+
+/**
+ * The vertical room a Tibetan run of this size needs to draw its full ink.
+ *
+ * For anything that puts Tibetan in a box of fixed height — a text field, a tile, a chip.
+ * `--leading-tibetan` is what a *paragraph* of Tibetan is set at; it is not enough room
+ * for the tallest stacks, which is why the spike's finding 2 makes headroom a rule rather
+ * than a nicety. Android is the platform that clips rather than overflowing.
+ *
+ * @example minHeight: tibetanBox('md')   // 62 at --text-tib-md
+ */
+export function tibetanBox(size: TibetanSize): number {
+  return Math.ceil(TIB_SIZES[size] * NATURAL_LINE_BOX);
+}
+
 export type TibetanTextProps = {
   children: string;
   /** The Trungtrung romanization. Becomes the accessible name — never the THL. */
