@@ -1,0 +1,5 @@
+# Conventional commits. This defends what is already practice rather than imposing
+# something new — every commit in both repos already reads `fix(ds):`, `chore(sync):`,
+# `test(components):`. See commitlint.config.js for the one rule that is not the default.
+
+npx --no -- commitlint --edit "$1"

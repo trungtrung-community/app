@@ -1,0 +1,13 @@
+# The full gate. Measured 2026-08-17: about 14s.
+#
+# At that price there is no reason to run a subset. It is also the only place that
+# catches a drifted token lockfile — sync:design, check:content and sync:cards each
+# compare a sha against the design-system export, and a stale one reaching the remote is
+# the failure the whole generated-code pipeline exists to prevent.
+#
+# These three read the sibling design-system repo and exit 1 with "Design system not
+# found" when it is missing. That is intended: this project cannot be built without it.
+# If you genuinely need to push from a machine without it, `git push --no-verify` and say
+# so in the pull request.
+
+npm run validate

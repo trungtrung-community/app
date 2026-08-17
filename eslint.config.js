@@ -4,7 +4,7 @@
  * The boundary rules are the point of this file. docs/05-architecture states that
  * pure logic never imports UI or storage, and a rule that is only written down
  * drifts — the design system already learned this and wired its own adherence
- * contract into CI before any code existed. These zones are the same idea for
+ * contract into CI before any code existed. These policies are the same idea for
  * layering.
  *
  * The dependency arrow points inward, toward the learning rules:
@@ -15,10 +15,29 @@
  *
  *   src/infra/ implements src/ports/ and is wired ONLY by src/composition/.
  *
- * To verify the zones actually bite, add `import {View} from 'react-native'` to a
- * file under src/engine/ and run `npm run lint`. It must fail.
+ * Rewritten 2026-08-17 from five hand-rolled `no-restricted-imports` zones onto
+ * eslint-plugin-boundaries. The zones worked; the reason for moving is that they were
+ * **deny-lists**. Each layer listed what it could not reach, so a layer added later was
+ * permitted everywhere until someone remembered to add it to all five — and two never
+ * had a zone at all (`src/infra`, `src/composition`). The policies below are an
+ * allow-list: anything not named is refused by `default: "disallow"`, which is the safer
+ * direction for a rule nobody re-reads.
+ *
+ * Each layer's reason is the comment above its policy rather than a `message` field. The
+ * plugin reports "no policy allowing dependencies from elements of type X to elements of
+ * type Y", which names both ends precisely, and a rule-level `message` would replace that
+ * rather than extend it. The prose is worth more where someone editing the policy reads
+ * it than as a string that would cost the diagnosis to display.
+ *
+ * Cycles, orphans and *transitive* reach are not here — eslint sees one import at a
+ * time. `.dependency-cruiser.js` owns those, and states no layering rule of its own,
+ * so the two configs cannot drift apart.
+ *
+ * To verify the policies bite, add `import {View} from 'react-native'` to a file under
+ * src/engine/ and run `npm run lint`. It must fail.
  */
 
+const boundaries = require('eslint-plugin-boundaries');
 const expoConfig = require('eslint-config-expo/flat');
 const prettierConfig = require('eslint-config-prettier');
 
@@ -39,12 +58,40 @@ const PLATFORM_PACKAGES = [
   'zustand/*',
 ];
 
-/** Any import that reaches a layer, whether by alias or by relative path. */
-const layer = name => [`@/${name}`, `@/${name}/**`, `**/${name}`, `**/${name}/**`];
+/**
+ * The layers, innermost first.
+ *
+ * `pattern` must be `<dir>/**` — **not** `<dir>/**` + `/*`. With `partialMatch: false`
+ * the latter classifies nothing, and a boundaries config that classifies nothing lints
+ * perfectly clean while checking no file at all. Probed with
+ * `boundaries/no-unknown-files` before this was trusted; do the same before changing it.
+ */
+const ELEMENTS = [
+  {type: 'domain', pattern: 'src/domain/**', partialMatch: false},
+  {type: 'engine', pattern: 'src/engine/**', partialMatch: false},
+  {type: 'ports', pattern: 'src/ports/**', partialMatch: false},
+  {type: 'usecases', pattern: 'src/usecases/**', partialMatch: false},
+  {type: 'infra', pattern: 'src/infra/**', partialMatch: false},
+  {type: 'composition', pattern: 'src/composition/**', partialMatch: false},
+  {type: 'store', pattern: 'src/store/**', partialMatch: false},
+  {type: 'theme', pattern: 'src/theme/**', partialMatch: false},
+  {type: 'components', pattern: 'src/components/**', partialMatch: false},
+  {type: 'app', pattern: 'app/**', partialMatch: false},
+];
 
-const forbid = (message, ...groups) => ({
-  'no-restricted-imports': ['error', {patterns: [{group: groups.flat(), message}]}],
+/** `from` may reach `to`, and — because the default is disallow — nothing else. */
+const allow = (from, to) => ({
+  from: {element: {type: from}},
+  allow: {to: {element: {types: {anyOf: to}}}},
 });
+
+/** The layers that must run with no platform at all. */
+const PURE_FILES = [
+  'src/domain/**/*.ts',
+  'src/engine/**/*.ts',
+  'src/ports/**/*.ts',
+  'src/usecases/**/*.ts',
+];
 
 module.exports = [
   ...expoConfig,
@@ -64,85 +111,110 @@ module.exports = [
     ],
   },
 
-  // ── zone 1 · domain ───────────────────────────────────────────────────────
-  // The innermost layer. Progression and scheduling rules, and nothing else.
   {
-    files: ['src/domain/**/*.ts'],
-    rules: forbid(
-      'src/domain is the innermost layer: it may import only from src/domain. ' +
-        'Rules here must run with no platform, no storage and no clock of their own — ' +
-        'pass the date in as a value.',
-      layer('engine'),
-      layer('usecases'),
-      layer('ports'),
-      layer('infra'),
-      layer('store'),
-      layer('components'),
-      layer('theme'),
-      PLATFORM_PACKAGES,
-    ),
+    plugins: {boundaries},
+    settings: {
+      'boundaries/elements': ELEMENTS,
+      // A test belongs to the layer it sits in and answers to that layer's policy. What
+      // it additionally reaches is a runner, which is external and governed below.
+      'boundaries/files': [{category: 'test', pattern: '**/*.test.{ts,tsx}'}],
+    },
+    rules: {
+      'boundaries/dependencies': [
+        'error',
+        {
+          default: 'disallow',
+          policies: [
+            // The innermost layer. Rules here run with no platform, no storage and no
+            // clock of their own — the date is passed in as a value.
+            allow('domain', ['domain']),
+
+            // Receives values and returns values. A use case does the loading and the
+            // saving, which is what keeps the engine testable with no doubles at all.
+            allow('engine', ['engine', 'domain']),
+
+            // Interfaces over domain types. An import from infra would invert the
+            // dependency the port exists to create.
+            allow('ports', ['ports', 'domain']),
+
+            // Orchestration. It must not reach an adapter directly — depend on the port
+            // and let src/composition choose the implementation.
+            allow('usecases', ['usecases', 'engine', 'ports', 'domain']),
+
+            // An adapter may know the domain it maps to and the port it satisfies, and
+            // nothing above. One that imports a screen or a store has stopped being
+            // replaceable, which is the only thing it is for.
+            allow('infra', ['infra', 'ports', 'domain']),
+
+            // The one place that names a concrete adapter. That is what it is for, and
+            // why nothing else may.
+            allow('composition', ['composition', 'infra', 'ports', 'usecases', 'engine', 'domain']),
+
+            // A slice reaches an adapter through src/composition/container, never by
+            // naming one. Persistence is ProgressStore's job, behind the port.
+            allow('store', ['store', 'usecases', 'ports', 'domain', 'composition']),
+
+            // Screens and components read from the container. Naming a concrete adapter
+            // here is what makes swapping SQLite for an API a rewrite of the screens
+            // rather than a change of one line.
+            allow(
+              ['components', 'app'],
+              ['components', 'app', 'store', 'usecases', 'ports', 'domain', 'theme', 'composition'],
+            ),
+
+            // Generated tokens. They import nothing.
+            allow('theme', ['theme']),
+          ],
+        },
+      ],
+    },
   },
 
-  // ── zone 2 · engine ───────────────────────────────────────────────────────
-  // The exercise machine. Receives values, returns values, touches no port.
+  // Platform packages stay on `no-restricted-imports` rather than moving into the
+  // policies above, and that is a deliberate retreat rather than an oversight.
+  // `boundaries/dependencies` can express an external-module rule, but only under
+  // `checkAllOrigins: true` — which subjects *every* external import to
+  // `default: "disallow"`, so `vitest`, `@testing-library/react` and `node:sqlite` would
+  // each need allow-listing before the suite could run again. That is a large blast
+  // radius for a rule these thirteen globs already state precisely.
   {
-    files: ['src/engine/**/*.ts'],
-    rules: forbid(
-      'src/engine may import only src/engine and src/domain. It receives values and ' +
-        'returns values — a use case does the loading and saving, which is what keeps ' +
-        'the engine testable with no doubles at all.',
-      layer('usecases'),
-      layer('ports'),
-      layer('infra'),
-      layer('store'),
-      layer('components'),
-      layer('theme'),
-      PLATFORM_PACKAGES,
-    ),
+    files: PURE_FILES,
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: PLATFORM_PACKAGES,
+              message:
+                'This layer must run with no platform. React, React Native, Expo, Zustand and ' +
+                'Uniwind all mean a file knows about a screen, a device or a bundler — which ' +
+                'is what makes the rules in this layer testable in plain Node, with no doubles.',
+            },
+          ],
+        },
+      ],
+    },
   },
 
-  // ── zone 3 · usecases ─────────────────────────────────────────────────────
-  // Orchestration. The only layer that touches a port, and still no platform.
+  // scripts/ is build tooling, not the app. It is deliberately outside the element map
+  // and answers to Node, not to the layering — but it must not import the app either.
   {
-    files: ['src/usecases/**/*.ts'],
-    rules: forbid(
-      'src/usecases orchestrates domain, engine and ports. It must not reach an ' +
-        'adapter directly — depend on the port and let src/composition choose the ' +
-        'implementation.',
-      layer('infra'),
-      layer('store'),
-      layer('components'),
-      layer('theme'),
-      PLATFORM_PACKAGES,
-    ),
-  },
-
-  // ── zone 4 · ports ────────────────────────────────────────────────────────
-  // Interfaces over domain types. No implementation, no platform.
-  {
-    files: ['src/ports/**/*.ts'],
-    rules: forbid(
-      'src/ports declares interfaces over domain types. An import from infra would ' +
-        'invert the dependency the port exists to create.',
-      layer('engine'),
-      layer('usecases'),
-      layer('infra'),
-      layer('store'),
-      layer('components'),
-      layer('theme'),
-      PLATFORM_PACKAGES,
-    ),
-  },
-
-  // ── zone 5 · UI ───────────────────────────────────────────────────────────
-  // Screens and components read from the container, never from an adapter.
-  {
-    files: ['app/**/*.tsx', 'app/**/*.ts', 'src/components/**/*.tsx', 'src/store/**/*.ts'],
-    rules: forbid(
-      'Reach an adapter through src/composition/container, not directly. Naming a ' +
-        'concrete adapter here is what makes swapping SQLite for an API a rewrite of ' +
-        'the screens rather than a change of one line.',
-      layer('infra'),
-    ),
+    files: ['scripts/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@/*', '**/src/components/**', '**/src/infra/**', '**/src/store/**'],
+              message:
+                'scripts/ is build tooling and runs in plain Node before the app is built. It ' +
+                'may read generated output and the domain, never a component or an adapter.',
+            },
+          ],
+        },
+      ],
+    },
   },
 ];

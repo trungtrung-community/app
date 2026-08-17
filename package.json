@@ -17,12 +17,15 @@
     "test:watch": "vitest",
     "sync:design": "node scripts/sync-design.ts",
     "sync": "npm run sync:design && npm run sync:content && npm run sync:cards",
-    "validate": "npm run typecheck && npm run lint && npm run format:check && npm run test && npm run check:adherence && npm run check:test-shape && npm run sync:design -- --check && npm run check:content && npm run sync:cards -- --check",
+    "validate": "npm run typecheck && npm run lint && npm run format:check && npm run test && npm run check:adherence && npm run check:test-shape && npm run depcruise && npm run sync:design -- --check && npm run check:content && npm run sync:cards -- --check",
     "sync:content": "node scripts/sync-content.ts",
     "check:content": "node scripts/sync-content.ts --check",
     "sync:cards": "node scripts/sync-cards.ts",
     "check:adherence": "node scripts/check-adherence.ts",
-    "check:test-shape": "node scripts/check-test-shape.ts"
+    "check:test-shape": "node scripts/check-test-shape.ts",
+    "prepare": "husky",
+    "depcruise": "depcruise src app scripts tests",
+    "depcruise:graph": "depcruise src app scripts --output-type dot"
   },
   "dependencies": {
     "@expo-google-fonts/gabarito": "^0.4.2",
@@ -54,20 +57,35 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.2.2",
+    "@commitlint/config-conventional": "^21.2.2",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/react-native": "^14.0.1",
     "@types/node": "^26.2.0",
     "@types/react": "~19.2.2",
+    "dependency-cruiser": "^17.4.3",
     "eslint": "^9.39.5",
     "eslint-config-expo": "^57.0.1",
     "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-boundaries": "^7.2.0",
+    "husky": "^9.1.7",
     "jsdom": "^29.1.1",
+    "lint-staged": "^17.3.0",
     "prettier": "^3.9.6",
     "react-test-renderer": "^19.2.3",
     "typescript": "~6.0.3",
     "vite-plugin-babel": "^1.7.3",
     "vitest": "^4.1.10"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,mjs,cjs}": [
+      "eslint --max-warnings 0 --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,css}": [
+      "prettier --write"
+    ]
   }
 }

@@ -1,0 +1,21 @@
+# Fast enough that nobody reaches for --no-verify. Measured 2026-08-17: about 9s.
+#
+# What is here and what is not, deliberately:
+#
+#   lint-staged        eslint + prettier, staged files only — the architecture policies
+#                      in eslint.config.js ride along with this
+#   typecheck          2.3s, and a type error is not worth pushing
+#   depcruise          cycles, orphans and transitive reach — the whole graph, not the diff
+#   vitest             4.9s
+#   check-test-shape   Given/When/Then, per docs/11
+#
+# The three sync gates and check:adherence run on push instead. Not because they are slow
+# — together they are under 2s — but because sync:design, check:content and sync:cards all
+# read the sibling design-system repo and exit 1 when it is absent. On push that is a fair
+# demand; on every commit it would block a machine that has not cloned it yet.
+
+npx lint-staged
+npm run typecheck
+npm run depcruise
+npm run test
+npm run check:test-shape

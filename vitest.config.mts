@@ -20,6 +20,15 @@ import {defineConfig} from 'vitest/config';
  * behaviour that differs on a device — Android's nested-Text line height, the native
  * keycap shadow — is still only provable on a device. The suite is honest about which
  * half it covers.
+ *
+ * `integration` is the third, for tests that cross several architectural pieces and so
+ * belong to no single module — see `docs/11-testing-conventions.md` §2. It is empty as of
+ * 2026-08-17, because `src/engine/` and `src/usecases/` have no files yet, which is why
+ * `passWithNoTests` is set: an empty project should not fail a run that has 121 passing
+ * tests in it.
+ *
+ * `tests/e2e/**` is excluded from all three. Playwright is a separate runner and driving
+ * it from Vitest would put two tools in charge of one suite.
  */
 export default defineConfig({
   plugins: [
@@ -50,12 +59,22 @@ export default defineConfig({
   // React Native's own global. Reanimated reads it while being imported.
   define: {__DEV__: 'true'},
   test: {
+    passWithNoTests: true,
+    exclude: ['**/node_modules/**', '**/dist/**', 'tests/e2e/**'],
     projects: [
       {
         extends: true,
         test: {
           name: 'logic',
           include: ['src/**/*.test.ts', 'scripts/**/*.test.ts'],
+          environment: 'node',
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'integration',
+          include: ['tests/integration/**/*.test.ts'],
           environment: 'node',
         },
       },
