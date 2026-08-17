@@ -68,7 +68,7 @@ import {StatPill} from './learning/stat-pill';
 import {SyllableChip} from './learning/syllable-chip';
 import {WordCard} from './learning/word-card';
 import {WordRow} from './learning/word-row';
-import {TibetanText} from './learning/tibetan-text';
+import {TibetanText, mixedTibetan} from './learning/tibetan-text';
 
 /** A row of specimens that belong side by side. */
 function Row({children}: {children: ReactNode}) {
@@ -415,9 +415,12 @@ export const PORTED: Record<string, PortedComponent> = {
         note: 'The one sanctioned line. It separates rows that already share a card, where a gap would read as two cards. Never to outline a card.',
         render: () => (
           <Card padding="sm">
-            <Text className="type-body text-fg-body">ཇ་ཐང · chhaathang</Text>
+            {/* Through mixedTibetan, not set as bare text. The first version of this
+                specimen put the script straight into a Text and got Latin metrics — the
+                rule the gallery exists to demonstrate, broken inside the gallery. */}
+            <Text className="type-body text-fg-body">{mixedTibetan('ཇ་ཐང · chhaathang')}</Text>
             <Divider />
-            <Text className="type-body text-fg-body">བོད་ཇ · phööcha</Text>
+            <Text className="type-body text-fg-body">{mixedTibetan('བོད་ཇ · phööcha')}</Text>
           </Card>
         ),
       },

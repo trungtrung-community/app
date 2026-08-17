@@ -124,6 +124,8 @@ export function Input({
         {icon ? <Icon name={icon} size={20} color={color.textMuted} /> : null}
         <TextInput
           accessibilityLabel={label ?? placeholder}
+          // adherence-allow: tibetan-outside-tibetantext — a field being typed into has
+          // no rendered run to wrap, and the language mark still has to be right.
           accessibilityLanguage={tibetan ? 'bo' : undefined}
           value={value}
           onChangeText={onChange}
@@ -179,6 +181,8 @@ const LATIN_TEXT: TextStyle = {
  */
 const TIBETAN_TEXT: TextStyle = {
   ...BASE_TEXT,
+  // adherence-allow: tibetan-outside-tibetantext — TibetanText renders; a TextInput's
+  // own face is the only way to set the script the learner is typing.
   fontFamily: fontFamily.tibetanRegular,
   fontSize: fontSize.tibMd,
 };

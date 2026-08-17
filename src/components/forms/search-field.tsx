@@ -70,6 +70,8 @@ export function SearchField({
         // Marked only while there is Tibetan in it. An empty field is not a Tibetan field,
         // and announcing it as one would make a screen reader read the placeholder in the
         // wrong language.
+        // adherence-allow: tibetan-outside-tibetantext — a query being typed into has no
+        // rendered run to wrap, and the language mark still has to be right.
         accessibilityLanguage={tibetan ? 'bo' : undefined}
         value={value}
         onChangeText={onChange}
@@ -118,6 +120,8 @@ const LATIN_QUERY: TextStyle = {
  */
 const TIBETAN_QUERY: TextStyle = {
   ...BASE_QUERY,
+  // adherence-allow: tibetan-outside-tibetantext — React Native has no font fallback, so
+  // a Tibetan query typed into a Latin field renders as boxes unless the field flips.
   fontFamily: fontFamily.tibetanRegular,
   fontSize: fontSize.md,
 };
