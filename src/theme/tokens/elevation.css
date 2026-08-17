@@ -29,4 +29,5 @@
   --border-none: 0; /* @kind other */
   --divider-hairline: 1px; /* the one sanctioned line: a half-width rule inside a single card */
   --outline-mascot: 3px; /* illustration stroke weight */
+  --focus-ring-width: 3px; /* the focus ring's weight — base.css and every field's focus state */
 }

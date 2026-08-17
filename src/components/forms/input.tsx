@@ -28,7 +28,7 @@ import {
 
 import {Icon, type IconName} from '../core/icon';
 import {tibetanBox} from '../learning/tibetan-text';
-import {color, fontFamily, fontSize, leading, space} from '../../theme/tokens.generated';
+import {color, elevation, fontFamily, fontSize, leading, space} from '../../theme/tokens.generated';
 
 /**
  * The web original's `type`, mapped to what React Native actually has.
@@ -48,15 +48,6 @@ const TYPES = {
 >;
 
 export type InputType = keyof typeof TYPES;
-
-/**
- * The focus ring's width.
- *
- * No token exists for it — `--focus-ring` names only the colour, and the design system's
- * own source hardcodes `3px solid`. Named here so it is one number rather than three, and
- * flagged as a token the design system is missing.
- */
-const RING_WIDTH = 3;
 
 const LATIN_MIN_HEIGHT = 52;
 
@@ -127,7 +118,7 @@ export function Input({
           // A ring rather than a border, so it costs no layout — the field does not move
           // when it gains focus. `boxShadow` carries geometry and colour in one string,
           // which is why the colour is a value here and not a class.
-          ring ? {boxShadow: `0 0 0 ${RING_WIDTH}px ${ring}`} : null,
+          ring ? {boxShadow: `0 0 0 ${elevation.focusRingWidth}px ${ring}`} : null,
         ]}
       >
         {icon ? <Icon name={icon} size={20} color={color.textMuted} /> : null}

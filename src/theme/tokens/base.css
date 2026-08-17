@@ -28,7 +28,7 @@ a { color: var(--text-link); text-decoration-thickness: 2px; text-underline-offs
 a:hover { color: var(--text-link-hover); }
 
 :where(button, [role="button"], a):focus-visible {
-  outline: 3px solid var(--focus-ring);
+  outline: var(--focus-ring-width) solid var(--focus-ring);
   outline-offset: 2px;
   border-radius: var(--radius-xs);
 }
