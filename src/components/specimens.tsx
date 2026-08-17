@@ -16,10 +16,29 @@
  */
 
 import type {ReactNode} from 'react';
-import {View} from 'react-native';
+import {Text, View} from 'react-native';
 
+import {Badge} from './core/badge';
+import {Button} from './core/button';
+import {Card} from './core/card';
+import {Divider} from './core/divider';
 import {Icon, ICON_NAMES} from './core/icon';
+import {IconButton} from './core/icon-button';
+import {ListRow} from './core/list-row';
+import {SegmentedControl} from './core/segmented-control';
+import {TabBar} from './core/tab-bar';
+import {Tag} from './core/tag';
 import {TibetanText} from './learning/tibetan-text';
+
+/** A row of specimens that belong side by side. */
+function Row({children}: {children: ReactNode}) {
+  return <View className="flex-row flex-wrap items-center gap-2">{children}</View>;
+}
+
+/** A column of specimens that read top to bottom. */
+function Stack({children}: {children: ReactNode}) {
+  return <View className="gap-3">{children}</View>;
+}
 
 export type Specimen = {
   /** What state this shows. Mirrors the wording on the .card.html where there is one. */
@@ -45,6 +64,348 @@ const STACK = 'བསྒྲིབས';
  * the code share.
  */
 export const PORTED: Record<string, PortedComponent> = {
+  Button: {
+    specimens: [
+      {
+        label: 'the two sanctioned skins',
+        note: 'docs/04 allows teal primary and ghost, and nothing else. The other four variants below exist for specific drawn screens.',
+        render: () => (
+          <Stack>
+            <Button variant="primary">Keep going</Button>
+            <Button variant="ghost" iconLeft="rotate-ccw">
+              Listen again
+            </Button>
+          </Stack>
+        ),
+      },
+      {
+        label: 'the keycap edge',
+        note: 'A solid offset, not a blur. Press it: the control sinks 2pt and the edge shrinks to match, so the footprint never changes and nothing below shifts.',
+        render: () => (
+          <Stack>
+            <Button variant="primary" size="lg" fullWidth>
+              Check
+            </Button>
+            <Button variant="ink">Leave</Button>
+            <Button variant="danger">Erase everything</Button>
+            <Button variant="secondary">Not yet</Button>
+          </Stack>
+        ),
+      },
+      {
+        label: 'flat variants scale instead of sinking',
+        note: 'soft and ghost have no edge to sink onto, so they take the press scale.',
+        render: () => (
+          <Row>
+            <Button variant="soft">Again</Button>
+            <Button variant="ghost">Got it</Button>
+          </Row>
+        ),
+      },
+      {
+        label: 'sizes',
+        render: () => (
+          <Stack>
+            <Button size="sm">Small</Button>
+            <Button size="md">Medium</Button>
+            <Button size="lg">Large</Button>
+          </Stack>
+        ),
+      },
+      {
+        label: 'disabled',
+        note: 'A disabled button must have its reason stated on screen — a dead control with no explanation reads as broken rather than unavailable.',
+        render: () => <Button disabled>Not yet walked</Button>,
+      },
+    ],
+  },
+
+  Card: {
+    specimens: [
+      {
+        label: 'tones separate by fill value',
+        note: 'Borderless by design. No hairline, no drop shadow — the value of the fill is what separates one surface from another.',
+        render: () => (
+          <Stack>
+            <Card tone="card">
+              <Text className="type-body text-fg-body">card</Text>
+            </Card>
+            <Card tone="ground">
+              <Text className="type-body text-fg-body">ground</Text>
+            </Card>
+            <Card tone="accent">
+              <Text className="type-body text-fg-accent">accent</Text>
+            </Card>
+            <Card tone="correct">
+              <Text className="type-body text-fg-heading">correct</Text>
+            </Card>
+            <Card tone="alert">
+              <Text className="type-body text-fg-heading">alert</Text>
+            </Card>
+            <Card tone="reward">
+              <Text className="type-body text-fg-heading">reward</Text>
+            </Card>
+            <Card tone="ink">
+              <Text className="type-body text-fg-on-ink">ink</Text>
+            </Card>
+          </Stack>
+        ),
+      },
+      {
+        label: 'floating — layered UI only',
+        note: 'The one case a shadow is allowed: a sheet or dialog above the page. A card in a list never floats.',
+        render: () => (
+          <Card floating>
+            <Text className="type-body text-fg-body">a sheet above the page</Text>
+          </Card>
+        ),
+      },
+      {
+        label: 'padding',
+        render: () => (
+          <Stack>
+            <Card padding="sm" tone="ground">
+              <Text className="type-caption text-fg-muted">sm</Text>
+            </Card>
+            <Card padding="lg" tone="ground">
+              <Text className="type-caption text-fg-muted">lg</Text>
+            </Card>
+          </Stack>
+        ),
+      },
+    ],
+  },
+
+  Badge: {
+    specimens: [
+      {
+        label: 'tones',
+        note: 'Read-only status. If it can be chosen or dismissed it is a Tag, not a Badge.',
+        render: () => (
+          <Row>
+            <Badge tone="soft">19 known</Badge>
+            <Badge tone="accent">New</Badge>
+            <Badge tone="correct">Met</Badge>
+            <Badge tone="reward">Found</Badge>
+            <Badge tone="alert">Due</Badge>
+            <Badge tone="neutral">Not yet</Badge>
+            <Badge tone="ink">Exam</Badge>
+          </Row>
+        ),
+      },
+      {
+        label: 'with a dot, and with an icon',
+        render: () => (
+          <Row>
+            <Badge tone="correct" dot>
+              Known
+            </Badge>
+            <Badge tone="soft" icon="star">
+              Walked
+            </Badge>
+          </Row>
+        ),
+      },
+      {
+        label: 'the bare dot',
+        note: 'Ten points, no text. It is decoration, so whatever it marks says itself in words nearby — colour is never the only signal.',
+        render: () => (
+          <Row>
+            <Badge tone="accent" />
+            <Badge tone="neutral" />
+          </Row>
+        ),
+      },
+    ],
+  },
+
+  Tag: {
+    specimens: [
+      {
+        label: 'selected and not',
+        note: 'Sentence case, which is what separates it from a Badge at a glance.',
+        render: () => (
+          <Row>
+            <Tag onPress={() => {}}>Teahouse</Tag>
+            <Tag selected onPress={() => {}}>
+              Market
+            </Tag>
+          </Row>
+        ),
+      },
+      {
+        label: 'dismissible',
+        note: 'The x has its own hit area, so dismissing is not a tap that also selects.',
+        render: () => (
+          <Row>
+            <Tag onPress={() => {}} onRemove={() => {}}>
+              Verbs
+            </Tag>
+          </Row>
+        ),
+      },
+      {
+        label: 'sizes',
+        render: () => (
+          <Row>
+            <Tag size="sm">Small</Tag>
+            <Tag size="md">Medium</Tag>
+          </Row>
+        ),
+      },
+    ],
+  },
+
+  IconButton: {
+    specimens: [
+      {
+        label: 'variants',
+        note: 'label is required, not optional: the glyph is the only thing naming the control.',
+        render: () => (
+          <Row>
+            <IconButton icon="x" label="Leave" variant="plain" />
+            <IconButton icon="volume-2" label="Play" variant="soft" />
+            <IconButton icon="search" label="Search" variant="card" />
+            <IconButton icon="play" label="Play" variant="accent" />
+          </Row>
+        ),
+      },
+      {
+        label: 'sizes',
+        note: 'The 40pt box keeps a 48pt hit area through hitSlop rather than by growing.',
+        render: () => (
+          <Row>
+            <IconButton icon="mic" label="Record" size="sm" variant="soft" />
+            <IconButton icon="mic" label="Record" size="md" variant="soft" />
+            <IconButton icon="mic" label="Record" size="lg" variant="soft" />
+          </Row>
+        ),
+      },
+      {
+        label: 'square, and disabled',
+        render: () => (
+          <Row>
+            <IconButton icon="columns-2" label="Grid" variant="card" round={false} />
+            <IconButton icon="mic" label="Record" variant="soft" disabled />
+          </Row>
+        ),
+      },
+    ],
+  },
+
+  Divider: {
+    specimens: [
+      {
+        label: 'inside one card',
+        note: 'The one sanctioned line. It separates rows that already share a card, where a gap would read as two cards. Never to outline a card.',
+        render: () => (
+          <Card padding="sm">
+            <Text className="type-body text-fg-body">ཇ་ཐང · chhaathang</Text>
+            <Divider />
+            <Text className="type-body text-fg-body">བོད་ཇ · phööcha</Text>
+          </Card>
+        ),
+      },
+      {
+        label: 'widths',
+        note: 'Half is the default, because at half it reads as a hint rather than a rule.',
+        render: () => (
+          <Stack>
+            <Divider width="half" />
+            <Divider width="third" />
+            <Divider width="full" />
+          </Stack>
+        ),
+      },
+      {
+        label: 'hanging off the text edge',
+        render: () => <Divider width="third" align="start" />,
+      },
+    ],
+  },
+
+  ListRow: {
+    specimens: [
+      {
+        label: 'label, sub and value',
+        note: 'The board hand-drew this thirty-two times before it was promoted. sub is one sentence, never two.',
+        render: () => (
+          <Stack>
+            <ListRow label="Reminders" value="19:00" onPress={() => {}} />
+            <ListRow
+              label="Sounds"
+              sub="The correct tick and the stop-complete moment."
+              value="On"
+              onPress={() => {}}
+            />
+            <ListRow label="Show Wylie spelling" value="Off" onPress={() => {}} />
+          </Stack>
+        ),
+      },
+      {
+        label: 'with an icon, and a destructive door',
+        render: () => (
+          <Stack>
+            <ListRow icon="share-2" label="Export your progress" onPress={() => {}} />
+            <ListRow icon="x" label="Erase everything" tone="danger" onPress={() => {}} />
+          </Stack>
+        ),
+      },
+      {
+        label: 'not a door',
+        note: 'No chevron and no press when the row only states something.',
+        render: () => <ListRow label="Days walking" value="41" chevron={false} />,
+      },
+    ],
+  },
+
+  SegmentedControl: {
+    specimens: [
+      {
+        label: 'the district hub',
+        note: 'The active segment is a white card on the sunken track, carrying the shallow edge. No borders, no underline, no sliding outline.',
+        render: () => (
+          <SegmentedControl
+            items={[
+              {label: 'Stops'},
+              {label: 'Words', count: '19'},
+              {label: 'Phrases', count: '7'},
+            ]}
+            active={0}
+          />
+        ),
+      },
+      {
+        label: 'Speak and Read',
+        note: 'These are segments rather than tabs, which is the decision that keeps TabBar at four forever.',
+        render: () => <SegmentedControl items={[{label: 'Speak'}, {label: 'Read'}]} active={1} />,
+      },
+    ],
+  },
+
+  TabBar: {
+    specimens: [
+      {
+        label: 'the four destinations',
+        note: 'Four, and it never grows. A filled bar with no top border and no translucency — the protection gradient above does the separating.',
+        render: () => (
+          <View className="-m-4">
+            <TabBar active="journey" />
+          </View>
+        ),
+      },
+      {
+        label: 'each destination active',
+        render: () => (
+          <View className="-m-4 gap-2">
+            <TabBar active="practice" />
+            <TabBar active="collection" />
+            <TabBar active="you" />
+          </View>
+        ),
+      },
+    ],
+  },
   TibetanText: {
     specimens: [
       {

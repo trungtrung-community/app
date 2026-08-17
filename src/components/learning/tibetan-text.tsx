@@ -150,7 +150,7 @@ export function TibetanText({
       {roman ? (
         // Hidden from assistive tech: the romanization is already the glyph's
         // accessible name, so announcing it twice is noise.
-        <Text accessibilityElementsHidden importantForAccessibility="no" style={styles.roman}>
+        <Text aria-hidden style={styles.roman}>
           {roman}
         </Text>
       ) : null}

@@ -144,8 +144,10 @@ export function Icon({name, size = DEFAULT_SIZE, strokeWidth, color, label, test
       color={color}
       strokeWidth={strokeWidth ?? SIZE_STROKE[size] ?? DEFAULT_STROKE}
       accessibilityLabel={label}
-      accessibilityElementsHidden={label === undefined}
-      importantForAccessibility={label === undefined ? 'no-hide-descendants' : 'yes'}
+      // aria-hidden rather than the native-only pair: React Native maps it to
+      // accessibilityElementsHidden on a device and to aria-hidden on web, where the
+      // native props leak into the DOM and React warns about them.
+      aria-hidden={label === undefined}
       testID={testID}
     />
   );
