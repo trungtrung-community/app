@@ -26,9 +26,17 @@
  *   wider than the screen. Omitted rather than guessed at.
  */
 
+import {Fragment, type ReactNode} from 'react';
 import {Text, View, type StyleProp, type TextStyle, type ViewStyle} from 'react-native';
 
-import {lineLetters, tshegBreaks, withTsheg, type TibetanUnit} from '../../domain/tibetan';
+import {
+  hasTibetan,
+  lineLetters,
+  splitRuns,
+  tshegBreaks,
+  withTsheg,
+  type TibetanUnit,
+} from '../../domain/tibetan';
 import {color, fontFamily, fontSize, leading} from '../../theme/tokens.generated';
 
 /** The Tibetan size ramp. Tibetan runs optically small, so it is stepped up a notch. */
@@ -181,6 +189,39 @@ export function TibetanText({
       {wylie ? <Text style={styles.wylie}>{wylie}</Text> : null}
       {gloss ? <Text style={styles.gloss}>{gloss}</Text> : null}
     </View>
+  );
+}
+
+/**
+ * Tibetan runs inside a Latin string, each routed through the inline renderer.
+ *
+ * This is the design system's `TibetanText.mixed()`, as a plain function rather than a
+ * static on the component — the same thing under a name TypeScript can see.
+ *
+ * It exists for the strings a receiver cannot wrap: a Sheet title, a Tooltip label, a
+ * RailNode caption. Those arrive as props already assembled, so the call site has no
+ * chance to put `<TibetanText>` around the Tibetan part, and without this the script
+ * would render in the receiver's Latin type — at 1.55 leading, letter-spaced, and
+ * uppercased if the receiver uppercases.
+ *
+ * Returns the string untouched when there is no Tibetan in it, so it is safe to call on
+ * every label rather than only the ones someone remembered were bilingual.
+ *
+ * @example mixedTibetan('The ད is silent')
+ * @example mixedTibetan(title, 'md')
+ */
+export function mixedTibetan(value: string, size: TibetanSize = 'xs'): ReactNode {
+  if (!hasTibetan(value)) {
+    return value;
+  }
+  return splitRuns(value).map((run, index) =>
+    run.tibetan ? (
+      <TibetanText key={index} inline size={size}>
+        {run.text}
+      </TibetanText>
+    ) : (
+      <Fragment key={index}>{run.text}</Fragment>
+    ),
   );
 }
 
