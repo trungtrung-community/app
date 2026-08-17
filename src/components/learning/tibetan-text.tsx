@@ -29,7 +29,14 @@
  */
 
 import {Fragment, type ReactNode} from 'react';
-import {Text, View, type StyleProp, type TextStyle, type ViewStyle} from 'react-native';
+import {
+  Text,
+  View,
+  type StyleProp,
+  type TextProps,
+  type TextStyle,
+  type ViewStyle,
+} from 'react-native';
 
 import {
   hasTibetan,
@@ -52,6 +59,22 @@ const TIB_SIZES = {
 } as const;
 
 export type TibetanSize = keyof typeof TIB_SIZES;
+
+/**
+ * The language, marked for both targets.
+ *
+ * `accessibilityLanguage` is the React Native prop and is what a device reads. It never
+ * reaches the DOM — react-native-web drops it, exactly as it drops `accessibilityState` —
+ * so the web needs the `lang` attribute as well, and React Native ignores an unknown prop.
+ * One each, rather than the one whichever platform was checked last happened to need.
+ *
+ * The cast is the whole reason this is a constant: React Native does not type `lang`, and
+ * a cast buried in the JSX would read as a mistake rather than as a second target.
+ */
+const TIBETAN_LANGUAGE = {
+  accessibilityLanguage: 'bo',
+  lang: 'bo',
+} as unknown as Partial<TextProps>;
 
 /**
  * The line box Noto Serif Tibetan *declares*, as a multiple of font size.
@@ -172,7 +195,7 @@ export function TibetanText({
   if (inline) {
     return (
       <Text
-        accessibilityLanguage="bo"
+        {...TIBETAN_LANGUAGE}
         accessibilityLabel={highlightLabel ?? roman}
         style={[glyphStyle, textStyle]}
         testID={testID}
@@ -185,7 +208,7 @@ export function TibetanText({
   return (
     <View style={[align === 'center' && styles.centered, style]} testID={testID}>
       <Text
-        accessibilityLanguage="bo"
+        {...TIBETAN_LANGUAGE}
         accessibilityLabel={highlightLabel ?? roman}
         style={[glyphStyle, styles.ink, align === 'center' && styles.centerText, textStyle]}
       >

@@ -102,6 +102,20 @@ function stripComment(line: string): string {
   return line;
 }
 
+/**
+ * The line with every string literal blanked out, keeping the quotes.
+ *
+ * For the rules that look at JSX shape rather than at words. Without it, a specimen note
+ * *describing* a `lang="bo"` span reads as one, and a Tibetan string passed as a prop reads
+ * as bare script in a text position.
+ */
+function withoutLiterals(line: string): string {
+  return line.replace(
+    /"([^"\\]*(?:\\.[^"\\]*)*)"|'([^'\\]*(?:\\.[^'\\]*)*)'|`([^`\\]*(?:\\.[^`\\]*)*)`/g,
+    match => match[0] + ' '.repeat(Math.max(match.length - 2, 0)) + match[0],
+  );
+}
+
 /** String literal contents on a line, so prose rules do not fire on code. */
 function literals(line: string): string[] {
   const out: string[] = [];
@@ -224,12 +238,14 @@ const RULES: Rule[] = [
       if (family) {
         return family;
       }
-      if (/accessibilityLanguage/.test(line)) {
-        return 'accessibilityLanguage';
+      // JSX shape, so the rules read markup rather than the prose about it.
+      const markup = withoutLiterals(line);
+      if (/accessibilityLanguage/.test(markup) || /\slang=/.test(markup)) {
+        return 'the language mark';
       }
       // Tibetan sitting in a JSX text position — `<Text>ཀ</Text>`. Script inside a string
       // is a prop or a specimen, which is how content is supposed to travel.
-      const jsxText = line.match(/>[^<>{}"'`]*[ༀ-࿿][^<>{}"'`]*</)?.[0];
+      const jsxText = markup.match(/>[^<>{}]*[ༀ-࿿][^<>{}]*</)?.[0];
       return jsxText ? jsxText.trim().slice(0, 40) : null;
     },
   },
@@ -275,7 +291,10 @@ function* walk(dir: string): Generator<string> {
     }
     if (entry.isDirectory()) {
       yield* walk(full);
-    } else if (/\.(ts|tsx|css)$/.test(entry.name)) {
+    } else if (/\.(ts|tsx|css)$/.test(entry.name) && !/\.test\.tsx?$/.test(entry.name)) {
+      // Tests are not the product. They render TibetanText itself, assert on colours and
+      // reproduce the very shapes these rules forbid, on purpose — and nothing in them is
+      // ever seen by a learner.
       yield full;
     }
   }

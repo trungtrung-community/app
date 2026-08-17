@@ -9,8 +9,8 @@
  * nullable wherever the column is. Map them at the adapter boundary — the
  * engine must never see a database row.
  *
- * schema_version  1
- * content_version f03101fcccb527b1
+ * schema_version  2
+ * content_version a82ab13f20705295
  */
 
 /**
@@ -20,7 +20,7 @@
  * build with a changed schema therefore fails loudly at startup rather than
  * returning undefined for a renamed column.
  */
-export const CONTENT_SCHEMA_VERSION = 1;
+export const CONTENT_SCHEMA_VERSION = 2;
 
 /**
  * The content build this app bundles.
@@ -30,7 +30,7 @@ export const CONTENT_SCHEMA_VERSION = 1;
  * against what the copied file reports and re-imports when they differ, which
  * is safe because progress lives in MMKV and never in the content database.
  */
-export const CONTENT_VERSION = "f03101fcccb527b1";
+export const CONTENT_VERSION = "a82ab13f20705295";
 
 /** collection — 0 rows in this build. */
 export type CollectionRow = {
@@ -96,5 +96,4 @@ export type VocabularyRow = {
   register: string | null;
   status: string | null;
   audio_natural: string | null;
-  audio_slow: string | null;
 };

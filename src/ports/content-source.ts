@@ -44,10 +44,18 @@ export type VocabularyItem = {
   /** Drawn by WordRow as the register marker. */
   readonly register: string | null;
   /**
-   * Clip ids, not URIs. Turning one into something playable is `AudioSource`'s job,
-   * which is what lets audio move behind a network later without touching content.
+   * The clip id, not a URI. Turning one into something playable is `AudioSource`'s
+   * job, which is what lets audio move behind a network later without touching
+   * content.
+   *
+   * There is one recording per item and no slow variant. A slower reading is the
+   * same clip played at a reduced rate with pitch correction, so nothing is stored
+   * twice and a word cannot drift from its own slow reading.
+   *
+   * Null means no recording exists. The listen control is hidden rather than shown
+   * broken.
    */
-  readonly audio: {readonly natural: string | null; readonly slow: string | null};
+  readonly audio: {readonly natural: string | null};
 };
 
 export type ContentSource = {

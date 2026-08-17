@@ -27,7 +27,7 @@ export type ContentDatabase = {
 
 const VOCAB_COLUMNS =
   'id, slug, district, district_number, bo, roman, en, en_definition, ' +
-  'wylie, thl, thl_note, pos, register, status, audio_natural, audio_slow';
+  'wylie, thl, thl_note, pos, register, status, audio_natural';
 
 const DEFAULT_SEARCH_LIMIT = 20;
 

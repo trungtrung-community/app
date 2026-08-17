@@ -69,11 +69,15 @@ describe.each(adapters)('%s', (_name, make) => {
     });
   });
 
-  it('exposes audio as clip ids, not URIs', async () => {
+  it('exposes audio as a clip id, not a URI', async () => {
     const item = await make().getVocabulary(SHARED_ID);
-    // No recordings exist yet, so both are null — but the SHAPE is the contract:
-    // resolving a clip to something playable belongs to AudioSource.
-    expect(item.audio).toEqual({natural: null, slow: null});
+    // The shape is the contract, not the value. Resolving a clip to something
+    // playable belongs to AudioSource, and there is exactly one clip per item —
+    // a slower reading is this one played at a reduced rate, never a second
+    // recording. Asserting the key rather than `null` keeps this test true on
+    // the day recordings actually land.
+    expect(Object.keys(item.audio)).toEqual(['natural']);
+    expect(item.audio.natural === null || typeof item.audio.natural === 'string').toBe(true);
   });
 
   it('uses camelCase domain keys, never database column names', async () => {

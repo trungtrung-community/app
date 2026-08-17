@@ -1,8 +1,8 @@
 /**
  * @fileoverview The boundary between storage rows and domain values.
  *
- * A database row is snake_case, nullable wherever the column is, and has `audio`
- * split across two columns because that is how it stores best. A domain value is
+ * A database row is snake_case, nullable wherever the column is, and keeps `audio`
+ * in a flat column because that is how it stores best. A domain value is
  * camelCase and shaped the way the rules and the components want to read it. This
  * file is the only place that knows both.
  *
@@ -37,6 +37,6 @@ export function toVocabularyItem(row: VocabularyRow): VocabularyItem {
     thlNote: row.thl_note,
     pos: row.pos,
     register: row.register,
-    audio: {natural: row.audio_natural, slow: row.audio_slow},
+    audio: {natural: row.audio_natural},
   };
 }
