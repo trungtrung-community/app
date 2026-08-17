@@ -16,10 +16,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "sync:design": "node scripts/sync-design.ts",
-    "sync": "npm run sync:design && npm run sync:content",
-    "validate": "npm run typecheck && npm run lint && npm run format:check && npm run test && npm run sync:design -- --check && npm run check:content",
+    "sync": "npm run sync:design && npm run sync:content && npm run sync:cards",
+    "validate": "npm run typecheck && npm run lint && npm run format:check && npm run test && npm run sync:design -- --check && npm run check:content && npm run sync:cards -- --check",
     "sync:content": "node scripts/sync-content.ts",
-    "check:content": "node scripts/sync-content.ts --check"
+    "check:content": "node scripts/sync-content.ts --check",
+    "sync:cards": "node scripts/sync-cards.ts"
   },
   "dependencies": {
     "@expo-google-fonts/gabarito": "^0.4.2",
