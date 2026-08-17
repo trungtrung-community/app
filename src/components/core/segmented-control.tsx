@@ -58,7 +58,7 @@ export function SegmentedControl({
           <Pressable
             key={`${segment.label}-${index}`}
             accessibilityRole="tab"
-            accessibilityState={{selected: on}}
+            aria-selected={on}
             onPress={onChange ? () => onChange(index, segment) : undefined}
             className={`h-10 flex-1 flex-row items-center justify-center rounded-pill ${
               on ? 'bg-surface-card' : 'bg-transparent'

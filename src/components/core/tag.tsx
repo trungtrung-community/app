@@ -79,7 +79,7 @@ export function Tag({
       <View className={shell} style={style} testID={testID}>
         <Pressable
           accessibilityRole="button"
-          accessibilityState={{selected}}
+          aria-selected={selected}
           onPress={onPress}
           className={box}
           style={({pressed}) => (pressed ? pressScale : null)}
@@ -95,7 +95,7 @@ export function Tag({
     return (
       <Pressable
         accessibilityRole="button"
-        accessibilityState={{selected}}
+        aria-selected={selected}
         onPress={onPress}
         className={`${shell} ${box}`}
         style={({pressed}) => [pressed && pressScale, style]}

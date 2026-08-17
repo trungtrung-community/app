@@ -57,7 +57,7 @@ export function TabBar({active = 'journey', tabs = TABS, onSelect, style, testID
           <Pressable
             key={tab.id}
             accessibilityRole="tab"
-            accessibilityState={{selected: on}}
+            aria-selected={on}
             accessibilityLabel={tab.label}
             onPress={onSelect ? () => onSelect(tab.id) : undefined}
             className="flex-1 items-center justify-center gap-[3px]"
