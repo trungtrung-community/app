@@ -54,7 +54,39 @@ So `--leading-tibetan: 2.1` sets the line box _tighter_ than the font asks for. 
 | 68   | 143        | 167 | +24      |
 
 **No glyph is clipped on web** — overflow is visible, and every stack draws in full at
-every size. Multi-line blocks at hero size separate cleanly with no collision.
+every size.
+
+### Correction, 2026-08-17 (while porting LetterTile)
+
+The `ink` column above is not the ink. It is a rendered element height, and reading it as
+the glyphs' painted extent made the overflow look dangerous when it is empty space.
+
+Measured directly with `TextMetrics.actualBoundingBox*` against the bundled 400Regular
+face, at 22pt:
+
+| what                                 | value                  |
+| ------------------------------------ | ---------------------- |
+| font's declared box (ascent+descent) | 32 + 30 = 62           |
+| `--leading-tibetan` box (2.1×)       | 46.2                   |
+| `ཀ` painted ink                      | 14.9 + 10.4 = **25.3** |
+| `བསྒྲིབས` painted ink                | 23.3 + 10.2 = **33.5** |
+
+With 2.1 applied the half-leading is (46.2 − 62) / 2 = −7.9, putting the baseline 24.1
+below the box top. The tall stack's ink therefore spans 0.8 → 34.3 inside a 0 → 46.2 box:
+**it fits, with 12pt spare.** The 0.35 × font-size figure is that half-leading — the part
+of the font's declared box hanging outside the line box, which contains no ink.
+
+The font declares 62 because it reserves room for the tallest stack it could ever be asked
+to draw, not because any real glyph uses it.
+
+**What this changes.** Nothing about finding 2's headroom advice for what sits _below_ a
+Tibetan block — that still holds, since the declared box is what the layout reserves. But a
+fixed-height box holding one known glyph should be sized from the drawn number, not from the
+declared line box. Provisioning the full 2.8× was tried in `LetterTile` and is visibly
+worse: it opens 24pt of blank space between a glyph and its romanization.
+
+Still unverified on Android, which is the platform that clips rather than overflowing. The
+numbers above are web. Multi-line blocks at hero size separate cleanly with no collision.
 
 **Consequence for the components:** a Tibetan block's ink extends ≈0.35 × font size
 beyond its layout box. Any layout that puts something immediately below Tibetan needs

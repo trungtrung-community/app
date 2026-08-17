@@ -42,6 +42,13 @@ import {Radio} from './forms/radio';
 import {SearchField} from './forms/search-field';
 import {Select} from './forms/select';
 import {Switch} from './forms/switch';
+import {AudioButton} from './learning/audio-button';
+import {CircuitRing} from './learning/circuit-ring';
+import {LetterTile} from './learning/letter-tile';
+import {ProgressBar} from './learning/progress-bar';
+import {SectionHeader} from './learning/section-header';
+import {StatPill} from './learning/stat-pill';
+import {SyllableChip} from './learning/syllable-chip';
 import {TibetanText} from './learning/tibetan-text';
 
 /** A row of specimens that belong side by side. */
@@ -1025,6 +1032,206 @@ export const PORTED: Record<string, PortedComponent> = {
               </>
             )}
           </Live>
+        ),
+      },
+    ],
+  },
+
+  SectionHeader: {
+    specimens: [
+      {
+        label: 'eyebrow and title',
+        note: 'Plain text, no card and no rule. It marks a new stretch of the journey by the space around it, the way a chapter opening does.',
+        render: () => (
+          <Stack>
+            <SectionHeader eyebrow="Section 2">The Market District</SectionHeader>
+            <SectionHeader align="start">Where you left off</SectionHeader>
+          </Stack>
+        ),
+      },
+    ],
+  },
+
+  ProgressBar: {
+    specimens: [
+      {
+        label: 'the four tones',
+        note: 'The journey’s own progress is a CircuitRing — a walk round, not a bar. This is for the things that genuinely are linear.',
+        render: () => (
+          <Stack>
+            <ProgressBar value={4} max={7} label="This stop" />
+            <ProgressBar value={62} tone="reward" />
+            <ProgressBar value={100} tone="correct" />
+            <ProgressBar value={18} tone="alert" height={8} />
+          </Stack>
+        ),
+      },
+      {
+        label: 'a bad value cannot draw outside the track',
+        note: 'Clamped, and guarded against a zero max rather than dividing by it.',
+        render: () => (
+          <Stack>
+            <ProgressBar value={-20} max={10} label="below zero" />
+            <ProgressBar value={999} max={10} label="over max" />
+            <ProgressBar value={5} max={0} label="max of zero" />
+          </Stack>
+        ),
+      },
+    ],
+  },
+
+  StatPill: {
+    specimens: [
+      {
+        label: 'the icon carries the meaning, the number stays ink',
+        note: 'Five pills in a row read as five different things without five different number colours competing. streak and hearts share crown red on purpose — both are things you can lose, and the icon separates them.',
+        render: () => (
+          <Row>
+            <StatPill tone="streak" value="12" label="12 days walking" />
+            <StatPill tone="xp" value="340" label="340 experience" />
+            <StatPill tone="hearts" value="4" label="4 hearts left" />
+            <StatPill tone="accent" value="2" label="District 2" />
+            <StatPill value="19" label="19 words known" />
+          </Row>
+        ),
+      },
+    ],
+  },
+
+  CircuitRing: {
+    specimens: [
+      {
+        label: 'a second circuit overlays the first, never resets it',
+        note: 'The thick inner arc is the first walk; the thin outer arc is the second pass over the same ground. The inner arc keeps its finished fill — the first walk happened and nothing later un-happens it, which is the same commitment the progression model makes by never demoting a state.',
+        render: () => (
+          <Row>
+            <CircuitRing circuit1={0.35} circuit2={0} label="First circuit, a third done">
+              <Text className="type-body-strong text-fg-heading">3</Text>
+            </CircuitRing>
+            <CircuitRing circuit1={1} circuit2={0} label="First circuit closed">
+              <Text className="type-body-strong text-fg-heading">7</Text>
+            </CircuitRing>
+            <CircuitRing circuit1={1} circuit2={0.5} label="Halfway round again">
+              <Text className="type-body-strong text-fg-heading">7</Text>
+            </CircuitRing>
+            <CircuitRing circuit1={1} circuit2={1} label="Both circuits closed">
+              <Icon name="check" size={28} />
+            </CircuitRing>
+          </Row>
+        ),
+      },
+      {
+        label: 'one circuit only',
+        render: () => (
+          <CircuitRing size={120} circuit1={0.7} showCircuit2={false} label="Seven of ten">
+            <Text className="type-title text-fg-heading">7</Text>
+          </CircuitRing>
+        ),
+      },
+    ],
+  },
+
+  SyllableChip: {
+    specimens: [
+      {
+        label: 'the five tones',
+        note: 'The glyph goes through TibetanText like every Tibetan string in the system. The design system’s own source had a hand-set lang="bo" span here until 2026-08-16, which put 83 mounts outside the rule — which is why the rule is enforced by lint rather than by intent.',
+        render: () => (
+          <Row>
+            <SyllableChip glyph="ཀྲ" roman="tra" onPress={noop} />
+            <SyllableChip glyph="སྐུ" roman="ku" tone="selected" onPress={noop} />
+            <SyllableChip glyph="བཀྲ" roman="tra" tone="correct" />
+            <SyllableChip glyph="ཤིས" roman="shi" tone="wrong" />
+            <SyllableChip glyph="བདེ" roman="de" tone="muted" />
+          </Row>
+        ),
+      },
+      {
+        label: 'sizes, and without a romanization',
+        render: () => (
+          <Row>
+            <SyllableChip glyph="ཀ" roman="ka" size="sm" onPress={noop} />
+            <SyllableChip glyph="ཀ" roman="ka" size="md" onPress={noop} />
+            <SyllableChip glyph="ཀ" roman="ka" size="lg" onPress={noop} />
+            <SyllableChip glyph="ཀ" onPress={noop} />
+          </Row>
+        ),
+      },
+    ],
+  },
+
+  LetterTile: {
+    specimens: [
+      {
+        label: 'the five states of knowing a letter',
+        note: 'learned, not yet, selected while answering, and the two results. The box is never smaller than the glyph’s ink needs — the board’s numbers were measured in a browser, where ink may overflow. Android clips instead.',
+        render: () => (
+          <Row>
+            <LetterTile glyph="ཀ" roman="ka" onPress={noop} />
+            <LetterTile glyph="ཁ" roman="kha" state="notYet" />
+            <LetterTile glyph="ག" roman="ga" state="selected" onPress={noop} />
+            <LetterTile glyph="ང" roman="nga" state="correct" />
+            <LetterTile glyph="ཅ" roman="ca" state="wrong" />
+          </Row>
+        ),
+      },
+      {
+        label: 'base names the letter a stack was built from',
+        note: 'Not decoration. ར་བཏགས་ alone produces tra three times, thra three times and thraa three times, and nothing else on the tile says which base made which.',
+        render: () => (
+          <Row>
+            <LetterTile glyph="ཀྲ" roman="tra" base="ཀ" size="lg" />
+            <LetterTile glyph="ཁྲ" roman="thra" base="ཁ" size="lg" />
+            <LetterTile glyph="གྲ" roman="thraa" base="ག" size="lg" />
+          </Row>
+        ),
+      },
+      {
+        label: 'sizes, and a caption',
+        render: () => (
+          <Row>
+            <LetterTile glyph="ཀ" roman="ka" size="sm" />
+            <LetterTile glyph="ཀ" roman="ka" size="md" />
+            <LetterTile glyph="ཀ" roman="ka" size="xl" caption="The first of the thirty" />
+          </Row>
+        ),
+      },
+    ],
+  },
+
+  AudioButton: {
+    specimens: [
+      {
+        label: 'ready, playing, and the half-speed badge',
+        note: 'The pulse runs only while sound is actually coming out — a paused button that keeps pulsing says the wrong thing. It holds still under reduced motion.',
+        render: () => (
+          <Row>
+            <AudioButton onPress={noop} />
+            <AudioButton playing onPress={noop} />
+            <AudioButton speed="slow" onPress={noop} />
+            <AudioButton size="lg" playing onPress={noop} />
+          </Row>
+        ),
+      },
+      {
+        label: 'downloading, and unavailable',
+        note: 'docs/01 commits to no in-app downloads ever, so these describe the install-time delivery of an audio pack rather than anything a learner waits on mid-lesson.',
+        render: () => (
+          <Row>
+            <AudioButton state="downloading" progress={0.35} />
+            <AudioButton state="downloading" progress={0.8} size="lg" />
+            <AudioButton state="unavailable" />
+          </Row>
+        ),
+      },
+      {
+        label: 'sizes',
+        render: () => (
+          <Row>
+            <AudioButton size="sm" onPress={noop} />
+            <AudioButton size="md" onPress={noop} />
+            <AudioButton size="lg" onPress={noop} />
+          </Row>
         ),
       },
     ],

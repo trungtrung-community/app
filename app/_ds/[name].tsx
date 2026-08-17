@@ -10,6 +10,7 @@ import {useLocalSearchParams} from 'expo-router';
 import {ScrollView, Text, View} from 'react-native';
 
 import {DS_ROSTER} from '../../src/components/ds-roster.generated';
+import {mixedTibetan} from '../../src/components/learning/tibetan-text';
 import {PORTED} from '../../src/components/specimens';
 
 export default function ComponentSpecimens() {
@@ -38,7 +39,10 @@ export default function ComponentSpecimens() {
         <View key={specimen.label} className="gap-2">
           <Text className="type-label uppercase text-fg-subtle">{specimen.label}</Text>
           {specimen.note ? (
-            <Text className="type-caption text-fg-muted">{specimen.note}</Text>
+            // Through mixedTibetan: a note explaining a Tibetan rule tends to quote
+            // Tibetan, and the gallery is not exempt from the rule it documents. Left as a
+            // plain string it rendered ར་བཏགས་ at caption metrics, stacks colliding.
+            <Text className="type-caption text-fg-muted">{mixedTibetan(specimen.note)}</Text>
           ) : null}
           <View className="rounded-card bg-surface-card p-4">{specimen.render()}</View>
         </View>

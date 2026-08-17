@@ -52,26 +52,37 @@ const TIB_SIZES = {
 export type TibetanSize = keyof typeof TIB_SIZES;
 
 /**
- * Noto Serif Tibetan's natural line box, as a multiple of font size.
+ * The line box Noto Serif Tibetan *declares*, as a multiple of font size.
  *
  * Measured at five sizes in docs/spikes/2026-08-17-tibetan-rendering.md, where the ratio
- * held between 2.80 and 2.86. `--leading-tibetan: 2.1` is therefore a compression of
- * about 25%, and ink overflows the line box by roughly 0.35x the font size.
+ * held between 2.80 and 2.86 — at 22pt, an ascent of 32 and a descent of 30.
+ *
+ * **This is not how much room the ink needs.** The font declares that much because it
+ * reserves space for the tallest stack it could ever be asked to draw. Real ink is far
+ * smaller: at 22pt, `ཀ` measures 25.3pt and `བསྒྲིབས` — one of the tallest stacks in the
+ * language — measures 33.5pt, against `--leading-tibetan`'s 46.2pt box. Both fit, with
+ * room over.
+ *
+ * The spike's finding 2 read the 0.35x overflow as ink escaping the line box. It is not:
+ * 0.35 x 22 is 7.7, which is the *half-leading* — the amount the font's declared box hangs
+ * outside a compressed line box, above and below, with no ink in it. Corrected here rather
+ * than left to be rediscovered, because the wrong reading makes every fixed-height Tibetan
+ * box a third taller than it needs to be.
  */
-const NATURAL_LINE_BOX = 2.8;
+const DECLARED_LINE_BOX = 2.8;
 
 /**
- * The vertical room a Tibetan run of this size needs to draw its full ink.
+ * The room a Tibetan run of this size would need for the font's whole declared box.
  *
- * For anything that puts Tibetan in a box of fixed height — a text field, a tile, a chip.
- * `--leading-tibetan` is what a *paragraph* of Tibetan is set at; it is not enough room
- * for the tallest stacks, which is why the spike's finding 2 makes headroom a rule rather
- * than a nicety. Android is the platform that clips rather than overflowing.
+ * Deliberately generous — see above, real ink needs about half this. Worth it only where
+ * the content is arbitrary and the cost of clipping is high: an editable field, where the
+ * learner can type any stack and Android's baseline placement inside a compressed line box
+ * is still unverified. A tile showing one known glyph should use the drawn size instead.
  *
  * @example minHeight: tibetanBox('md')   // 62 at --text-tib-md
  */
 export function tibetanBox(size: TibetanSize): number {
-  return Math.ceil(TIB_SIZES[size] * NATURAL_LINE_BOX);
+  return Math.ceil(TIB_SIZES[size] * DECLARED_LINE_BOX);
 }
 
 export type TibetanTextProps = {
