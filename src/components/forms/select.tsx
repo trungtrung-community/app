@@ -7,30 +7,19 @@
  * Ported from the bundle: `Select` ships no `.jsx` in the export.
  *
  * This is the one form control with no React Native equivalent at all. The web original is
- * a real `<select>`, which the browser renders as a native picker; there is no such
- * element here, and Expo ships no picker. So the control is split in two: a trigger that
- * looks exactly like the drawn one, and a panel of options that opens over it.
- *
- * The panel is provisional. `Sheet` is the design system's component for exactly this —
- * a list of choices rising from the bottom edge — and it has not been ported yet. When it
- * lands, the `Modal` block below is deleted and the options move into it. Everything above
- * that block, including this component's whole contract, stays as it is.
+ * a real `<select>`, which the browser renders as a native picker; there is no such element
+ * here, and Expo ships no picker. So the control is split in two: a trigger that looks
+ * exactly like the drawn one, and the options in a `Sheet` — which is the design system's
+ * own answer to a list of choices, so the picker is not a new surface but an existing one.
  */
 
 import {useState} from 'react';
-import {
-  Modal,
-  Pressable,
-  Text,
-  View,
-  type StyleProp,
-  type TextStyle,
-  type ViewStyle,
-} from 'react-native';
+import {Pressable, Text, View, type StyleProp, type TextStyle, type ViewStyle} from 'react-native';
 
 import {Icon} from '../core/icon';
 import {pressScale} from '../core/press';
-import {color, layout, radius, space} from '../../theme/tokens.generated';
+import {Sheet} from '../feedback/sheet';
+import {color, layout, space} from '../../theme/tokens.generated';
 
 const CONTROL_HEIGHT = 52;
 
@@ -117,24 +106,21 @@ export function Select({
         </Text>
       ) : null}
 
-      {/* Provisional: this whole block becomes a <Sheet> once the feedback group lands. */}
-      <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Close"
-          onPress={() => setOpen(false)}
-          style={SCRIM}
-        />
-        <View className="bg-surface-card" style={PANEL}>
+      <Sheet open={open} title={label} onClose={() => setOpen(false)}>
+        {/* The sheet's own title is the field's label, so the learner sees the same word
+            they pressed rather than a second name for it. */}
+        <View accessibilityRole="radiogroup">
           {items.map(item => {
             const on = item.value === value;
             return (
               <Pressable
                 key={item.value}
-                accessibilityRole="menuitem"
-                aria-selected={on}
+                // A radio rather than a menuitem: these are one-of-many with a persistent
+                // selection, which is what a radio announces and a menu item does not.
+                accessibilityRole="radio"
+                aria-checked={on}
                 onPress={() => choose(item.value)}
-                className="w-full flex-row items-center justify-between px-5"
+                className="w-full flex-row items-center justify-between"
                 style={OPTION}
               >
                 <Text className={`type-body-strong ${on ? 'text-fg-accent' : 'text-fg-heading'}`}>
@@ -145,7 +131,7 @@ export function Select({
             );
           })}
         </View>
-      </Modal>
+      </Sheet>
     </View>
   );
 }
@@ -153,13 +139,5 @@ export function Select({
 const LABEL_GAP: TextStyle = {marginBottom: space['1h']};
 const HINT_GAP: TextStyle = {marginTop: space['1h']};
 const CONTROL: ViewStyle = {height: CONTROL_HEIGHT};
-
-const SCRIM: ViewStyle = {flex: 1, backgroundColor: color.scrim};
-
-const PANEL: ViewStyle = {
-  paddingVertical: space['2'],
-  borderTopLeftRadius: radius.sheet,
-  borderTopRightRadius: radius.sheet,
-};
 
 const OPTION: ViewStyle = {minHeight: layout.touchMin};

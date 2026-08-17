@@ -28,6 +28,14 @@ import {ListRow} from './core/list-row';
 import {SegmentedControl} from './core/segmented-control';
 import {TabBar} from './core/tab-bar';
 import {Tag} from './core/tag';
+import {Dialog} from './feedback/dialog';
+import {EmptyState} from './feedback/empty-state';
+import {MascotSpeech} from './feedback/mascot-speech';
+import {OfflineBanner} from './feedback/offline-banner';
+import {Sheet} from './feedback/sheet';
+import {Skeleton} from './feedback/skeleton';
+import {Toast} from './feedback/toast';
+import {Tooltip} from './feedback/tooltip';
 import {Checkbox} from './forms/checkbox';
 import {Input} from './forms/input';
 import {Radio} from './forms/radio';
@@ -57,6 +65,9 @@ export type Specimen = {
 export type PortedComponent = {
   readonly specimens: readonly Specimen[];
 };
+
+/** For an action that has to exist so the control renders, but has nowhere to go here. */
+function noop() {}
 
 /** Real records, so the specimens read like the product rather than like a test. */
 const TRASHI = 'བཀྲ་ཤིས་བདེ་ལེགས';
@@ -771,7 +782,7 @@ export const PORTED: Record<string, PortedComponent> = {
     specimens: [
       {
         label: 'closed, with a value',
-        note: 'The only control with no React Native equivalent at all: the web original is a real <select> the browser draws. The trigger matches the drawn control; the options panel below it is provisional until Sheet is ported.',
+        note: 'The only control with no React Native equivalent at all: the web original is a real <select> the browser draws. The trigger matches the drawn control, and the options open in a Sheet — the design system’s own answer to a list of choices, so the picker is an existing surface rather than a new one. Press it.',
         render: () => (
           <Stack>
             <Live initial="19:00">
@@ -809,6 +820,211 @@ export const PORTED: Record<string, PortedComponent> = {
             <Select label="District" options={['Barkhor', 'Teahouse']} />
             <Select label="Dialect" value="Lhasa" options={['Lhasa']} disabled />
           </Stack>
+        ),
+      },
+    ],
+  },
+
+  Skeleton: {
+    specimens: [
+      {
+        label: 'the three shapes',
+        note: 'The sheen is a band travelling across a clipped shape, because React Native has neither a gradient background nor background-position. It holds still under reduced motion.',
+        render: () => (
+          <Stack>
+            <Skeleton shape="text" width="70%" />
+            <Skeleton shape="text" width="45%" />
+            <Skeleton shape="block" height={72} />
+            <Skeleton shape="circle" width={68} />
+          </Stack>
+        ),
+      },
+      {
+        label: 'composed into the shape of a journey row',
+        note: 'A skeleton sketches the screen being loaded. That is the whole reason it is not a spinner.',
+        render: () => (
+          <Row>
+            <Skeleton shape="circle" width={68} />
+            <View style={{flex: 1, gap: 8}}>
+              <Skeleton shape="text" width="60%" />
+              <Skeleton shape="text" width="85%" height={12} />
+            </View>
+          </Row>
+        ),
+      },
+    ],
+  },
+
+  Toast: {
+    specimens: [
+      {
+        label: 'the four tones',
+        note: 'The icon belongs to the tone rather than being a separate decision. The action takes the tone’s own text colour — teal on grass or crown would be unreadable.',
+        render: () => (
+          <Stack>
+            <Toast>Saved for later</Toast>
+            <Toast tone="correct">Stop complete</Toast>
+            <Toast tone="reward" action="See it" onAction={noop}>
+              New card earned
+            </Toast>
+            <Toast tone="alert" action="Undo" onAction={noop}>
+              Removed from your collection
+            </Toast>
+          </Stack>
+        ),
+      },
+    ],
+  },
+
+  OfflineBanner: {
+    specimens: [
+      {
+        label: 'the default message',
+        note: 'It says what still works, not that something failed — docs/01 commits to the whole app working offline from first launch, so losing connectivity takes nothing away.',
+        render: () => <OfflineBanner />,
+      },
+      {
+        label: 'with an action',
+        note: 'Rarely needed. teal-300 is the one place the palette’s light teal is a text colour, because the darker teals disappear on ink.',
+        render: () => (
+          <OfflineBanner action="Retry" onAction={noop}>
+            You&apos;re offline. Your progress is saved on this phone.
+          </OfflineBanner>
+        ),
+      },
+    ],
+  },
+
+  Tooltip: {
+    specimens: [
+      {
+        label: 'four sides',
+        note: 'Controlled only: there is no hover on a touch screen, so the half of the web original that showed itself on hover does not survive. Shown open here.',
+        render: () => (
+          <View style={{gap: 40, paddingVertical: 40, alignItems: 'flex-start'}}>
+            {(['top', 'bottom', 'right'] as const).map(side => (
+              <Tooltip key={side} label={`Set on the ${side}`} side={side} open>
+                <Tag>{side}</Tag>
+              </Tooltip>
+            ))}
+          </View>
+        ),
+      },
+      {
+        label: 'a Tibetan word in the label',
+        note: 'The label goes through mixedTibetan, so the script gets its own face and leading inside the caption type rather than rendering at Latin metrics.',
+        render: () => (
+          <View style={{paddingTop: 56, alignItems: 'flex-start'}}>
+            <Tooltip label={`${THUK} means mind`} open>
+              <Tag>gloss</Tag>
+            </Tooltip>
+          </View>
+        ),
+      },
+    ],
+  },
+
+  MascotSpeech: {
+    specimens: [
+      {
+        label: 'the bubble, with the crane missing',
+        note: 'No mascot art exists in this repo yet — the design system points at assets/mascot-crane.png, which has never been drawn. Without a source it renders the bubble alone rather than a broken-image gap. Shown on the app ground, because a white bubble on a white card is invisible — and the single pointed corner, the whole substitute for a speech tail, is the thing to look at.',
+        render: () => (
+          // On the pale app ground, which is where it actually sits.
+          <View className="gap-3 rounded-lg bg-surface-app p-4">
+            <MascotSpeech>Two more stops and the district opens.</MascotSpeech>
+            <MascotSpeech side="right">That is the third time today. It is sticking.</MascotSpeech>
+          </View>
+        ),
+      },
+    ],
+  },
+
+  EmptyState: {
+    specimens: [
+      {
+        label: 'points forward, never apologises',
+        note: 'The copy rule is the component. "Your first district starts below", not "No districts found".',
+        render: () => (
+          <EmptyState title="Your first district starts below" action="Begin" onAction={noop}>
+            Six stops, about ten minutes each.
+          </EmptyState>
+        ),
+      },
+      {
+        label: 'title only',
+        render: () => <EmptyState title="Nothing due today. Come back tomorrow." />,
+      },
+    ],
+  },
+
+  Sheet: {
+    specimens: [
+      {
+        label: 'open it',
+        note: 'A real Modal rather than an absolutely-positioned overlay, which is what puts it above the tab bar instead of inside whatever rendered it. The grabber is decoration: there is no drag-to-dismiss, because a rubber-banding sheet is not the one flip docs/04 allows.',
+        render: () => (
+          <Live initial={false}>
+            {(open, set) => (
+              <>
+                <Button variant="secondary" onPress={() => set(true)}>
+                  Open the sheet
+                </Button>
+                <Sheet
+                  open={open}
+                  title={`${THUK} · thuk`}
+                  onClose={() => set(false)}
+                  footer={
+                    <Button fullWidth onPress={() => set(false)}>
+                      Got it
+                    </Button>
+                  }
+                >
+                  <Text className="type-body text-fg-body">
+                    A Tibetan title goes through mixedTibetan, so the script sets properly inside
+                    the heading rather than at Latin metrics.
+                  </Text>
+                </Sheet>
+              </>
+            )}
+          </Live>
+        ),
+      },
+    ],
+  },
+
+  Dialog: {
+    specimens: [
+      {
+        label: 'a decision that must interrupt',
+        note: 'Reserved for quitting a lesson and destructive confirmations. The footer stacks: on a phone two side-by-side buttons are both too narrow, and stacking puts the safe choice under the destructive one where a thumb rests.',
+        render: () => (
+          <Live initial={false}>
+            {(open, set) => (
+              <>
+                <Button variant="danger" onPress={() => set(true)}>
+                  Leave this stop
+                </Button>
+                <Dialog
+                  open={open}
+                  title="Leave this stop?"
+                  onClose={() => set(false)}
+                  footer={
+                    <>
+                      <Button variant="danger" fullWidth onPress={() => set(false)}>
+                        Leave
+                      </Button>
+                      <Button variant="ghost" fullWidth onPress={() => set(false)}>
+                        Keep going
+                      </Button>
+                    </>
+                  }
+                >
+                  <Text className="type-body text-fg-body">Your answers so far are kept.</Text>
+                </Dialog>
+              </>
+            )}
+          </Live>
         ),
       },
     ],

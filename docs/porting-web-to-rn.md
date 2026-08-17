@@ -63,6 +63,33 @@ const BOX = {flex: 0, width: 26, height: 26}; // collapses on web
 
 `flex: 1` is fine — growing is the same instruction on both.
 
+## An `experimental_` style is not a style you can ship
+
+React Native does have gradients, as `experimental_backgroundImage`. **react-native-web does
+not implement it**, and an unsupported style is dropped rather than warned about.
+
+That turned `Skeleton`'s sheen into nothing at all on web — not a blunter sheen, nothing —
+because the gradient was the band's only paint. A component that is invisible on the
+platform the e2e suite runs on is worse than one with harder edges.
+
+The rule that generalises: if an `experimental_` style is the _only_ thing painting an
+element, the element has no fallback. Give it a plain floor first, then treat the
+experimental value as an enhancement — or skip it, which is usually the right answer.
+
+## Reanimated's easings are native-only
+
+`.easing(...)` on a layout animation logs _"Selected easing is not currently supported on
+web. Using linear easing instead."_ and runs linear. The animation still plays; only the
+curve is lost, and only on web.
+
+This is a platform gap, not a bug to fix. The curve on a device is the product, so keep it —
+but expect the warning in the browser console and do not go hunting for its cause again.
+
+## `pointerEvents` is a style, not a prop
+
+`pointerEvents="none"` on a View is deprecated and warns on every render. It goes in the
+style object.
+
 ## Fonts do not fall back
 
 A browser silently substitutes a font that has no glyph for a codepoint. React Native does
