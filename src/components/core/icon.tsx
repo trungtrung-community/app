@@ -7,12 +7,20 @@
  * name the same icon.
  *
  * The registry is explicit rather than a namespace import. Lucide ships ~1,770 icons
- * and importing the namespace would defeat tree-shaking for the sake of 34. Naming
+ * and importing the namespace would defeat tree-shaking for the sake of 37. Naming
  * them also makes `IconName` a closed type, so a typo is a compile error rather than
  * a blank square — which is what the CDN version would have produced.
  *
- * The 34 are exactly the icons used across the design system's components and the
- * six boards, counted from source.
+ * The set is every icon the design system actually names — recounted by intersecting each
+ * of Lucide's 1,767 exports against every quoted string in the components, the bundle and
+ * the six boards, then reading each hit in context to drop the false positives (`ghost` is a
+ * Button variant, `sheet` a radius token, `radio` a role, `clock` and `bird` are English
+ * glosses in the content).
+ *
+ * The first count was taken from the `.jsx` sources and missed three: `download` and
+ * `volume-x` live in AudioButton, which ships no `.jsx`, and `message-circle` appears only
+ * inside a board's data array. Counting from what is readable is not the same as counting
+ * from what exists.
  */
 
 import {
@@ -25,12 +33,14 @@ import {
   CircleAlert,
   CloudOff,
   Columns2,
+  Download,
   Flame,
   Gauge,
   Hand,
   Heart,
   Info,
   MapPin,
+  MessageCircle,
   Mic,
   Pause,
   Play,
@@ -48,6 +58,7 @@ import {
   Type,
   User,
   Volume2,
+  VolumeX,
   Wifi,
   X,
   type LucideIcon,
@@ -70,12 +81,14 @@ const ICONS = {
   circle: Circle,
   'cloud-off': CloudOff,
   'columns-2': Columns2,
+  download: Download,
   flame: Flame,
   gauge: Gauge,
   hand: Hand,
   heart: Heart,
   info: Info,
   'map-pin': MapPin,
+  'message-circle': MessageCircle,
   mic: Mic,
   pause: Pause,
   play: Play,
@@ -93,6 +106,7 @@ const ICONS = {
   type: Type,
   user: User,
   'volume-2': Volume2,
+  'volume-x': VolumeX,
   wifi: Wifi,
   x: X,
 } satisfies Record<string, LucideIcon>;
