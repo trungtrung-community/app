@@ -1,5 +1,5 @@
 {
-  "content_version": "b451f58d8e8b04fb",
+  "content_version": "0ab3fca95cfad61d",
   "schema_version": 3,
   "districts": [
     {
@@ -863,7 +863,7 @@
       "district_number": 1,
       "bo": "སྐུ་དཀྱིལ་གསལ་དྭངས",
       "roman": "ku kil sel thaang",
-      "en": "how are you?",
+      "en": "how are you? (honorific)",
       "en_definition": null,
       "wylie": "sku dkyil gsal dwangs",
       "thl": "ku kyil sel dang",
