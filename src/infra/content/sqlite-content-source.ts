@@ -27,7 +27,7 @@ export type ContentDatabase = {
 
 const VOCAB_COLUMNS =
   'id, slug, district, district_number, bo, roman, en, en_definition, ' +
-  'wylie, thl, thl_note, pos, register, status, audio_natural';
+  'wylie, thl, thl_note, pos, register, status, audio_natural, word_id';
 
 const DEFAULT_SEARCH_LIMIT = 20;
 
@@ -48,16 +48,44 @@ export class SqliteContentSource implements ContentSource {
     return toVocabularyItem(row);
   }
 
+  /**
+   * Every word a district teaches, which is not the same as every word it
+   * coined.
+   *
+   * This was `WHERE district = ?` — the record's own home field — and it hid 79
+   * words from the districts that teach them, across 18 of the 24. Departure
+   * teaches 16 and the query returned 7. The join is the fix: `placement` holds
+   * one `home` row per record plus a `reuse` row for every further district,
+   * and the reuse rows are exactly what the old query could not see.
+   *
+   * `placement_district` serves the ordering now; `vocabulary_district` no
+   * longer does, because the rows no longer come from a scan of one district's
+   * own records. Sorting on the slug is what keeps both adapters agreeing.
+   */
   async listVocabularyByDistrict(district: string): Promise<readonly VocabularyItem[]> {
     await this.assertSchema();
-    // Ordered by the covering index, so a district list needs no sort.
     const rows = await this.db.getAllAsync<VocabularyRow>(
-      `SELECT ${VOCAB_COLUMNS} FROM vocabulary WHERE district = ? ORDER BY district_number, slug`,
-      [district],
+      `SELECT ${VOCAB_COLUMNS.split(', ')
+        .map(c => `v.${c}`)
+        .join(', ')}
+       FROM placement p
+       JOIN vocabulary v ON v.id = p.vocab_id
+       WHERE p.district_id = ?
+       ORDER BY v.slug`,
+      [`district.${district}`],
     );
     return rows.map(toVocabularyItem);
   }
 
+  /**
+   * Prefix search over script, romanization and gloss.
+   *
+   * Rows, not words. Several entries can share a `wordId` — གྲང་མོ is one word
+   * on three cards — and this deliberately does NOT collapse them in SQL.
+   * Collapsing is a display decision nobody has made, and a search result also
+   * has to be able to reach one card. The screen groups by `wordId` if it wants
+   * to; the adapter does not decide for it.
+   */
   async searchVocabulary(
     query: string,
     limit = DEFAULT_SEARCH_LIMIT,

@@ -28,6 +28,7 @@ export function toVocabularyItem(row: VocabularyRow): VocabularyItem {
     slug: row.slug,
     district: row.district,
     districtNumber: row.district_number,
+    wordId: row.word_id,
     bo: row.bo,
     roman: row.roman,
     en: row.en,

@@ -51,8 +51,15 @@ function openDatabase(): ContentDatabase {
 }
 
 /** A record present in both the full database and the two-district fixture. */
-const SHARED_ID = 'vocab.core.tashi-delek' as VocabId;
+const SHARED_ID = 'vocab.tashi-delek' as VocabId;
 const SHARED_DISTRICT = 'core';
+
+/**
+ * A word taught in two districts: coined in Meeting People, reused in the
+ * Family Home. Its record's `district` says `meeting` and always will, which is
+ * exactly why a district list cannot be built from that field.
+ */
+const REUSED_ID = 'vocab.child' as VocabId;
 
 const adapters: [string, () => ContentSource][] = [
   ['SqliteContentSource', () => new SqliteContentSource(openDatabase())],
@@ -115,7 +122,7 @@ describe.each(adapters)('%s', (_name, make) => {
     const source = make();
 
     // Then
-    await expect(source.getVocabulary('vocab.core.nope' as VocabId)).rejects.toThrow(
+    await expect(source.getVocabulary('vocab.nope' as VocabId)).rejects.toThrow(
       /no vocabulary record/,
     );
   });
@@ -129,9 +136,13 @@ describe.each(adapters)('%s', (_name, make) => {
 
     // Then
     expect(items.length).toBeGreaterThan(5);
-    expect(items.every(i => i.district === SHARED_DISTRICT)).toBe(true);
     const slugs = items.map(i => i.slug);
     expect(slugs).toEqual([...slugs].sort());
+    // Deliberately NOT `every(i => i.district === SHARED_DISTRICT)`. That held
+    // only while a district could teach nothing but its own words, and it is
+    // the assumption this suite now exists to disprove — District 1 simply
+    // happens to receive no reuse. A list is what a district TEACHES.
+    expect(items.some(i => i.district === SHARED_DISTRICT)).toBe(true);
   });
 
   it('finds a record by its romanization', async () => {
@@ -185,8 +196,8 @@ describe.each(adapters)('%s', (_name, make) => {
     const hits = (await source.searchVocabulary('བཀྲ', 100)).map(h => h.id);
 
     // Then
-    expect(hits).toContain('vocab.core.tashi-delek');
-    expect(hits).not.toContain('vocab.core.to-ask');
+    expect(hits).toContain('vocab.tashi-delek');
+    expect(hits).not.toContain('vocab.to-ask');
   });
 
   it('returns nothing for an empty or punctuation-only query', async () => {
@@ -221,6 +232,49 @@ describe.each(adapters)('%s', (_name, make) => {
 
     // Then
     expect(hits.length).toBeLessThanOrEqual(3);
+  });
+
+  it('lists a word in every district that teaches it, not only its home', async () => {
+    // Given
+    // `child` is a District 2 word the spec reuses into the Family Home. Its
+    // record says district `meeting`, because that is where the word was
+    // coined — so a query that reads the record's own district finds it in
+    // District 2 and nowhere else. It is taught in both.
+    const source = make();
+
+    // When
+    const home = await source.listVocabularyByDistrict('meeting');
+    const reusing = await source.listVocabularyByDistrict('family');
+
+    // Then
+    expect(home.map(i => i.id)).toContain(REUSED_ID);
+    expect(reusing.map(i => i.id)).toContain(REUSED_ID);
+  });
+
+  it('keeps the home district on the record while listing it elsewhere', async () => {
+    // Given
+    const source = make();
+
+    // When
+    const reusing = await source.listVocabularyByDistrict('family');
+    const item = reusing.find(i => i.id === REUSED_ID);
+
+    // Then
+    // `district` is the HOME placement and stays that way. A word listed in
+    // the Family Home still belongs to Meeting People, and the card that
+    // draws it should say so.
+    expect(item?.district).toBe('meeting');
+  });
+
+  it('carries the word id, so two cards of one word can be told apart', async () => {
+    // Given
+    const source = make();
+
+    // When
+    const item = await source.getVocabulary(SHARED_ID);
+
+    // Then
+    expect(item.wordId).toMatch(/^word\.\d{4}$/);
   });
 
   it('reports the content version it is serving', async () => {

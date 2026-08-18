@@ -1,13 +1,35 @@
 {
-  "content_version": "a82ab13f20705295",
-  "schema_version": 2,
+  "content_version": "9352b2e86c18ae77",
+  "schema_version": 3,
   "districts": [
-    1,
-    2
+    {
+      "id": "district.core",
+      "number": 1,
+      "name": "First Words",
+      "section": 1
+    },
+    {
+      "id": "district.meeting",
+      "number": 2,
+      "name": "Meeting People",
+      "section": 1
+    },
+    {
+      "id": "district.family",
+      "number": 10,
+      "name": "The Family Home",
+      "section": 3
+    },
+    {
+      "id": "district.departure",
+      "number": 24,
+      "name": "Departure",
+      "section": 5
+    }
   ],
   "vocabulary": [
     {
-      "id": "vocab.core.a-little",
+      "id": "vocab.a-little",
       "slug": "a-little",
       "district": "core",
       "district_number": 1,
@@ -21,282 +43,11 @@
       "pos": "quantifier",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0074"
     },
     {
-      "id": "vocab.core.excuse-me",
-      "slug": "excuse-me",
-      "district": "core",
-      "district_number": 1,
-      "bo": "དགོངས་དག་གནང",
-      "roman": "gongtak nhang",
-      "en": "excuse me (getting someone's attention)",
-      "en_definition": "Excuse me, used to get someone's attention before you ask them anything. It is the opening move of every question you will ask in the district of Asking the Way.",
-      "wylie": "dgongs dag gnang",
-      "thl": "gong dak nang",
-      "thl_note": null,
-      "pos": "interjection",
-      "register": "honorific",
-      "status": "draft",
-      "audio_natural": null
-    },
-    {
-      "id": "vocab.core.goodbye-going",
-      "slug": "goodbye-going",
-      "district": "core",
-      "district_number": 1,
-      "bo": "ག་ལེར་ཕེབས",
-      "roman": "khaaler phep",
-      "en": "goodbye (said to the one who is leaving)",
-      "en_definition": "The goodbye said to the person who is leaving. Tibetan has two, and this is the one you use when you are the one staying behind.",
-      "wylie": "ga ler phebs",
-      "thl": "kalé phe",
-      "thl_note": "ཕེབས is the honorific of \"to go\"; the b is not pronounced — *phe*, not *phebs*.",
-      "pos": "interjection",
-      "register": "honorific",
-      "status": "draft",
-      "audio_natural": null
-    },
-    {
-      "id": "vocab.core.goodbye-staying",
-      "slug": "goodbye-staying",
-      "district": "core",
-      "district_number": 1,
-      "bo": "ག་ལེར་བཞུགས",
-      "roman": "khaaler shuuk",
-      "en": "goodbye (said to the one who is staying)",
-      "en_definition": "The goodbye said to the person who is staying. This is the one you use when you are the one walking out of the door.",
-      "wylie": "ga ler bzhugs",
-      "thl": "kalé shu",
-      "thl_note": "བཞུགས is *shu* — the b and the final s are both silent. An English reader will want \"b-zhugs\".",
-      "pos": "interjection",
-      "register": "honorific",
-      "status": "draft",
-      "audio_natural": null
-    },
-    {
-      "id": "vocab.core.maybe",
-      "slug": "maybe",
-      "district": "core",
-      "district_number": 1,
-      "bo": "གཅིག་བྱས་ན",
-      "roman": "chik chheena",
-      "en": "maybe / perhaps",
-      "en_definition": "Maybe, perhaps. The softener for when yes and no are both too strong — an invitation you have not decided about, a plan that may not happen. It leaves the question open without committing you to anything.",
-      "wylie": "gcig byas na",
-      "thl": "chik jé na",
-      "thl_note": "*chik chheena* — གཅིག is *chik*, not \"g-chig\".",
-      "pos": "adverb",
-      "register": "colloquial",
-      "status": "draft",
-      "audio_natural": null
-    },
-    {
-      "id": "vocab.core.no",
-      "slug": "no",
-      "district": "core",
-      "district_number": 1,
-      "bo": "ལགས་མིན",
-      "roman": "lakmin",
-      "en": "no",
-      "en_definition": "The polite negative answer, for correcting a wrong guess about you without any sharpness. You will need it the first time someone assumes you are from somewhere you are not.",
-      "wylie": "lags min",
-      "thl": "lak min",
-      "thl_note": null,
-      "pos": "particle",
-      "register": "honorific",
-      "status": "draft",
-      "audio_natural": null
-    },
-    {
-      "id": "vocab.core.ok",
-      "slug": "ok",
-      "district": "core",
-      "district_number": 1,
-      "bo": "ལགས་སོ",
-      "roman": "lakso",
-      "en": "all right / good (agreement)",
-      "en_definition": "All right, fine, agreed. The general-purpose word for accepting what has been said or offered.",
-      "wylie": "lags so",
-      "thl": "lak so",
-      "thl_note": "*lakso* — the s of ལགས closes the syllable rather than starting a new one.",
-      "pos": "interjection",
-      "register": "honorific",
-      "status": "draft",
-      "audio_natural": null
-    },
-    {
-      "id": "vocab.core.please",
-      "slug": "please",
-      "district": "core",
-      "district_number": 1,
-      "bo": "རོགས་གནང",
-      "roman": "rok nhang",
-      "en": "please",
-      "en_definition": "The word that softens a request. You always meet it inside a whole phrase in this track, so you never have to decide where to put it.",
-      "wylie": "rogs gnang",
-      "thl": "rok nang",
-      "thl_note": "*roknhang*. The dictionary's English→Tibetan hits for \"please\" (མགུ་བ, \"to gratify\") are the wrong sense entirely.",
-      "pos": "interjection",
-      "register": "honorific",
-      "status": "draft",
-      "audio_natural": null
-    },
-    {
-      "id": "vocab.core.slowly",
-      "slug": "slowly",
-      "district": "core",
-      "district_number": 1,
-      "bo": "ག་ལེར",
-      "roman": "khaaler",
-      "en": "slowly",
-      "en_definition": "Slowly. It is a word in its own right, and it also sits inside both goodbyes, which is why learning it stops them being two opaque noises.",
-      "wylie": "ga ler",
-      "thl": "ga ler",
-      "thl_note": "*khaaler*. The ག is unvoiced at the start of a word.",
-      "pos": "adverb",
-      "register": "colloquial",
-      "status": "draft",
-      "audio_natural": null
-    },
-    {
-      "id": "vocab.core.sorry",
-      "slug": "sorry",
-      "district": "core",
-      "district_number": 1,
-      "bo": "དགོངས་དག",
-      "roman": "gongtak",
-      "en": "sorry / excuse me (apologising)",
-      "en_definition": "Sorry. An apology for something you did or bumped into, rather than a way of getting attention.",
-      "wylie": "dgongs dag",
-      "thl": "gong dak",
-      "thl_note": "*gongtak*. The དག prefix is silent; not \"d-gongs d-ag\".",
-      "pos": "interjection",
-      "register": "honorific",
-      "status": "draft",
-      "audio_natural": null
-    },
-    {
-      "id": "vocab.core.tashi-delek",
-      "slug": "tashi-delek",
-      "district": "core",
-      "district_number": 1,
-      "bo": "བཀྲ་ཤིས་བདེ་ལེགས",
-      "roman": "trashi delek",
-      "en": "hello / greetings",
-      "en_definition": "The all-purpose greeting, safe with anyone at any hour of the day. It is the first thing you will say off the bus and the last thing you will stop needing.",
-      "wylie": "bkra shis bde legs",
-      "thl": "tashi delek",
-      "thl_note": null,
-      "pos": "interjection",
-      "register": "colloquial",
-      "status": "draft",
-      "audio_natural": null
-    },
-    {
-      "id": "vocab.core.thank-you",
-      "slug": "thank-you",
-      "district": "core",
-      "district_number": 1,
-      "bo": "ཐུགས་རྗེ་ཆེ",
-      "roman": "thukdje chhe",
-      "en": "thank you",
-      "en_definition": "Thank you. The words are literally \"great kindness\", which is why it can sound warmer than the English and is worth using more often, not less.",
-      "wylie": "thugs rje che",
-      "thl": "thuk-jé ché",
-      "thl_note": null,
-      "pos": "interjection",
-      "register": "honorific",
-      "status": "draft",
-      "audio_natural": null
-    },
-    {
-      "id": "vocab.core.to-ask",
-      "slug": "to-ask",
-      "district": "core",
-      "district_number": 1,
-      "bo": "བཀའ་འདྲི་ཞུ་བ",
-      "roman": "ka dri shuuwa",
-      "en": "to ask",
-      "en_definition": "To ask, in the sense of putting a question to someone. This card is here to be recognised rather than said: the place you actually use the verb is the whole sentence \"Can I ask you something?\", which you learn in one piece. Seeing the verb alone is only so that you notice it again inside the sentence.",
-      "wylie": "bka' 'dri zhu ba",
-      "thl": "ka dri zhuwa",
-      "thl_note": null,
-      "pos": "verb",
-      "register": "honorific",
-      "status": "draft",
-      "audio_natural": null
-    },
-    {
-      "id": "vocab.core.to-greet",
-      "slug": "to-greet",
-      "district": "core",
-      "district_number": 1,
-      "bo": "འཚམས་འདྲི་ཞུ་བ",
-      "roman": "tsham dri shuuwa",
-      "en": "to greet",
-      "en_definition": "To greet. You meet it inside \"Please greet your family for me\", which is where it does its work, and the card exists so that the word is familiar when it turns up elsewhere. There is nothing to produce here; recognising it is the whole task.",
-      "wylie": "'tshams 'dri zhu ba",
-      "thl": "tsam dri zhuwa",
-      "thl_note": null,
-      "pos": "verb",
-      "register": "honorific",
-      "status": "draft",
-      "audio_natural": null
-    },
-    {
-      "id": "vocab.core.to-talk",
-      "slug": "to-talk",
-      "district": "core",
-      "district_number": 1,
-      "bo": "སྐད་ཆ་བཤད་པ",
-      "roman": "ke chha shepa",
-      "en": "to talk",
-      "en_definition": "To talk, to speak. The phrase \"Please talk slowly\" is where you use it, and that phrase is learned whole. This card asks only for recognition, so that the verb stops being an unidentified sound in the middle of a sentence you already know.",
-      "wylie": "skad cha bshad pa",
-      "thl": "ké cha shé pa",
-      "thl_note": "*ke chha shepa*, literally \"to speak words\".",
-      "pos": "verb",
-      "register": "colloquial",
-      "status": "draft",
-      "audio_natural": null
-    },
-    {
-      "id": "vocab.core.very",
-      "slug": "very",
-      "district": "core",
-      "district_number": 1,
-      "bo": "ཞེ་དྲག",
-      "roman": "sheethrak",
-      "en": "very",
-      "en_definition": "Very. It strengthens whatever it is attached to, and it is the difference between the plain thank you and the strengthened one you already know. Learning it late means two fixed courtesies stop being two unrelated noises.",
-      "wylie": "zhe drag",
-      "thl": "zhé drak",
-      "thl_note": null,
-      "pos": "adverb",
-      "register": "colloquial",
-      "status": "draft",
-      "audio_natural": null
-    },
-    {
-      "id": "vocab.core.yes",
-      "slug": "yes",
-      "district": "core",
-      "district_number": 1,
-      "bo": "ལགས",
-      "roman": "la",
-      "en": "yes",
-      "en_definition": "The short, polite way of agreeing with what someone has just said. It is the safe answer: it commits you to nothing beyond agreement.",
-      "wylie": "lags",
-      "thl": "la",
-      "thl_note": null,
-      "pos": "particle",
-      "register": "honorific",
-      "status": "draft",
-      "audio_natural": null
-    },
-    {
-      "id": "vocab.meeting.afternoon",
+      "id": "vocab.afternoon",
       "slug": "afternoon",
       "district": "meeting",
       "district_number": 2,
@@ -310,10 +61,11 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0567"
     },
     {
-      "id": "vocab.meeting.age",
+      "id": "vocab.age",
       "slug": "age",
       "district": "meeting",
       "district_number": 2,
@@ -327,10 +79,11 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0073"
     },
     {
-      "id": "vocab.meeting.also",
+      "id": "vocab.also",
       "slug": "also",
       "district": "meeting",
       "district_number": 2,
@@ -344,10 +97,11 @@
       "pos": "adverb",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0568"
     },
     {
-      "id": "vocab.meeting.always",
+      "id": "vocab.always",
       "slug": "always",
       "district": "meeting",
       "district_number": 2,
@@ -361,10 +115,11 @@
       "pos": "adverb",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0569"
     },
     {
-      "id": "vocab.meeting.boy",
+      "id": "vocab.boy",
       "slug": "boy",
       "district": "meeting",
       "district_number": 2,
@@ -378,10 +133,11 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0162"
     },
     {
-      "id": "vocab.meeting.child",
+      "id": "vocab.child",
       "slug": "child",
       "district": "meeting",
       "district_number": 2,
@@ -395,10 +151,11 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0570"
     },
     {
-      "id": "vocab.meeting.country",
+      "id": "vocab.country",
       "slug": "country",
       "district": "meeting",
       "district_number": 2,
@@ -412,10 +169,11 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0571"
     },
     {
-      "id": "vocab.meeting.day-after-tomorrow",
+      "id": "vocab.day-after-tomorrow",
       "slug": "day-after-tomorrow",
       "district": "meeting",
       "district_number": 2,
@@ -429,10 +187,11 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0572"
     },
     {
-      "id": "vocab.meeting.day-before-yesterday",
+      "id": "vocab.day-before-yesterday",
       "slug": "day-before-yesterday",
       "district": "meeting",
       "district_number": 2,
@@ -446,10 +205,11 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0573"
     },
     {
-      "id": "vocab.meeting.evening",
+      "id": "vocab.evening",
       "slug": "evening",
       "district": "meeting",
       "district_number": 2,
@@ -463,10 +223,11 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0574"
     },
     {
-      "id": "vocab.meeting.every-day",
+      "id": "vocab.every-day",
       "slug": "every-day",
       "district": "meeting",
       "district_number": 2,
@@ -480,10 +241,29 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0575"
     },
     {
-      "id": "vocab.meeting.few-days-back",
+      "id": "vocab.excuse-me",
+      "slug": "excuse-me",
+      "district": "core",
+      "district_number": 1,
+      "bo": "དགོངས་དག་གནང",
+      "roman": "gongtak nhang",
+      "en": "excuse me (getting someone's attention)",
+      "en_definition": "Excuse me, used to get someone's attention before you ask them anything. It is the opening move of every question you will ask in the district of Asking the Way.",
+      "wylie": "dgongs dag gnang",
+      "thl": "gong dak nang",
+      "thl_note": null,
+      "pos": "interjection",
+      "register": "honorific",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.0075"
+    },
+    {
+      "id": "vocab.few-days-back",
       "slug": "few-days-back",
       "district": "meeting",
       "district_number": 2,
@@ -497,10 +277,11 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0576"
     },
     {
-      "id": "vocab.meeting.foreigner",
+      "id": "vocab.foreigner",
       "slug": "foreigner",
       "district": "meeting",
       "district_number": 2,
@@ -514,10 +295,11 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0577"
     },
     {
-      "id": "vocab.meeting.friend",
+      "id": "vocab.friend",
       "slug": "friend",
       "district": "meeting",
       "district_number": 2,
@@ -531,10 +313,11 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0578"
     },
     {
-      "id": "vocab.meeting.future",
+      "id": "vocab.future",
       "slug": "future",
       "district": "meeting",
       "district_number": 2,
@@ -548,10 +331,11 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0579"
     },
     {
-      "id": "vocab.meeting.generally",
+      "id": "vocab.generally",
       "slug": "generally",
       "district": "meeting",
       "district_number": 2,
@@ -565,10 +349,11 @@
       "pos": "adverb",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0580"
     },
     {
-      "id": "vocab.meeting.girl",
+      "id": "vocab.girl",
       "slug": "girl",
       "district": "meeting",
       "district_number": 2,
@@ -582,10 +367,47 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0140"
     },
     {
-      "id": "vocab.meeting.homeland",
+      "id": "vocab.goodbye-going",
+      "slug": "goodbye-going",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ག་ལེར་ཕེབས",
+      "roman": "khaaler phep",
+      "en": "goodbye (said to the one who is leaving)",
+      "en_definition": "The goodbye said to the person who is leaving. Tibetan has two, and this is the one you use when you are the one staying behind.",
+      "wylie": "ga ler phebs",
+      "thl": "kalé phe",
+      "thl_note": "ཕེབས is the honorific of \"to go\"; the b is not pronounced — *phe*, not *phebs*.",
+      "pos": "interjection",
+      "register": "honorific",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.0076"
+    },
+    {
+      "id": "vocab.goodbye-staying",
+      "slug": "goodbye-staying",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ག་ལེར་བཞུགས",
+      "roman": "khaaler shuuk",
+      "en": "goodbye (said to the one who is staying)",
+      "en_definition": "The goodbye said to the person who is staying. This is the one you use when you are the one walking out of the door.",
+      "wylie": "ga ler bzhugs",
+      "thl": "kalé shu",
+      "thl_note": "བཞུགས is *shu* — the b and the final s are both silent. An English reader will want \"b-zhugs\".",
+      "pos": "interjection",
+      "register": "honorific",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.0077"
+    },
+    {
+      "id": "vocab.homeland",
       "slug": "homeland",
       "district": "meeting",
       "district_number": 2,
@@ -599,10 +421,11 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0581"
     },
     {
-      "id": "vocab.meeting.last-night",
+      "id": "vocab.last-night",
       "slug": "last-night",
       "district": "meeting",
       "district_number": 2,
@@ -616,10 +439,11 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0582"
     },
     {
-      "id": "vocab.meeting.later",
+      "id": "vocab.later",
       "slug": "later",
       "district": "meeting",
       "district_number": 2,
@@ -633,15 +457,16 @@
       "pos": "adverb",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0583"
     },
     {
-      "id": "vocab.meeting.lhasa",
+      "id": "vocab.lhasa",
       "slug": "lhasa",
       "district": "meeting",
       "district_number": 2,
       "bo": "ལྷ་ས",
-      "roman": "lhasa",
+      "roman": "lhhasa",
       "en": "Lhasa",
       "en_definition": "Lhasa: the city this walk moves through, and the source of the variety of Tibetan taught here.",
       "wylie": "lha sa",
@@ -650,10 +475,11 @@
       "pos": "noun",
       "register": "neutral",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0584"
     },
     {
-      "id": "vocab.meeting.man",
+      "id": "vocab.man",
       "slug": "man",
       "district": "meeting",
       "district_number": 2,
@@ -667,10 +493,11 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0585"
     },
     {
-      "id": "vocab.meeting.marriage",
+      "id": "vocab.marriage",
       "slug": "marriage",
       "district": "meeting",
       "district_number": 2,
@@ -684,10 +511,29 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0168"
     },
     {
-      "id": "vocab.meeting.midday",
+      "id": "vocab.maybe",
+      "slug": "maybe",
+      "district": "core",
+      "district_number": 1,
+      "bo": "གཅིག་བྱས་ན",
+      "roman": "chik chheena",
+      "en": "maybe / perhaps",
+      "en_definition": "Maybe, perhaps. The softener for when yes and no are both too strong — an invitation you have not decided about, a plan that may not happen. It leaves the question open without committing you to anything.",
+      "wylie": "gcig byas na",
+      "thl": "chik jé na",
+      "thl_note": "*chik chheena* — གཅིག is *chik*, not \"g-chig\".",
+      "pos": "adverb",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.0078"
+    },
+    {
+      "id": "vocab.midday",
       "slug": "midday",
       "district": "meeting",
       "district_number": 2,
@@ -701,10 +547,11 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0586"
     },
     {
-      "id": "vocab.meeting.midnight",
+      "id": "vocab.midnight",
       "slug": "midnight",
       "district": "meeting",
       "district_number": 2,
@@ -718,10 +565,11 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0587"
     },
     {
-      "id": "vocab.meeting.morning",
+      "id": "vocab.morning",
       "slug": "morning",
       "district": "meeting",
       "district_number": 2,
@@ -735,10 +583,11 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0588"
     },
     {
-      "id": "vocab.meeting.name",
+      "id": "vocab.name",
       "slug": "name",
       "district": "meeting",
       "district_number": 2,
@@ -752,10 +601,11 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0589"
     },
     {
-      "id": "vocab.meeting.nepali",
+      "id": "vocab.nepali",
       "slug": "nepali",
       "district": "meeting",
       "district_number": 2,
@@ -769,10 +619,11 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0590"
     },
     {
-      "id": "vocab.meeting.night",
+      "id": "vocab.night",
       "slug": "night",
       "district": "meeting",
       "district_number": 2,
@@ -786,10 +637,29 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0591"
     },
     {
-      "id": "vocab.meeting.now",
+      "id": "vocab.no",
+      "slug": "no",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ལགས་མིན",
+      "roman": "lakmin",
+      "en": "no",
+      "en_definition": "The polite negative answer, for correcting a wrong guess about you without any sharpness. You will need it the first time someone assumes you are from somewhere you are not.",
+      "wylie": "lags min",
+      "thl": "lak min",
+      "thl_note": null,
+      "pos": "particle",
+      "register": "honorific",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.0079"
+    },
+    {
+      "id": "vocab.now",
       "slug": "now",
       "district": "meeting",
       "district_number": 2,
@@ -803,10 +673,29 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0592"
     },
     {
-      "id": "vocab.meeting.person",
+      "id": "vocab.ok",
+      "slug": "ok",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ལགས་སོ",
+      "roman": "lakso",
+      "en": "all right / good (agreement)",
+      "en_definition": "All right, fine, agreed. The general-purpose word for accepting what has been said or offered.",
+      "wylie": "lags so",
+      "thl": "lak so",
+      "thl_note": "*lakso* — the s of ལགས closes the syllable rather than starting a new one.",
+      "pos": "interjection",
+      "register": "honorific",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.0080"
+    },
+    {
+      "id": "vocab.person",
       "slug": "person",
       "district": "meeting",
       "district_number": 2,
@@ -820,10 +709,29 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0593"
     },
     {
-      "id": "vocab.meeting.previously",
+      "id": "vocab.please",
+      "slug": "please",
+      "district": "core",
+      "district_number": 1,
+      "bo": "རོགས་གནང",
+      "roman": "rok nhang",
+      "en": "please",
+      "en_definition": "The word that softens a request. You always meet it inside a whole phrase in this track, so you never have to decide where to put it.",
+      "wylie": "rogs gnang",
+      "thl": "rok nang",
+      "thl_note": "*roknhang*. The dictionary's English→Tibetan hits for \"please\" (མགུ་བ, \"to gratify\") are the wrong sense entirely.",
+      "pos": "interjection",
+      "register": "honorific",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.0081"
+    },
+    {
+      "id": "vocab.previously",
       "slug": "previously",
       "district": "meeting",
       "district_number": 2,
@@ -837,10 +745,83 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0594"
     },
     {
-      "id": "vocab.meeting.these-days",
+      "id": "vocab.slowly",
+      "slug": "slowly",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ག་ལེར",
+      "roman": "khaaler",
+      "en": "slowly",
+      "en_definition": "Slowly. It is a word in its own right, and it also sits inside both goodbyes, which is why learning it stops them being two opaque noises.",
+      "wylie": "ga ler",
+      "thl": "ga ler",
+      "thl_note": "*khaaler*. The ག is unvoiced at the start of a word.",
+      "pos": "adverb",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.0082"
+    },
+    {
+      "id": "vocab.sorry",
+      "slug": "sorry",
+      "district": "core",
+      "district_number": 1,
+      "bo": "དགོངས་དག",
+      "roman": "gongtak",
+      "en": "sorry / excuse me (apologising)",
+      "en_definition": "Sorry. An apology for something you did or bumped into, rather than a way of getting attention.",
+      "wylie": "dgongs dag",
+      "thl": "gong dak",
+      "thl_note": "*gongtak*. The དག prefix is silent; not \"d-gongs d-ag\".",
+      "pos": "interjection",
+      "register": "honorific",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.0083"
+    },
+    {
+      "id": "vocab.tashi-delek",
+      "slug": "tashi-delek",
+      "district": "core",
+      "district_number": 1,
+      "bo": "བཀྲ་ཤིས་བདེ་ལེགས",
+      "roman": "trashi delek",
+      "en": "hello / greetings",
+      "en_definition": "The all-purpose greeting, safe with anyone at any hour of the day. It is the first thing you will say off the bus and the last thing you will stop needing.",
+      "wylie": "bkra shis bde legs",
+      "thl": "tashi delek",
+      "thl_note": null,
+      "pos": "interjection",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.0084"
+    },
+    {
+      "id": "vocab.thank-you",
+      "slug": "thank-you",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ཐུགས་རྗེ་ཆེ",
+      "roman": "thukdje chhe",
+      "en": "thank you",
+      "en_definition": "Thank you. The words are literally \"great kindness\", which is why it can sound warmer than the English and is worth using more often, not less.",
+      "wylie": "thugs rje che",
+      "thl": "thuk-jé ché",
+      "thl_note": null,
+      "pos": "interjection",
+      "register": "honorific",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.0085"
+    },
+    {
+      "id": "vocab.these-days",
       "slug": "these-days",
       "district": "meeting",
       "district_number": 2,
@@ -854,10 +835,11 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0595"
     },
     {
-      "id": "vocab.meeting.tibet",
+      "id": "vocab.tibet",
       "slug": "tibet",
       "district": "meeting",
       "district_number": 2,
@@ -871,10 +853,11 @@
       "pos": "noun",
       "register": "neutral",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0596"
     },
     {
-      "id": "vocab.meeting.tibetan-person",
+      "id": "vocab.tibetan-person",
       "slug": "tibetan-person",
       "district": "meeting",
       "district_number": 2,
@@ -888,15 +871,16 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0597"
     },
     {
-      "id": "vocab.meeting.to-arrive",
+      "id": "vocab.to-arrive",
       "slug": "to-arrive",
       "district": "meeting",
       "district_number": 2,
       "bo": "སླེབས་པ",
-      "roman": "leppa",
+      "roman": "lheppa",
       "en": "to arrive",
       "en_definition": "To arrive, to reach somewhere. You meet it inside \"When did you arrive?\", one of the first questions anyone will put to you, and that sentence is learned whole. The card is here so the verb is recognisable when it comes round again on the pilgrimage road.",
       "wylie": "slebs pa",
@@ -905,10 +889,47 @@
       "pos": "verb",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0598"
     },
     {
-      "id": "vocab.meeting.to-hear",
+      "id": "vocab.to-ask",
+      "slug": "to-ask",
+      "district": "core",
+      "district_number": 1,
+      "bo": "བཀའ་འདྲི་ཞུ་བ",
+      "roman": "ka dri shuuwa",
+      "en": "to ask",
+      "en_definition": "To ask, in the sense of putting a question to someone. This card is here to be recognised rather than said: the place you actually use the verb is the whole sentence \"Can I ask you something?\", which you learn in one piece. Seeing the verb alone is only so that you notice it again inside the sentence.",
+      "wylie": "bka' 'dri zhu ba",
+      "thl": "ka dri zhuwa",
+      "thl_note": null,
+      "pos": "verb",
+      "register": "honorific",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.0086"
+    },
+    {
+      "id": "vocab.to-greet",
+      "slug": "to-greet",
+      "district": "core",
+      "district_number": 1,
+      "bo": "འཚམས་འདྲི་ཞུ་བ",
+      "roman": "tsham dri shuuwa",
+      "en": "to greet",
+      "en_definition": "To greet. You meet it inside \"Please greet your family for me\", which is where it does its work, and the card exists so that the word is familiar when it turns up elsewhere. There is nothing to produce here; recognising it is the whole task.",
+      "wylie": "'tshams 'dri zhu ba",
+      "thl": "tsam dri zhuwa",
+      "thl_note": null,
+      "pos": "verb",
+      "register": "honorific",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.0087"
+    },
+    {
+      "id": "vocab.to-hear",
       "slug": "to-hear",
       "district": "meeting",
       "district_number": 2,
@@ -922,10 +943,11 @@
       "pos": "verb",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0599"
     },
     {
-      "id": "vocab.meeting.to-introduce",
+      "id": "vocab.to-introduce",
       "slug": "to-introduce",
       "district": "meeting",
       "district_number": 2,
@@ -939,10 +961,29 @@
       "pos": "verb",
       "register": "honorific",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0600"
     },
     {
-      "id": "vocab.meeting.today",
+      "id": "vocab.to-talk",
+      "slug": "to-talk",
+      "district": "core",
+      "district_number": 1,
+      "bo": "སྐད་ཆ་བཤད་པ",
+      "roman": "ke chha shepa",
+      "en": "to talk",
+      "en_definition": "To talk, to speak. The phrase \"Please talk slowly\" is where you use it, and that phrase is learned whole. This card asks only for recognition, so that the verb stops being an unidentified sound in the middle of a sentence you already know.",
+      "wylie": "skad cha bshad pa",
+      "thl": "ké cha shé pa",
+      "thl_note": "*ke chha shepa*, literally \"to speak words\".",
+      "pos": "verb",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.0088"
+    },
+    {
+      "id": "vocab.today",
       "slug": "today",
       "district": "meeting",
       "district_number": 2,
@@ -956,10 +997,11 @@
       "pos": "adverb",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0601"
     },
     {
-      "id": "vocab.meeting.tomorrow",
+      "id": "vocab.tomorrow",
       "slug": "tomorrow",
       "district": "meeting",
       "district_number": 2,
@@ -973,10 +1015,11 @@
       "pos": "adverb",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0602"
     },
     {
-      "id": "vocab.meeting.tomorrow-evening",
+      "id": "vocab.tomorrow-evening",
       "slug": "tomorrow-evening",
       "district": "meeting",
       "district_number": 2,
@@ -990,10 +1033,11 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0603"
     },
     {
-      "id": "vocab.meeting.tonight",
+      "id": "vocab.tonight",
       "slug": "tonight",
       "district": "meeting",
       "district_number": 2,
@@ -1007,10 +1051,11 @@
       "pos": "adverb",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0604"
     },
     {
-      "id": "vocab.meeting.usually",
+      "id": "vocab.usually",
       "slug": "usually",
       "district": "meeting",
       "district_number": 2,
@@ -1024,10 +1069,29 @@
       "pos": "adverb",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0605"
     },
     {
-      "id": "vocab.meeting.woman",
+      "id": "vocab.very",
+      "slug": "very",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ཞེ་དྲག",
+      "roman": "sheethrak",
+      "en": "very",
+      "en_definition": "Very. It strengthens whatever it is attached to, and it is the difference between the plain thank you and the strengthened one you already know. Learning it late means two fixed courtesies stop being two unrelated noises.",
+      "wylie": "zhe drag",
+      "thl": "zhé drak",
+      "thl_note": null,
+      "pos": "adverb",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.0089"
+    },
+    {
+      "id": "vocab.woman",
       "slug": "woman",
       "district": "meeting",
       "district_number": 2,
@@ -1041,10 +1105,11 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0606"
     },
     {
-      "id": "vocab.meeting.year-of-age",
+      "id": "vocab.year-of-age",
       "slug": "year-of-age",
       "district": "meeting",
       "district_number": 2,
@@ -1058,10 +1123,29 @@
       "pos": "noun",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0073"
     },
     {
-      "id": "vocab.meeting.yesterday",
+      "id": "vocab.yes",
+      "slug": "yes",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ལགས",
+      "roman": "la",
+      "en": "yes",
+      "en_definition": "The short, polite way of agreeing with what someone has just said. It is the safe answer: it commits you to nothing beyond agreement.",
+      "wylie": "lags",
+      "thl": "la",
+      "thl_note": null,
+      "pos": "particle",
+      "register": "honorific",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.0090"
+    },
+    {
+      "id": "vocab.yesterday",
       "slug": "yesterday",
       "district": "meeting",
       "district_number": 2,
@@ -1075,7 +1159,335 @@
       "pos": "adverb",
       "register": "colloquial",
       "status": "draft",
-      "audio_natural": null
+      "audio_natural": null,
+      "word_id": "word.0607"
+    }
+  ],
+  "placements": [
+    {
+      "vocab_id": "vocab.a-little",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.afternoon",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.age",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.also",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.always",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.boy",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.child",
+      "district_id": "district.family",
+      "role": "reuse"
+    },
+    {
+      "vocab_id": "vocab.child",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.country",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.day-after-tomorrow",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.day-before-yesterday",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.evening",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.every-day",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.excuse-me",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.few-days-back",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.foreigner",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.friend",
+      "district_id": "district.departure",
+      "role": "reuse"
+    },
+    {
+      "vocab_id": "vocab.friend",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.future",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.generally",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.girl",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.goodbye-going",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.goodbye-staying",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.homeland",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.last-night",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.later",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.lhasa",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.man",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.marriage",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.maybe",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.midday",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.midnight",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.morning",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.name",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.nepali",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.night",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.no",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.now",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.ok",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.person",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.please",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.previously",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.slowly",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.sorry",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.tashi-delek",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.thank-you",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.these-days",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.tibet",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.tibetan-person",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.to-arrive",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.to-ask",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.to-greet",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.to-hear",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.to-introduce",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.to-talk",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.today",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.tomorrow",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.tomorrow-evening",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.tonight",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.usually",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.very",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.woman",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.year-of-age",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.yes",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.yesterday",
+      "district_id": "district.meeting",
+      "role": "home"
     }
   ]
 }

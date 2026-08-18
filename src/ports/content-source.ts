@@ -30,8 +30,25 @@ export type VocabId = string & {readonly __brand: 'VocabId'};
 export type VocabularyItem = {
   readonly id: VocabId;
   readonly slug: string;
+  /**
+   * The **home** district — where this word was coined, and the one the record
+   * itself names. It is NOT the only district that teaches the word: 79
+   * records are taught elsewhere as well, so a district list comes from
+   * `listVocabularyByDistrict`, never from filtering on this field.
+   */
   readonly district: string;
+  /** The home district's number. Same caveat as `district`. */
   readonly districtNumber: number;
+  /**
+   * The lexical identity this entry belongs to.
+   *
+   * A word and a card are not the same thing. གྲང་མོ is one word taught as
+   * cold-of-a-drink, cold-of-a-room and cold-of-weather — three entries, one
+   * `wordId`. ཐང is two different words that share a spelling, so its two
+   * entries have different ones. Search returns rows, not words; grouping them
+   * is the screen's decision and this is what it groups by.
+   */
+  readonly wordId: string;
   readonly bo: string;
   readonly roman: string;
   readonly en: string;
@@ -60,7 +77,12 @@ export type VocabularyItem = {
 
 export type ContentSource = {
   getVocabulary(id: VocabId): Promise<VocabularyItem>;
-  /** Every vocabulary record in a district, in teaching order. */
+  /**
+   * Every vocabulary record a district teaches, in teaching order.
+   *
+   * Taught, not homed. A word reused from another district appears here and
+   * keeps its own `district` — the two are different questions.
+   */
   listVocabularyByDistrict(district: string): Promise<readonly VocabularyItem[]>;
   /** Backed by FTS5 on native. Matches Tibetan, romanization and gloss. */
   searchVocabulary(query: string, limit?: number): Promise<readonly VocabularyItem[]>;

@@ -49,6 +49,19 @@ export const DAYS_TO_KNOWN = 2;
  */
 export type ItemState = 'new' | 'met' | 'known';
 
+/**
+ * What progress is keyed on, and eventually persisted under in MMKV.
+ *
+ * An `ItemId` is a `VocabId` or a phrase id. Vocabulary ids stopped naming a
+ * district on 2026-08-18 precisely so this could be safe to persist: identity
+ * used to be a function of curriculum placement, so moving a word between
+ * districts renamed it, and the expansion draft alone resolved to eight moves.
+ * `validate.py` rules 30-32 now hold the id to its slug, hold the slug unique,
+ * and refuse any rename that is not recorded in `content/id-history.json`.
+ *
+ * Nothing here is wired to a vocabulary id yet, and this pass deliberately does
+ * not wire it. The point is that doing so has become safe, not that it is done.
+ */
 export type ItemId = string & {readonly __brand: 'ItemId'};
 
 /**

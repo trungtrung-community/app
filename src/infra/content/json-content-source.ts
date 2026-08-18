@@ -16,23 +16,39 @@
 
 import type {ContentSource, VocabId, VocabularyItem} from '../../ports/content-source';
 import {toVocabularyItem} from './mappers';
-import type {VocabularyRow} from './rows.generated';
+import type {DistrictRow, PlacementRow, VocabularyRow} from './rows.generated';
 import {toFtsPrefixQuery} from './sqlite-content-source';
 
 export type ContentFixture = {
   content_version: string;
   schema_version: number;
-  districts: number[];
+  /**
+   * Every district the fixture's placements name — not only the two whose
+   * vocabulary it holds. Two District 2 words are reused into the Family Home
+   * and Departure, so those districts are here too, or a placement would point
+   * at a district the file does not contain.
+   */
+  districts: DistrictRow[];
   vocabulary: VocabularyRow[];
+  /** Vocabulary placements only. The app has no phrase-by-district query. */
+  placements: PlacementRow[];
 };
 
 export class JsonContentSource implements ContentSource {
   private readonly byId: Map<string, VocabularyItem>;
   private readonly items: readonly VocabularyItem[];
+  /** district id -> the ids it teaches, home and reused alike. */
+  private readonly taughtIn: Map<string, string[]>;
 
   constructor(private readonly fixture: ContentFixture) {
     this.items = fixture.vocabulary.map(toVocabularyItem);
     this.byId = new Map(this.items.map(item => [item.id, item]));
+    this.taughtIn = new Map();
+    for (const placement of fixture.placements) {
+      const ids = this.taughtIn.get(placement.district_id) ?? [];
+      ids.push(placement.vocab_id);
+      this.taughtIn.set(placement.district_id, ids);
+    }
   }
 
   async getVocabulary(id: VocabId): Promise<VocabularyItem> {
@@ -43,10 +59,22 @@ export class JsonContentSource implements ContentSource {
     return item;
   }
 
+  /**
+   * Every word the district teaches, read from placements rather than from the
+   * record's own `district` — the same correction the SQLite adapter makes, and
+   * it has to be the same or the end-to-end suite defends behaviour the device
+   * does not have.
+   *
+   * Sorted by slug alone. Ordering by district number made sense while a list
+   * could only hold one district's records; it cannot any more, and the SQLite
+   * side orders by `v.slug`.
+   */
   async listVocabularyByDistrict(district: string): Promise<readonly VocabularyItem[]> {
-    return this.items
-      .filter(item => item.district === district)
-      .sort((a, b) => a.districtNumber - b.districtNumber || a.slug.localeCompare(b.slug));
+    const ids = this.taughtIn.get(`district.${district}`) ?? [];
+    return ids
+      .map(id => this.byId.get(id))
+      .filter((item): item is VocabularyItem => item !== undefined)
+      .sort((a, b) => a.slug.localeCompare(b.slug));
   }
 
   /**

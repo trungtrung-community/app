@@ -9,8 +9,8 @@
  * nullable wherever the column is. Map them at the adapter boundary — the
  * engine must never see a database row.
  *
- * schema_version  2
- * content_version a82ab13f20705295
+ * schema_version  3
+ * content_version 9352b2e86c18ae77
  */
 
 /**
@@ -20,7 +20,7 @@
  * build with a changed schema therefore fails loudly at startup rather than
  * returning undefined for a renamed column.
  */
-export const CONTENT_SCHEMA_VERSION = 2;
+export const CONTENT_SCHEMA_VERSION = 3;
 
 /**
  * The content build this app bundles.
@@ -30,7 +30,7 @@ export const CONTENT_SCHEMA_VERSION = 2;
  * against what the copied file reports and re-imports when they differ, which
  * is safe because progress lives in MMKV and never in the content database.
  */
-export const CONTENT_VERSION = "a82ab13f20705295";
+export const CONTENT_VERSION = "9352b2e86c18ae77";
 
 /** collection — 0 rows in this build. */
 export type CollectionRow = {
@@ -39,7 +39,7 @@ export type CollectionRow = {
   kind: string;
 };
 
-/** district — 0 rows in this build. */
+/** district — 24 rows in this build. */
 export type DistrictRow = {
   id: string;
   number: number;
@@ -70,6 +70,13 @@ export type PhraseRow = {
   en: string;
 };
 
+/** placement — 1124 rows in this build. */
+export type PlacementRow = {
+  vocab_id: string;
+  district_id: string;
+  role: string;
+};
+
 /** stop — 0 rows in this build. */
 export type StopRow = {
   id: string;
@@ -96,4 +103,5 @@ export type VocabularyRow = {
   register: string | null;
   status: string | null;
   audio_natural: string | null;
+  word_id: string;
 };
