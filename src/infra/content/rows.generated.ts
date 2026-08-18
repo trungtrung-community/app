@@ -10,7 +10,7 @@
  * engine must never see a database row.
  *
  * schema_version  3
- * content_version 9352b2e86c18ae77
+ * content_version 651e0b0f134e9426
  */
 
 /**
@@ -30,7 +30,7 @@ export const CONTENT_SCHEMA_VERSION = 3;
  * against what the copied file reports and re-imports when they differ, which
  * is safe because progress lives in MMKV and never in the content database.
  */
-export const CONTENT_VERSION = "9352b2e86c18ae77";
+export const CONTENT_VERSION = "651e0b0f134e9426";
 
 /** collection — 0 rows in this build. */
 export type CollectionRow = {
@@ -70,7 +70,7 @@ export type PhraseRow = {
   en: string;
 };
 
-/** placement — 1124 rows in this build. */
+/** placement — 1567 rows in this build. */
 export type PlacementRow = {
   vocab_id: string;
   district_id: string;
@@ -86,7 +86,7 @@ export type StopRow = {
   circuit: number;
 };
 
-/** vocabulary — 1045 rows in this build. */
+/** vocabulary — 1488 rows in this build. */
 export type VocabularyRow = {
   id: string | null;
   slug: string;

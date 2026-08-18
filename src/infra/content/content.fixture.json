@@ -1,5 +1,5 @@
 {
-  "content_version": "9352b2e86c18ae77",
+  "content_version": "651e0b0f134e9426",
   "schema_version": 3,
   "districts": [
     {
@@ -83,6 +83,42 @@
       "word_id": "word.0073"
     },
     {
+      "id": "vocab.all-day",
+      "slug": "all-day",
+      "district": "meeting",
+      "district_number": 2,
+      "bo": "ཉི་མ་ཉིན་གང",
+      "roman": "nyima nyinkang",
+      "en": "all day",
+      "en_definition": null,
+      "wylie": "nyi ma nyin gang",
+      "thl": "nyi ma nyin gang",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1016"
+    },
+    {
+      "id": "vocab.already",
+      "slug": "already",
+      "district": "meeting",
+      "district_number": 2,
+      "bo": "ད་ལྟ་ནས",
+      "roman": "thaata ne",
+      "en": "already",
+      "en_definition": null,
+      "wylie": "da lta nas",
+      "thl": "da ta né",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1017"
+    },
+    {
       "id": "vocab.also",
       "slug": "also",
       "district": "meeting",
@@ -119,6 +155,60 @@
       "word_id": "word.0569"
     },
     {
+      "id": "vocab.at-the-same-time",
+      "slug": "at-the-same-time",
+      "district": "meeting",
+      "district_number": 2,
+      "bo": "ཆབས་ཅིག",
+      "roman": "chhapchik",
+      "en": "at the same time",
+      "en_definition": null,
+      "wylie": "chabs cig",
+      "thl": "chap chik",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1023"
+    },
+    {
+      "id": "vocab.biased",
+      "slug": "biased",
+      "district": "meeting",
+      "district_number": 2,
+      "bo": "ཞེན་ཁོག་ཚ་པོ",
+      "roman": "sheen khok tshapo",
+      "en": "biased",
+      "en_definition": null,
+      "wylie": "zhen khog tsha po",
+      "thl": "zhen khok tsa po",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1037"
+    },
+    {
+      "id": "vocab.birthplace",
+      "slug": "birthplace",
+      "district": "meeting",
+      "district_number": 2,
+      "bo": "འཁྲུངས་ས",
+      "roman": "thrungsa",
+      "en": "birthplace",
+      "en_definition": null,
+      "wylie": "'khrungs sa",
+      "thl": "trung sa",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "honorific",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1040"
+    },
+    {
       "id": "vocab.boy",
       "slug": "boy",
       "district": "meeting",
@@ -137,6 +227,24 @@
       "word_id": "word.0162"
     },
     {
+      "id": "vocab.certainly",
+      "slug": "certainly",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ངེས་པར་དུ",
+      "roman": "ngepar thuu",
+      "en": "certainly",
+      "en_definition": null,
+      "wylie": "nges par du",
+      "thl": "ngé par du",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1051"
+    },
+    {
       "id": "vocab.child",
       "slug": "child",
       "district": "meeting",
@@ -153,6 +261,78 @@
       "status": "draft",
       "audio_natural": null,
       "word_id": "word.0570"
+    },
+    {
+      "id": "vocab.completely",
+      "slug": "completely",
+      "district": "core",
+      "district_number": 1,
+      "bo": "རྦད་དེ",
+      "roman": "bete",
+      "en": "completely",
+      "en_definition": null,
+      "wylie": "rbad de",
+      "thl": "bé dé",
+      "thl_note": null,
+      "pos": "adverb",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1062"
+    },
+    {
+      "id": "vocab.comprehension",
+      "slug": "comprehension",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ཨ་ལས",
+      "roman": "ale",
+      "en": "comprehension",
+      "en_definition": null,
+      "wylie": "a las",
+      "thl": "a lé",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1063"
+    },
+    {
+      "id": "vocab.confidence",
+      "slug": "confidence",
+      "district": "core",
+      "district_number": 1,
+      "bo": "སྤོབས་པ",
+      "roman": "poppa",
+      "en": "confidence",
+      "en_definition": null,
+      "wylie": "spobs pa",
+      "thl": "pop pa",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1065"
+    },
+    {
+      "id": "vocab.constantly",
+      "slug": "constantly",
+      "district": "meeting",
+      "district_number": 2,
+      "bo": "ཉིན་མཚན་མེད་པར",
+      "roman": "nyintshen mepar",
+      "en": "constantly",
+      "en_definition": null,
+      "wylie": "nyin mtshan med par",
+      "thl": "nyin tsen mé par",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1066"
     },
     {
       "id": "vocab.country",
@@ -209,6 +389,60 @@
       "word_id": "word.0573"
     },
     {
+      "id": "vocab.definitely",
+      "slug": "definitely",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ཐག་ཆོད",
+      "roman": "thakchhö",
+      "en": "definitely",
+      "en_definition": null,
+      "wylie": "thag chod",
+      "thl": "tak chö",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1074"
+    },
+    {
+      "id": "vocab.do-you-understand",
+      "slug": "do-you-understand",
+      "district": "core",
+      "district_number": 1,
+      "bo": "མཁྱེན་སོང་ངས",
+      "roman": "khyen song nge",
+      "en": "do you understand?",
+      "en_definition": null,
+      "wylie": "mkhyen song ngas",
+      "thl": "khyen song ngé",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "honorific",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1077"
+    },
+    {
+      "id": "vocab.each-and-every-day",
+      "slug": "each-and-every-day",
+      "district": "meeting",
+      "district_number": 2,
+      "bo": "ཉིན་ལྟར་རེ་བཞིན",
+      "roman": "nyintar re shiin",
+      "en": "each and every day",
+      "en_definition": null,
+      "wylie": "nyin ltar re bzhin",
+      "thl": "nyin tar ré zhin",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1079"
+    },
+    {
       "id": "vocab.evening",
       "slug": "evening",
       "district": "meeting",
@@ -245,6 +479,42 @@
       "word_id": "word.0575"
     },
     {
+      "id": "vocab.every-year",
+      "slug": "every-year",
+      "district": "meeting",
+      "district_number": 2,
+      "bo": "ལོ་ལྟར་རེ་བཞིན",
+      "roman": "lo tar re shiin",
+      "en": "every year",
+      "en_definition": null,
+      "wylie": "lo ltar re bzhin",
+      "thl": "lo tar ré zhin",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1084"
+    },
+    {
+      "id": "vocab.exactly-the-same",
+      "slug": "exactly-the-same",
+      "district": "core",
+      "district_number": 1,
+      "bo": "གཅིག་པ་གཅིག་རྐྱང",
+      "roman": "chik pa chik kyang",
+      "en": "exactly the same",
+      "en_definition": null,
+      "wylie": "gcig pa gcig rkyang",
+      "thl": "chik pa chik kyang",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1085"
+    },
+    {
       "id": "vocab.excuse-me",
       "slug": "excuse-me",
       "district": "core",
@@ -261,6 +531,24 @@
       "status": "draft",
       "audio_natural": null,
       "word_id": "word.0075"
+    },
+    {
+      "id": "vocab.female-friend",
+      "slug": "female-friend",
+      "district": "meeting",
+      "district_number": 2,
+      "bo": "གྲོགས་མོ",
+      "roman": "throokmo",
+      "en": "female friend",
+      "en_definition": null,
+      "wylie": "grogs mo",
+      "thl": "drok mo",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1095"
     },
     {
       "id": "vocab.few-days-back",
@@ -297,6 +585,24 @@
       "status": "draft",
       "audio_natural": null,
       "word_id": "word.0577"
+    },
+    {
+      "id": "vocab.fortunately",
+      "slug": "fortunately",
+      "district": "core",
+      "district_number": 1,
+      "bo": "སྟབས་ལེགས་པ་ཞིག་ལ",
+      "roman": "tap lekpa shiik la",
+      "en": "fortunately",
+      "en_definition": null,
+      "wylie": "stabs legs pa zhig la",
+      "thl": "tap lek pa zhik la",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1103"
     },
     {
       "id": "vocab.friend",
@@ -371,6 +677,96 @@
       "word_id": "word.0140"
     },
     {
+      "id": "vocab.good-afternoon",
+      "slug": "good-afternoon",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ཉིན་གུང་བདེ་ལེགས",
+      "roman": "nyinkung delek",
+      "en": "good afternoon",
+      "en_definition": null,
+      "wylie": "nyin gung bde legs",
+      "thl": "nyin gung dé lek",
+      "thl_note": null,
+      "pos": "interjection",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1110"
+    },
+    {
+      "id": "vocab.good-evening",
+      "slug": "good-evening",
+      "district": "core",
+      "district_number": 1,
+      "bo": "དགོང་དྲོ་བདེ་ལེགས",
+      "roman": "gongthro delek",
+      "en": "good evening",
+      "en_definition": null,
+      "wylie": "dgong dro bde legs",
+      "thl": "gong dro dé lek",
+      "thl_note": null,
+      "pos": "interjection",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1111"
+    },
+    {
+      "id": "vocab.good-morning-early",
+      "slug": "good-morning-early",
+      "district": "core",
+      "district_number": 1,
+      "bo": "སྔ་དྲོ་བདེ་ལེགས",
+      "roman": "nghathro delek",
+      "en": "good morning (early)",
+      "en_definition": null,
+      "wylie": "snga dro bde legs",
+      "thl": "nga dro dé lek",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1113"
+    },
+    {
+      "id": "vocab.good-morning-later",
+      "slug": "good-morning-later",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ཞོགས་པ་བདེ་ལེགས",
+      "roman": "shookpa delek",
+      "en": "good morning (later)",
+      "en_definition": null,
+      "wylie": "zhogs pa bde legs",
+      "thl": "zhok pa dé lek",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1114"
+    },
+    {
+      "id": "vocab.good-night",
+      "slug": "good-night",
+      "district": "core",
+      "district_number": 1,
+      "bo": "གཟིམ་འཇགས་གནང་གོ",
+      "roman": "siimdjak nhang khoo",
+      "en": "good night",
+      "en_definition": null,
+      "wylie": "gzim 'jags gnang go",
+      "thl": "zim jak nang go",
+      "thl_note": null,
+      "pos": "interjection",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1117"
+    },
+    {
       "id": "vocab.goodbye-going",
       "slug": "goodbye-going",
       "district": "core",
@@ -413,7 +809,7 @@
       "district_number": 2,
       "bo": "ཕ་ཡུལ",
       "roman": "phayül",
-      "en": "homeland / native place",
+      "en": "homeland / fatherland",
       "en_definition": "The place your family is from, which is not necessarily anywhere you have lived. This, not your current address, is usually what a Tibetan means when they ask where you are from.",
       "wylie": "pha yul",
       "thl": "pa yül",
@@ -423,6 +819,168 @@
       "status": "draft",
       "audio_natural": null,
       "word_id": "word.0581"
+    },
+    {
+      "id": "vocab.how",
+      "slug": "how",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ག་འདྲས",
+      "roman": "khaadre",
+      "en": "how",
+      "en_definition": null,
+      "wylie": "ga 'dras",
+      "thl": "gandré",
+      "thl_note": null,
+      "pos": "adverb",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1126"
+    },
+    {
+      "id": "vocab.how-are-you",
+      "slug": "how-are-you",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ཁྱེད་རང་སྐུ་གཟུགས་བདེ་པོ་ཡིན་པས",
+      "roman": "khyerang kusuuk depo yin pe",
+      "en": "how are you?",
+      "en_definition": null,
+      "wylie": "khyed rang sku gzugs bde po yin pas",
+      "thl": "khyé rang ku zuk dé po yin pé",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1127"
+    },
+    {
+      "id": "vocab.how-are-you-honorific",
+      "slug": "how-are-you-honorific",
+      "district": "core",
+      "district_number": 1,
+      "bo": "སྐུ་དཀྱིལ་གསལ་དྭངས",
+      "roman": "ku kil sel thaang",
+      "en": "how are you?",
+      "en_definition": null,
+      "wylie": "sku dkyil gsal dwangs",
+      "thl": "ku kyil sel dang",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "honorific",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1128"
+    },
+    {
+      "id": "vocab.how-many",
+      "slug": "how-many",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ག་ཚོད",
+      "roman": "khaatshö",
+      "en": "how many",
+      "en_definition": null,
+      "wylie": "ga tshod",
+      "thl": "ga tsö",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1129"
+    },
+    {
+      "id": "vocab.i-am-doing-well",
+      "slug": "i-am-doing-well",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ང་བདེ་པོ་ཡིན",
+      "roman": "nga depo yin",
+      "en": "I am doing well",
+      "en_definition": null,
+      "wylie": "nga bde po yin",
+      "thl": "nga dé po yin",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1132"
+    },
+    {
+      "id": "vocab.in-the-future",
+      "slug": "in-the-future",
+      "district": "meeting",
+      "district_number": 2,
+      "bo": "མ་འོངས་པར",
+      "roman": "maong par",
+      "en": "in the future",
+      "en_definition": null,
+      "wylie": "ma 'ongs par",
+      "thl": "ma ong par",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1137"
+    },
+    {
+      "id": "vocab.intentionally",
+      "slug": "intentionally",
+      "district": "core",
+      "district_number": 1,
+      "bo": "རྐང་བཙུགས་ནས",
+      "roman": "kang tsuk ne",
+      "en": "intentionally",
+      "en_definition": null,
+      "wylie": "rkang btsugs nas",
+      "thl": "kang tsuk né",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1139"
+    },
+    {
+      "id": "vocab.just-now",
+      "slug": "just-now",
+      "district": "meeting",
+      "district_number": 2,
+      "bo": "ད་གིན",
+      "roman": "thaakin",
+      "en": "just now",
+      "en_definition": null,
+      "wylie": "da gin",
+      "thl": "da gin",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1143"
+    },
+    {
+      "id": "vocab.last-month",
+      "slug": "last-month",
+      "district": "meeting",
+      "district_number": 2,
+      "bo": "ཟླ་བ་སྔོན་མ",
+      "roman": "dawa nghönma",
+      "en": "last month",
+      "en_definition": null,
+      "wylie": "zla ba sngon ma",
+      "thl": "dawa ngön ma",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1144"
     },
     {
       "id": "vocab.last-night",
@@ -441,6 +999,24 @@
       "status": "draft",
       "audio_natural": null,
       "word_id": "word.0582"
+    },
+    {
+      "id": "vocab.last-year",
+      "slug": "last-year",
+      "district": "meeting",
+      "district_number": 2,
+      "bo": "ཟླ་རྙིང",
+      "roman": "danhying",
+      "en": "last year",
+      "en_definition": null,
+      "wylie": "zla rnying",
+      "thl": "da nying",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1145"
     },
     {
       "id": "vocab.later",
@@ -477,6 +1053,24 @@
       "status": "draft",
       "audio_natural": null,
       "word_id": "word.0584"
+    },
+    {
+      "id": "vocab.loyalty",
+      "slug": "loyalty",
+      "district": "meeting",
+      "district_number": 2,
+      "bo": "ལ་རྒྱ",
+      "roman": "lagya",
+      "en": "loyalty",
+      "en_definition": null,
+      "wylie": "la rgya",
+      "thl": "la gya",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1153"
     },
     {
       "id": "vocab.man",
@@ -569,6 +1163,24 @@
       "word_id": "word.0587"
     },
     {
+      "id": "vocab.more-or-less-like-that",
+      "slug": "more-or-less-like-that",
+      "district": "core",
+      "district_number": 1,
+      "bo": "དེ་ཙམ",
+      "roman": "theetsam",
+      "en": "more or less like that",
+      "en_definition": null,
+      "wylie": "de tsam",
+      "thl": "dé tsam",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1163"
+    },
+    {
       "id": "vocab.morning",
       "slug": "morning",
       "district": "meeting",
@@ -585,6 +1197,24 @@
       "status": "draft",
       "audio_natural": null,
       "word_id": "word.0588"
+    },
+    {
+      "id": "vocab.most-of-the-time",
+      "slug": "most-of-the-time",
+      "district": "meeting",
+      "district_number": 2,
+      "bo": "ཕལ་ཆེར",
+      "roman": "phelchher",
+      "en": "most of the time",
+      "en_definition": null,
+      "wylie": "phal cher",
+      "thl": "pel cher",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1164"
     },
     {
       "id": "vocab.name",
@@ -605,6 +1235,24 @@
       "word_id": "word.0589"
     },
     {
+      "id": "vocab.native-language",
+      "slug": "native-language",
+      "district": "meeting",
+      "district_number": 2,
+      "bo": "ཕ་སྐད",
+      "roman": "phake",
+      "en": "native language",
+      "en_definition": null,
+      "wylie": "pha skad",
+      "thl": "pa ké",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1166"
+    },
+    {
       "id": "vocab.nepali",
       "slug": "nepali",
       "district": "meeting",
@@ -621,6 +1269,42 @@
       "status": "draft",
       "audio_natural": null,
       "word_id": "word.0590"
+    },
+    {
+      "id": "vocab.never",
+      "slug": "never",
+      "district": "core",
+      "district_number": 1,
+      "bo": "རྩ་བ་ནས",
+      "roman": "tsawa ne",
+      "en": "never",
+      "en_definition": null,
+      "wylie": "rtsa ba nas",
+      "thl": "tsawa né",
+      "thl_note": null,
+      "pos": "adverb",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1168"
+    },
+    {
+      "id": "vocab.next-x-adjective",
+      "slug": "next-x-adjective",
+      "district": "meeting",
+      "district_number": 2,
+      "bo": "རྗེས་མར",
+      "roman": "djemar",
+      "en": "next x (adjective)",
+      "en_definition": null,
+      "wylie": "rjes mar",
+      "thl": "jé mar",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1169"
     },
     {
       "id": "vocab.night",
@@ -659,6 +1343,24 @@
       "word_id": "word.0079"
     },
     {
+      "id": "vocab.not-at-all",
+      "slug": "not-at-all",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ཁྱོན་ནས",
+      "roman": "khyönne",
+      "en": "not at all",
+      "en_definition": null,
+      "wylie": "khyon nas",
+      "thl": "khyön né",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1171"
+    },
+    {
       "id": "vocab.now",
       "slug": "now",
       "district": "meeting",
@@ -695,6 +1397,60 @@
       "word_id": "word.0080"
     },
     {
+      "id": "vocab.one-time",
+      "slug": "one-time",
+      "district": "meeting",
+      "district_number": 2,
+      "bo": "ཐེངས་གཅིག",
+      "roman": "thengchik",
+      "en": "one time",
+      "en_definition": null,
+      "wylie": "thengs gcig",
+      "thl": "teng chik",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1182"
+    },
+    {
+      "id": "vocab.only",
+      "slug": "only",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ལས",
+      "roman": "le",
+      "en": "only",
+      "en_definition": null,
+      "wylie": "las",
+      "thl": "lé",
+      "thl_note": null,
+      "pos": "adverb",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1183"
+    },
+    {
+      "id": "vocab.patriotic",
+      "slug": "patriotic",
+      "district": "meeting",
+      "district_number": 2,
+      "bo": "རྒྱལ་ཞེན་ཚ་པོ",
+      "roman": "gyel sheen tshapo",
+      "en": "patriotic",
+      "en_definition": null,
+      "wylie": "rgyal zhen tsha po",
+      "thl": "gyel zhen tsa po",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1188"
+    },
+    {
       "id": "vocab.person",
       "slug": "person",
       "district": "meeting",
@@ -711,6 +1467,24 @@
       "status": "draft",
       "audio_natural": null,
       "word_id": "word.0593"
+    },
+    {
+      "id": "vocab.place-of-birth",
+      "slug": "place-of-birth",
+      "district": "meeting",
+      "district_number": 2,
+      "bo": "སྐྱེ་ས",
+      "roman": "kyesa",
+      "en": "place of birth",
+      "en_definition": null,
+      "wylie": "skye sa",
+      "thl": "kyé sa",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1191"
     },
     {
       "id": "vocab.please",
@@ -749,6 +1523,114 @@
       "word_id": "word.0594"
     },
     {
+      "id": "vocab.recently",
+      "slug": "recently",
+      "district": "meeting",
+      "district_number": 2,
+      "bo": "ཉེ་ཆར",
+      "roman": "nyechhar",
+      "en": "recently",
+      "en_definition": null,
+      "wylie": "nye char",
+      "thl": "nyé char",
+      "thl_note": null,
+      "pos": "adverb",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1196"
+    },
+    {
+      "id": "vocab.sadness",
+      "slug": "sadness",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ཨ་ཁ་ཁ",
+      "roman": "a kha kha",
+      "en": "sadness",
+      "en_definition": null,
+      "wylie": "a kha kha",
+      "thl": "a kha kha",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1205"
+    },
+    {
+      "id": "vocab.same-as-before",
+      "slug": "same-as-before",
+      "district": "meeting",
+      "district_number": 2,
+      "bo": "རང་འཇགས",
+      "roman": "rangdjak",
+      "en": "same as before",
+      "en_definition": null,
+      "wylie": "rang 'jags",
+      "thl": "rang jak",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1209"
+    },
+    {
+      "id": "vocab.see-you-later",
+      "slug": "see-you-later",
+      "district": "core",
+      "district_number": 1,
+      "bo": "རྗེས་ལ་མཇལ་ཡོང",
+      "roman": "djela djel yong",
+      "en": "see you later",
+      "en_definition": null,
+      "wylie": "rjes la mjal yong",
+      "thl": "jé la jel yong",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1212"
+    },
+    {
+      "id": "vocab.see-you-tomorrow",
+      "slug": "see-you-tomorrow",
+      "district": "core",
+      "district_number": 1,
+      "bo": "སང་ཉིན་མཇལ་ཡོང",
+      "roman": "sangnyin djel yong",
+      "en": "see you tomorrow",
+      "en_definition": null,
+      "wylie": "sang nyin mjal yong",
+      "thl": "sang nyin jel yong",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1213"
+    },
+    {
+      "id": "vocab.shock",
+      "slug": "shock",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ཨ་ཙི་ཙི",
+      "roman": "a tsitsi",
+      "en": "shock",
+      "en_definition": null,
+      "wylie": "a tsi tsi",
+      "thl": "a tsi tsi",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1216"
+    },
+    {
       "id": "vocab.slowly",
       "slug": "slowly",
       "district": "core",
@@ -767,13 +1649,31 @@
       "word_id": "word.0082"
     },
     {
+      "id": "vocab.sometimes",
+      "slug": "sometimes",
+      "district": "meeting",
+      "district_number": 2,
+      "bo": "སྐབས་སྐབས་ལ",
+      "roman": "kap kap la",
+      "en": "sometimes",
+      "en_definition": null,
+      "wylie": "skabs skabs la",
+      "thl": "kap kap la",
+      "thl_note": null,
+      "pos": "adverb",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1227"
+    },
+    {
       "id": "vocab.sorry",
       "slug": "sorry",
       "district": "core",
       "district_number": 1,
       "bo": "དགོངས་དག",
       "roman": "gongtak",
-      "en": "sorry / excuse me (apologising)",
+      "en": "sorry / excuse me (apologizing)",
       "en_definition": "Sorry. An apology for something you did or bumped into, rather than a way of getting attention.",
       "wylie": "dgongs dag",
       "thl": "gong dak",
@@ -783,6 +1683,24 @@
       "status": "draft",
       "audio_natural": null,
       "word_id": "word.0083"
+    },
+    {
+      "id": "vocab.surprise",
+      "slug": "surprise",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ཨ་མ་མ",
+      "roman": "ama ma",
+      "en": "surprise",
+      "en_definition": null,
+      "wylie": "a ma ma",
+      "thl": "a ma ma",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1236"
     },
     {
       "id": "vocab.tashi-delek",
@@ -819,6 +1737,42 @@
       "status": "draft",
       "audio_natural": null,
       "word_id": "word.0085"
+    },
+    {
+      "id": "vocab.the-whole-day",
+      "slug": "the-whole-day",
+      "district": "meeting",
+      "district_number": 2,
+      "bo": "ཉིན་མ་ཉིན་གང",
+      "roman": "nyinma nyinkang",
+      "en": "the whole day",
+      "en_definition": null,
+      "wylie": "nyin ma nyin gang",
+      "thl": "nyin ma nyin gang",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1244"
+    },
+    {
+      "id": "vocab.the-whole-night",
+      "slug": "the-whole-night",
+      "district": "meeting",
+      "district_number": 2,
+      "bo": "མཚན་གང",
+      "roman": "tshenkang",
+      "en": "the whole night",
+      "en_definition": null,
+      "wylie": "mtshan gang",
+      "thl": "tsen gang",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1245"
     },
     {
       "id": "vocab.these-days",
@@ -875,6 +1829,24 @@
       "word_id": "word.0597"
     },
     {
+      "id": "vocab.to-agree",
+      "slug": "to-agree",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ཁས་ལེན་བྱེད་པ",
+      "roman": "khelen chheepa",
+      "en": "to agree",
+      "en_definition": null,
+      "wylie": "khas len byed pa",
+      "thl": "khé len jé pa",
+      "thl_note": null,
+      "pos": "verb",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1255"
+    },
+    {
       "id": "vocab.to-arrive",
       "slug": "to-arrive",
       "district": "meeting",
@@ -911,6 +1883,24 @@
       "word_id": "word.0086"
     },
     {
+      "id": "vocab.to-be-finished",
+      "slug": "to-be-finished",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ཚར་བ",
+      "roman": "tsharwa",
+      "en": "to be finished",
+      "en_definition": null,
+      "wylie": "tshar ba",
+      "thl": "tsarwa",
+      "thl_note": null,
+      "pos": "verb",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1266"
+    },
+    {
       "id": "vocab.to-greet",
       "slug": "to-greet",
       "district": "core",
@@ -927,6 +1917,42 @@
       "status": "draft",
       "audio_natural": null,
       "word_id": "word.0087"
+    },
+    {
+      "id": "vocab.to-guess",
+      "slug": "to-guess",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ཚོད་དཔག་བྱེད",
+      "roman": "tshö pak chhee",
+      "en": "to guess",
+      "en_definition": null,
+      "wylie": "tshod dpag byed",
+      "thl": "tsö pak jé",
+      "thl_note": null,
+      "pos": "verb",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1333"
+    },
+    {
+      "id": "vocab.to-have-a-conversation",
+      "slug": "to-have-a-conversation",
+      "district": "core",
+      "district_number": 1,
+      "bo": "སྐད་ཆ་བཤད",
+      "roman": "ke chha she",
+      "en": "to have a conversation",
+      "en_definition": null,
+      "wylie": "skad cha bshad",
+      "thl": "ké cha shé",
+      "thl_note": null,
+      "pos": "verb",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1335"
     },
     {
       "id": "vocab.to-hear",
@@ -954,7 +1980,7 @@
       "bo": "ངོ་སྤྲོད་ཞུ་བ",
       "roman": "ngotrö shuuwa",
       "en": "to introduce",
-      "en_definition": "To introduce, in the sense of presenting one person to another. The sentence you actually use is \"Let me introduce my friend\", drilled as a single piece; this card asks only that you recognise the verb sitting inside it.",
+      "en_definition": "To introduce, in the sense of presenting one person to another. The sentence you actually use is \"Let me introduce my friend\", drilled as a single piece; this card asks only that you recognize the verb sitting inside it.",
       "wylie": "ngo sprod zhu ba",
       "thl": "ngo trö zhuwa",
       "thl_note": "*ngotrö shuuwa*. སྤྲ is a single *tr*, not \"s-p-r\".",
@@ -965,12 +1991,66 @@
       "word_id": "word.0600"
     },
     {
+      "id": "vocab.to-know",
+      "slug": "to-know",
+      "district": "meeting",
+      "district_number": 2,
+      "bo": "ངོ་ཤེས",
+      "roman": "ngoshe",
+      "en": "to know",
+      "en_definition": null,
+      "wylie": "ngo shes",
+      "thl": "ngo shé",
+      "thl_note": null,
+      "pos": "verb",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1349"
+    },
+    {
+      "id": "vocab.to-meet-in-person",
+      "slug": "to-meet-in-person",
+      "district": "meeting",
+      "district_number": 2,
+      "bo": "ཞལ་མཇལ་བ",
+      "roman": "sheel djelwa",
+      "en": "to meet in person",
+      "en_definition": null,
+      "wylie": "zhal mjal ba",
+      "thl": "zhel jelwa",
+      "thl_note": null,
+      "pos": "verb",
+      "register": "honorific",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1366"
+    },
+    {
+      "id": "vocab.to-say",
+      "slug": "to-say",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ལབ",
+      "roman": "lap",
+      "en": "to say",
+      "en_definition": null,
+      "wylie": "lab",
+      "thl": "lap",
+      "thl_note": null,
+      "pos": "verb",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1387"
+    },
+    {
       "id": "vocab.to-talk",
       "slug": "to-talk",
       "district": "core",
       "district_number": 1,
       "bo": "སྐད་ཆ་བཤད་པ",
-      "roman": "ke chha shepa",
+      "roman": "kechhashe pa",
       "en": "to talk",
       "en_definition": "To talk, to speak. The phrase \"Please talk slowly\" is where you use it, and that phrase is learned whole. This card asks only for recognition, so that the verb stops being an unidentified sound in the middle of a sentence you already know.",
       "wylie": "skad cha bshad pa",
@@ -981,6 +2061,24 @@
       "status": "draft",
       "audio_natural": null,
       "word_id": "word.0088"
+    },
+    {
+      "id": "vocab.to-whom",
+      "slug": "to-whom",
+      "district": "core",
+      "district_number": 1,
+      "bo": "སུ་ལ",
+      "roman": "sula",
+      "en": "to whom",
+      "en_definition": null,
+      "wylie": "su la",
+      "thl": "su la",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1420"
     },
     {
       "id": "vocab.today",
@@ -1037,6 +2135,24 @@
       "word_id": "word.0603"
     },
     {
+      "id": "vocab.tomorrow-morning",
+      "slug": "tomorrow-morning",
+      "district": "meeting",
+      "district_number": 2,
+      "bo": "སང་ཞོགས",
+      "roman": "sangshok",
+      "en": "tomorrow morning",
+      "en_definition": null,
+      "wylie": "sang zhogs",
+      "thl": "sang zhok",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1422"
+    },
+    {
       "id": "vocab.tonight",
       "slug": "tonight",
       "district": "meeting",
@@ -1053,6 +2169,42 @@
       "status": "draft",
       "audio_natural": null,
       "word_id": "word.0604"
+    },
+    {
+      "id": "vocab.truly-and-honestly",
+      "slug": "truly-and-honestly",
+      "district": "core",
+      "district_number": 1,
+      "bo": "དངོས་གནས་དྲང་གནས",
+      "roman": "nghönhe thraang nhe",
+      "en": "truly and honestly",
+      "en_definition": null,
+      "wylie": "dngos gnas drang gnas",
+      "thl": "ngö né drang né",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1424"
+    },
+    {
+      "id": "vocab.twice-as-much",
+      "slug": "twice-as-much",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ལྡབ་གཉིས་ཀྱིས",
+      "roman": "dap nhyi ki",
+      "en": "twice as much",
+      "en_definition": null,
+      "wylie": "ldab gnyis kyis",
+      "thl": "dap nyi kyi",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1425"
     },
     {
       "id": "vocab.usually",
@@ -1089,6 +2241,222 @@
       "status": "draft",
       "audio_natural": null,
       "word_id": "word.0089"
+    },
+    {
+      "id": "vocab.we-ll-see",
+      "slug": "we-ll-see",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ལྟ་ཡག་རེད",
+      "roman": "ta yak re",
+      "en": "\"we'll see",
+      "en_definition": null,
+      "wylie": "lta yag red",
+      "thl": "ta yak ré",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1436"
+    },
+    {
+      "id": "vocab.well-then",
+      "slug": "well-then",
+      "district": "core",
+      "district_number": 1,
+      "bo": "འོ་ན",
+      "roman": "oona",
+      "en": "well then",
+      "en_definition": null,
+      "wylie": "'o na",
+      "thl": "o na",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1439"
+    },
+    {
+      "id": "vocab.what",
+      "slug": "what",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ག་རེ",
+      "roman": "khaare",
+      "en": "what",
+      "en_definition": null,
+      "wylie": "ga re",
+      "thl": "ga ré",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1440"
+    },
+    {
+      "id": "vocab.what-happened",
+      "slug": "what-happened",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ག་རེ་བྱས་སོང",
+      "roman": "khaare chhee song",
+      "en": "what happened?",
+      "en_definition": null,
+      "wylie": "ga re byas song",
+      "thl": "ga ré jé song",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1441"
+    },
+    {
+      "id": "vocab.what-kind-of",
+      "slug": "what-kind-of",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ག་རེ་ག་རེ",
+      "roman": "khaare khaare",
+      "en": "what kind of...",
+      "en_definition": null,
+      "wylie": "ga re ga re",
+      "thl": "ga ré ga ré",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1442"
+    },
+    {
+      "id": "vocab.what-s-your-name",
+      "slug": "what-s-your-name",
+      "district": "meeting",
+      "district_number": 2,
+      "bo": "ཁྱེད་རང་གི་མཚན་ལ་ག་རེ་རེད",
+      "roman": "khyerang khii tshen la khaare re",
+      "en": "what's your name?",
+      "en_definition": null,
+      "wylie": "khyed rang gi mtshan la ga re red",
+      "thl": "khyé rang gi tsen la ga ré ré",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1443"
+    },
+    {
+      "id": "vocab.when",
+      "slug": "when",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ག་དུས",
+      "roman": "khaatü",
+      "en": "when",
+      "en_definition": null,
+      "wylie": "ga dus",
+      "thl": "ga dü",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1444"
+    },
+    {
+      "id": "vocab.where",
+      "slug": "where",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ག་པར",
+      "roman": "khaapar",
+      "en": "where",
+      "en_definition": null,
+      "wylie": "ga par",
+      "thl": "ga par",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1445"
+    },
+    {
+      "id": "vocab.where-from",
+      "slug": "where-from",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ག་ནས",
+      "roman": "khaane",
+      "en": "where from",
+      "en_definition": null,
+      "wylie": "ga nas",
+      "thl": "ga né",
+      "thl_note": null,
+      "pos": "noun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1446"
+    },
+    {
+      "id": "vocab.which",
+      "slug": "which",
+      "district": "core",
+      "district_number": 1,
+      "bo": "ག་གི",
+      "roman": "khaaki",
+      "en": "which",
+      "en_definition": null,
+      "wylie": "ga gi",
+      "thl": "ga gi",
+      "thl_note": null,
+      "pos": "pronoun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1447"
+    },
+    {
+      "id": "vocab.who",
+      "slug": "who",
+      "district": "core",
+      "district_number": 1,
+      "bo": "སུ",
+      "roman": "su",
+      "en": "who",
+      "en_definition": null,
+      "wylie": "su",
+      "thl": "su",
+      "thl_note": null,
+      "pos": "pronoun",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1449"
+    },
+    {
+      "id": "vocab.whose",
+      "slug": "whose",
+      "district": "core",
+      "district_number": 1,
+      "bo": "སུའི",
+      "roman": "sü",
+      "en": "whose",
+      "en_definition": null,
+      "wylie": "su'i",
+      "thl": "sü",
+      "thl_note": null,
+      "pos": "determiner",
+      "register": "colloquial",
+      "status": "draft",
+      "audio_natural": null,
+      "word_id": "word.1451"
     },
     {
       "id": "vocab.woman",
@@ -1180,6 +2548,16 @@
       "role": "home"
     },
     {
+      "vocab_id": "vocab.all-day",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.already",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
       "vocab_id": "vocab.also",
       "district_id": "district.meeting",
       "role": "home"
@@ -1190,8 +2568,28 @@
       "role": "home"
     },
     {
+      "vocab_id": "vocab.at-the-same-time",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.biased",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.birthplace",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
       "vocab_id": "vocab.boy",
       "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.certainly",
+      "district_id": "district.core",
       "role": "home"
     },
     {
@@ -1201,6 +2599,26 @@
     },
     {
       "vocab_id": "vocab.child",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.completely",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.comprehension",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.confidence",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.constantly",
       "district_id": "district.meeting",
       "role": "home"
     },
@@ -1220,6 +2638,21 @@
       "role": "home"
     },
     {
+      "vocab_id": "vocab.definitely",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.do-you-understand",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.each-and-every-day",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
       "vocab_id": "vocab.evening",
       "district_id": "district.meeting",
       "role": "home"
@@ -1230,8 +2663,23 @@
       "role": "home"
     },
     {
+      "vocab_id": "vocab.every-year",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.exactly-the-same",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
       "vocab_id": "vocab.excuse-me",
       "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.female-friend",
+      "district_id": "district.meeting",
       "role": "home"
     },
     {
@@ -1242,6 +2690,11 @@
     {
       "vocab_id": "vocab.foreigner",
       "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.fortunately",
+      "district_id": "district.core",
       "role": "home"
     },
     {
@@ -1270,6 +2723,31 @@
       "role": "home"
     },
     {
+      "vocab_id": "vocab.good-afternoon",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.good-evening",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.good-morning-early",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.good-morning-later",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.good-night",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
       "vocab_id": "vocab.goodbye-going",
       "district_id": "district.core",
       "role": "home"
@@ -1285,7 +2763,57 @@
       "role": "home"
     },
     {
+      "vocab_id": "vocab.how",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.how-are-you",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.how-are-you-honorific",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.how-many",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.i-am-doing-well",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.in-the-future",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.intentionally",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.just-now",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.last-month",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
       "vocab_id": "vocab.last-night",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.last-year",
       "district_id": "district.meeting",
       "role": "home"
     },
@@ -1296,6 +2824,11 @@
     },
     {
       "vocab_id": "vocab.lhasa",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.loyalty",
       "district_id": "district.meeting",
       "role": "home"
     },
@@ -1325,7 +2858,17 @@
       "role": "home"
     },
     {
+      "vocab_id": "vocab.more-or-less-like-that",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
       "vocab_id": "vocab.morning",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.most-of-the-time",
       "district_id": "district.meeting",
       "role": "home"
     },
@@ -1335,7 +2878,22 @@
       "role": "home"
     },
     {
+      "vocab_id": "vocab.native-language",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
       "vocab_id": "vocab.nepali",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.never",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.next-x-adjective",
       "district_id": "district.meeting",
       "role": "home"
     },
@@ -1350,6 +2908,11 @@
       "role": "home"
     },
     {
+      "vocab_id": "vocab.not-at-all",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
       "vocab_id": "vocab.now",
       "district_id": "district.meeting",
       "role": "home"
@@ -1360,7 +2923,27 @@
       "role": "home"
     },
     {
+      "vocab_id": "vocab.one-time",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.only",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.patriotic",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
       "vocab_id": "vocab.person",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.place-of-birth",
       "district_id": "district.meeting",
       "role": "home"
     },
@@ -1375,12 +2958,52 @@
       "role": "home"
     },
     {
+      "vocab_id": "vocab.recently",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.sadness",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.same-as-before",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.see-you-later",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.see-you-tomorrow",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.shock",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
       "vocab_id": "vocab.slowly",
       "district_id": "district.core",
       "role": "home"
     },
     {
+      "vocab_id": "vocab.sometimes",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
       "vocab_id": "vocab.sorry",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.surprise",
       "district_id": "district.core",
       "role": "home"
     },
@@ -1392,6 +3015,16 @@
     {
       "vocab_id": "vocab.thank-you",
       "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.the-whole-day",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.the-whole-night",
+      "district_id": "district.meeting",
       "role": "home"
     },
     {
@@ -1410,6 +3043,11 @@
       "role": "home"
     },
     {
+      "vocab_id": "vocab.to-agree",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
       "vocab_id": "vocab.to-arrive",
       "district_id": "district.meeting",
       "role": "home"
@@ -1420,7 +3058,22 @@
       "role": "home"
     },
     {
+      "vocab_id": "vocab.to-be-finished",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
       "vocab_id": "vocab.to-greet",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.to-guess",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.to-have-a-conversation",
       "district_id": "district.core",
       "role": "home"
     },
@@ -1435,7 +3088,27 @@
       "role": "home"
     },
     {
+      "vocab_id": "vocab.to-know",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.to-meet-in-person",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.to-say",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
       "vocab_id": "vocab.to-talk",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.to-whom",
       "district_id": "district.core",
       "role": "home"
     },
@@ -1455,8 +3128,23 @@
       "role": "home"
     },
     {
+      "vocab_id": "vocab.tomorrow-morning",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
       "vocab_id": "vocab.tonight",
       "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.truly-and-honestly",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.twice-as-much",
+      "district_id": "district.core",
       "role": "home"
     },
     {
@@ -1466,6 +3154,66 @@
     },
     {
       "vocab_id": "vocab.very",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.we-ll-see",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.well-then",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.what",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.what-happened",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.what-kind-of",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.what-s-your-name",
+      "district_id": "district.meeting",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.when",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.where",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.where-from",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.which",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.who",
+      "district_id": "district.core",
+      "role": "home"
+    },
+    {
+      "vocab_id": "vocab.whose",
       "district_id": "district.core",
       "role": "home"
     },
