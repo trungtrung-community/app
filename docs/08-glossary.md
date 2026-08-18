@@ -150,6 +150,15 @@
   *la-go*, ས་མགོ *sa-go* above. Never "modifier", never "attachment". A
   prefix and a suffix are **not** combiners — they sit on the line beside the
   root rather than stacking with it.
+- **Suffix / second suffix** — རྗེས་འཇུག and ཡང་འཇུག, the sixth and seventh
+  slots. **Never "ending"**, which the Read spec's prose uses and this glossary
+  does not: one name per concept, and "suffix" is the one the slot model, the
+  inventory and `affixes.json` all use. There is **no constraint on which root
+  a suffix may follow** — any of the ten follows any of the thirty, at high
+  confidence, and that is the finding that refuted the L4 and L5 tables. The
+  second suffix *is* constrained, and it constrains the **first suffix** rather
+  than the root: ས follows ག ང བ མ, ད follows ན ར ལ and is archaic,
+  mention-only.
 - **Line letter** — a position the eye reads left to right: a prefix, the
   stack column, a suffix, a second suffix. A superscript, its root and its
   subscripts share **one** line letter; a vowel mark is not one. This is the

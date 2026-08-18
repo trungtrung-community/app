@@ -121,7 +121,7 @@ gaps are named so they read as decisions, not oversights.*
    Speak §7.6 rule 26). That removed 587 takes and dissolved the question this
    entry existed to ask, along with the Read letters' A7.
 
-   The total is **2,004 takes** — 1,045 vocabulary + 416 phrases + 543 Read —
+   The total is **4,942 takes** — 1,045 vocabulary + 416 phrases + 3,481 Read —
    but do not quote that either. It is computed by
    `trungtrung-community/studio`, whose `lib/recording-plan.ts` reads this
    repository's content on every run and whose test asserts the figure against
@@ -135,7 +135,20 @@ gaps are named so they read as decisions, not oversights.*
    its total nor its "Not recorded" list. And the **~178 number takes for 11–99
    are still unplannable** — only 20 pattern cards are in the roster, and the
    21–99 combined forms exist in no dataset, so there is nothing for a generator
-   to enumerate. They are excluded from the 2,004 by decision, not by oversight.
+   to enumerate. They are excluded from the 4,942 by decision, not by oversight.
+
+   **The Read half went 543 → 3,481 on 2026-08-18**, and it is content rather
+   than counting. `content/read/combinations.json` measures which letter
+   combinations Tibetan actually writes — bottom-up from the Steinert cache,
+   because a set generated from §4.3's pairwise tables can only ever confirm
+   them — so stacks gained the 77 of three and four letters those tables cannot
+   express, and every non-prefix combination gained its four vowel forms. Two
+   families are new and are pile rather than walk (§9.4): every root carrying
+   every ending in every vowel, and the syllables the board draws or a taught
+   word contains. No stop names any of them, and 44 stops / 1,003 positions /
+   559 exercises are unchanged, which is how you can tell. Storage is not the
+   constraint at this size — roughly 40–50 MB against the 200–300 MB budget —
+   but studio time is.
 10. **`build_manifests.py` overwrites instead of merging** — **CLOSED
     2026-08-08.** It destructively regenerated `content/known-forms.json`,
     wiping the translation pass's enrichments. Reproduced deliberately while

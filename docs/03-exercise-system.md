@@ -529,9 +529,28 @@ and nowhere else:
 |---|---|---|
 | the thirty | `letters.json` | 30 |
 | letter × vowel | `syllables.json` family `grid` | 120 |
-| stacks | `stacks.json` | 122 |
+| stacks | `stacks.json` | 199 |
+| stacks × vowel | `syllables.json` family `stack-grid` | 604 |
 | the endings on one root | `syllables.json` family `demo` | 34 |
+| every root, every ending | `syllables.json` family `ending-grid` | 2,064 |
+| real syllables | `syllables.json` families `worked` + `corpus` | 246 |
 | whole words | `words.json` | 452 |
+
+**Four of those rows are new on 2026-08-18, and they are why the dataset grew.**
+A stop teaches an item to recognition and moves on; reading fluently is the
+reflex that turns a shape into a sound before you have thought about it, and
+that is built by volume the walk is deliberately not built for. So the pile
+needs forms the walk never drills — and a card it can show has to be a card
+someone recorded, which is what took the Read track from 543 takes to 3,481.
+
+None of it is curriculum. No stop names a single one of these items, and the
+walk still generates 44 stops, 1,003 positions and 559 exercises — unchanged.
+That invariant is the check: if adding pile material moves an exercise count,
+it has leaked into the walk.
+
+`ending-grid` is legal in full because §4.3's `root_constraint` is null at high
+confidence — any of the ten suffixes follows any of the thirty. That is the
+finding that refuted L4 and L5, and it is what makes the grid a grid.
 
 The learner chooses a pile, or takes everything. **An item enters its pile
 only after the stop that teaches it** — otherwise the training ground
