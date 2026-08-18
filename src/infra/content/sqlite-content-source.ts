@@ -53,8 +53,8 @@ export class SqliteContentSource implements ContentSource {
    * coined.
    *
    * This was `WHERE district = ?` — the record's own home field — and it hid 79
-   * words from the districts that teach them, across 18 of the 24. Departure
-   * teaches 16 and the query returned 7. The join is the fix: `placement` holds
+   * words from the districts that teach them, across 18 of the 24 districts
+   * there were then. Departure teaches 16 and the query returned 7. The join is the fix: `placement` holds
    * one `home` row per record plus a `reuse` row for every further district,
    * and the reuse rows are exactly what the old query could not see.
    *

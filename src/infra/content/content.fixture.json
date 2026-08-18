@@ -1,5 +1,5 @@
 {
-  "content_version": "651e0b0f134e9426",
+  "content_version": "b451f58d8e8b04fb",
   "schema_version": 3,
   "districts": [
     {
@@ -22,9 +22,9 @@
     },
     {
       "id": "district.departure",
-      "number": 24,
+      "number": 28,
       "name": "Departure",
-      "section": 5
+      "section": 6
     }
   ],
   "vocabulary": [
