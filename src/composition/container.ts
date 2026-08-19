@@ -18,8 +18,10 @@
 import {Platform} from 'react-native';
 
 import type {AudioSource, ContentSource, CuePlayer, ProgressStore, SettingsStore} from '../ports';
+import type {AppStateStore} from '../ports/app-state-store';
 
 import {BundledAudioSource} from '../infra/audio/bundled-audio-source';
+import {createMmkvAppStateStore} from '../infra/state/mmkv-app-state-store';
 import {JsonContentSource} from '../infra/content/json-content-source';
 import type {ContentFixture} from '../infra/content/rows.generated';
 import {SqliteContentSource} from '../infra/content/sqlite-content-source';
@@ -32,6 +34,7 @@ type Registry = {
   audio: AudioSource;
   cues: CuePlayer;
   settings: SettingsStore;
+  appState: AppStateStore;
 };
 
 const memo = new Map<keyof Registry, Promise<Registry[keyof Registry]>>();
@@ -90,6 +93,22 @@ export function settings(): Promise<SettingsStore> {
       return new MmkvSettingsStore(webKeyValueStore(pageStorage()));
     }
     return createMmkvSettingsStore();
+  });
+}
+
+/**
+ * Device bookkeeping — the parked session, nudge dates, primer flags. Persists
+ * the same way progress and settings do: MMKV on a device, localStorage on web,
+ * with the medium chosen here and nowhere else.
+ */
+export function appState(): Promise<AppStateStore> {
+  return once('appState', async () => {
+    if (Platform.OS === 'web') {
+      const {MmkvAppStateStore} = await import('../infra/state/mmkv-app-state-store');
+      const {pageStorage, webKeyValueStore} = await import('../infra/storage/web-key-value-store');
+      return new MmkvAppStateStore(webKeyValueStore(pageStorage()));
+    }
+    return createMmkvAppStateStore();
   });
 }
 
