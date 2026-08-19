@@ -279,10 +279,9 @@ describe('the presentation ladder', () => {
     const exercises = byId(
       phraseCloze('ex.1', {blockedOn: 'audio'}),
       phraseProduce('ex.2', {blockedOn: 'audio'}),
-      buildTheStack('ex.3', {blockedOn: null}),
       meaningPick('ex.4'),
     );
-    const script = ['ex.1', 'ex.2', 'ex.3', 'ex.4'].map(exercisePosition);
+    const script = ['ex.1', 'ex.2', 'ex.4'].map(exercisePosition);
 
     // When
     const today = planSession(script, exercises, TODAY);
@@ -291,6 +290,17 @@ describe('the presentation ladder', () => {
     // Then
     expect(presentations(today)).toEqual(['meaning-pick']);
     expect(presentations(withAudio)).toEqual(['meaning-pick']);
+  });
+
+  it('runs build-the-stack without a take: the frame writes its prompt on screen', () => {
+    // Given
+    const exercises = byId(buildTheStack('ex.1', {blockedOn: null}));
+
+    // When
+    const seed = planSession([exercisePosition('ex.1')], exercises, TODAY);
+
+    // Then — RB12's "It sounds like drip." line is text, so no gate applies
+    expect(presentations(seed)).toEqual(['build-the-stack']);
   });
 
   it('renders see-it-say-it as itself: a tap over four sounds, per the RB7 dossier', () => {
@@ -399,6 +409,50 @@ describe('the other position kinds', () => {
       'end',
     ]);
     expect(seed.positions[1]).toEqual({kind: 'card', card: 'word', itemId: 'vocab.cha'});
+
+    // Then — each note keeps its register: RS1, RR1, the C-card and a tip
+    // are four surfaces, not one paragraph
+    expect(seed.positions.slice(5, 9)).toEqual([
+      {kind: 'note', note: 'rule-card', text: 'De-aspirate'},
+      {kind: 'note', note: 'rule-statement', text: 'Rule'},
+      {kind: 'note', note: 'rule-reprise', text: 'Again'},
+      {kind: 'note', note: 'tip', text: 'A tip'},
+    ]);
+  });
+
+  it('forwards the R11 recap onto the end position, in the engine vocabulary', () => {
+    // Given
+    const pair = {
+      id: item('stack.rga'),
+      bo: 'རྒ',
+      reading: 'ga',
+      bareId: item('letter.ga'),
+      bareBo: 'ག',
+      bareReading: 'khaa',
+      changed: true,
+    };
+    const positions: StopPosition[] = [
+      {...POSITION, kind: 'end', capabilities: ['Read'], recap: [pair]},
+    ];
+
+    // When
+    const seed = planSession(positions, byId(), TODAY);
+
+    // Then
+    expect(seed.positions[0]).toEqual({
+      kind: 'end',
+      capabilities: ['Read'],
+      recap: [
+        {
+          itemId: 'stack.rga',
+          bo: 'རྒ',
+          roman: 'ga',
+          bareBo: 'ག',
+          bareRoman: 'khaa',
+          changed: true,
+        },
+      ],
+    });
   });
 
   it('lifts an artifact card into the seed instead of the queue, off the bar count', () => {

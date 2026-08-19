@@ -76,12 +76,27 @@ export async function startStop(
       kinds.set(item.id, item.kind);
     }
   }
+  // A stack, syllable, word or mark target has no port to load it yet — the
+  // tables exist but StackSource is a later task. Until it lands, the exercise
+  // prompt is what startStop can reach: it carries the glyph and the reading,
+  // which is everything the SK1 card and the option lists draw. Replaced by a
+  // real lookup when the ports task adds one.
+  const synthesized = new Map<ContentItemId, DisplayItem>();
   for (const exercise of exercises) {
     const target = exercise.target;
-    if (
-      target === null ||
-      (target.kind !== 'vocab' && target.kind !== 'phrase' && target.kind !== 'letter')
-    ) {
+    if (target === null) {
+      continue;
+    }
+    if (target.kind !== 'vocab' && target.kind !== 'phrase' && target.kind !== 'letter') {
+      if (exercise.prompt.bo !== null && !synthesized.has(target.id)) {
+        synthesized.set(target.id, {
+          id: target.id,
+          kind: target.kind,
+          bo: exercise.prompt.bo,
+          roman: exercise.prompt.roman ?? '',
+          en: exercise.prompt.en ?? '',
+        });
+      }
       continue;
     }
     kinds.set(target.id, target.kind);
@@ -104,10 +119,11 @@ export async function startStop(
     }),
   );
 
+  // A dictionary record wins over a synthesized one for the same id.
   return {
     stop,
     state: createSession(seed, rng),
-    itemsById: new Map(entries),
+    itemsById: new Map<ContentItemId, SessionItem>([...synthesized, ...entries]),
     artifacts: seed.artifacts ?? [],
   };
 }

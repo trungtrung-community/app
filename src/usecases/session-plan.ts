@@ -14,7 +14,7 @@ import type {Exercise} from '../ports/content-exercise';
 import type {ExerciseId} from '../ports/content-ids';
 import type {StopPosition} from '../ports/content-model';
 
-import {toSeedExercise, type PlanContext} from './exercise-seed';
+import {toSeedChangePairs, toSeedExercise, type PlanContext} from './exercise-seed';
 
 export {phraseArrangeOrder, type PlanContext} from './exercise-seed';
 
@@ -80,7 +80,10 @@ export function planSession(
       case 'rule-statement':
       case 'rule-reprise':
       case 'tip':
-        planned.push({kind: 'note', text: position.text});
+        // The note keeps its kind: RS1, RR1, the C-card and a tip are four
+        // registers, and a renderer that cannot tell them apart flattens the
+        // Read track's teaching surfaces into one paragraph.
+        planned.push({kind: 'note', note: position.kind, text: position.text});
         break;
       case 'warm-up':
       case 'exercise':
@@ -103,7 +106,11 @@ export function planSession(
         planned.push({kind: 'moment'});
         break;
       case 'end':
-        planned.push({kind: 'end', capabilities: position.capabilities});
+        planned.push({
+          kind: 'end',
+          capabilities: position.capabilities,
+          ...(position.recap === null ? {} : {recap: toSeedChangePairs(position.recap)}),
+        });
         break;
       default:
         assertNever(position);

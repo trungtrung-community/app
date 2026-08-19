@@ -21,7 +21,38 @@ import {shuffled, type Rng} from './rng';
 export type SessionOption = {
   readonly itemId: string;
   readonly isAnswer: boolean;
+  /** What to draw when the id resolves to no record — the content's own label. */
+  readonly label?: string;
 };
+
+/**
+ * One contrasted pair: a syllable beside its bare form, and whether the change
+ * landed. Structurally the ports' `ChangePair`, restated in the engine's own
+ * vocabulary because the engine may not import a content type.
+ */
+export type SeedChangePair = {
+  readonly itemId: string;
+  readonly bo: string;
+  readonly roman: string;
+  readonly bareBo: string;
+  readonly bareRoman: string;
+  readonly changed: boolean;
+};
+
+/** The four fixed rows of the build tray, as the exercise payload carries them (§9.1a). */
+export type SeedTray = {
+  /** The thirty consonants, in grid order. */
+  readonly thirty: readonly string[];
+  /** ར ལ ས — the superscripts. */
+  readonly superscripts: readonly string[];
+  /** The four subjoined forms, each on its ◌ carrier. */
+  readonly subscripts: readonly string[];
+  /** The four vowel marks, each on its ◌ carrier. */
+  readonly vowels: readonly string[];
+};
+
+/** What a between-drill note is: a rule surface or a tip, per docs/03 §4.2. */
+export type NoteKind = 'rule-card' | 'rule-statement' | 'rule-reprise' | 'tip';
 
 /** How an entry commits — docs/03 §2's commit rule, decided at plan time. */
 export type CommitMode = 'tap' | 'check' | 'pairs' | 'none';
@@ -43,6 +74,23 @@ export type SeedExercise = {
   readonly answers?: readonly string[];
   /** The position kind was `warm-up` — S11 draws its chip off this. */
   readonly warmUp?: true;
+  /** The glyph the drill shows, where the payload carries one. */
+  readonly glyph?: string;
+  /** The written question, for the drills whose prompt is a question. */
+  readonly question?: string;
+  /**
+   * The sentence naming the rule that decides this drill. Rides the band's
+   * headline where the rule is the lesson (docs/03 §2, amended 2026-08-16).
+   */
+  readonly reason?: string;
+  /** sort-what-changed rows, and the R11 recap's shape. */
+  readonly pairs?: readonly SeedChangePair[];
+  /** what-attaches: the root the affixes join. */
+  readonly root?: string;
+  /** build-the-stack: the romanized sound being spelled. */
+  readonly reading?: string;
+  /** build-the-stack: the four fixed tray rows (§9.1a). */
+  readonly tray?: SeedTray;
 };
 
 export type SeedPosition =
@@ -57,10 +105,15 @@ export type SeedPosition =
       readonly card: 'word' | 'phrase' | 'letter' | 'stack' | 'artifact';
       readonly itemId: string;
     }
-  | {readonly kind: 'note'; readonly text: string}
+  | {readonly kind: 'note'; readonly note: NoteKind; readonly text: string}
   | {readonly kind: 'exercise'; readonly exercise: SeedExercise}
   | {readonly kind: 'moment'}
-  | {readonly kind: 'end'; readonly capabilities: readonly string[]};
+  | {
+      readonly kind: 'end';
+      readonly capabilities: readonly string[];
+      /** The R11 recap rows, for a Read stop that ends on a contrast. */
+      readonly recap?: readonly SeedChangePair[];
+    };
 
 export type SessionSeed = {
   readonly stopId: string;

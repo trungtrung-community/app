@@ -30,8 +30,10 @@
  * `PlanContext`; the shuffle belongs to the engine.
  */
 
-import type {CommitMode, SeedExercise} from '../engine/session';
-import type {Exercise} from '../ports/content-exercise';
+import type {CommitMode, SeedChangePair, SeedExercise, SessionOption} from '../engine/session';
+import {lettersOf} from '../domain/tibetan';
+import type {Exercise, StackSlots} from '../ports/content-exercise';
+import type {ChangePair} from '../ports/content-model';
 
 /** What the planner needs to know about the build, handed in as values. */
 export type PlanContext = {
@@ -84,6 +86,15 @@ export const RENDERABLE_PRESENTATIONS: ReadonlySet<string> = new Set([
   'hear-it-find-it',
   'phrase-produce',
   'read-it-aloud',
+  // The Read stop-loop renderers (WS3-C): the glyph and stack drills, the
+  // multi-selects, and the crossing's read-a-word. All run without a take —
+  // their prompts are written on the frame.
+  'spot-it',
+  'find-the-root',
+  'sort-what-changed',
+  'what-attaches',
+  'read-a-word',
+  'build-the-stack',
 ]);
 
 /**
@@ -99,7 +110,10 @@ const AUDIO_LADDER = {
   'phrase-arrange': ['phrase-arrange', null],
   'phrase-produce': ['phrase-produce', null],
   'read-it-aloud': ['read-it-aloud', null],
-  'build-the-stack': ['build-the-stack', null],
+  // build-the-stack left the ladder (WS3-C): the RB12 frame writes its prompt
+  // on screen — "It sounds like drip." — with the take as an enrichment, so a
+  // missing recording degrades the drill rather than hiding it. The board
+  // draws that line on the audio-only specimen itself.
   'hear-it-find-it': ['hear-it-find-it', null],
 } as const satisfies Partial<Record<Exercise['type'], readonly [string, string | null]>>;
 
@@ -169,6 +183,139 @@ export function phraseArrangeOrder(exercise: Exercise): readonly string[] | unde
   return answer.length > 0 ? answer : undefined;
 }
 
+/** The combining-mark carrier the tray chips ride on (§2.4, U+25CC). */
+const CARRIER = '◌';
+
+/**
+ * A chip or slot value in its canonical spelling: the carrier stripped, and a
+ * subjoined consonant mapped to the base letter it is a form of. The answer
+ * slots store base letters (`subscript: ["ཡ"]`) while the tray chips carry the
+ * subjoined form on its carrier (`◌ྱ`), and both must compare equal. A vowel
+ * mark survives as itself — `lettersOf` drops it, so the fallback keeps it.
+ */
+function canonicalChipValue(value: string): string {
+  const stripped = value.split(CARRIER).join('');
+  return lettersOf(stripped)[0] ?? stripped;
+}
+
+/**
+ * One placement as the engine compares it: `slot:value`, canonical spelling.
+ * The same function builds the answer set and the renderer's picks, so the
+ * two cannot disagree about what a placed chip is called.
+ *
+ * @example stackSlotToken('subscript', '◌ྱ') // 'subscript:ཡ'
+ */
+export function stackSlotToken(slot: keyof StackSlots, value: string): string {
+  return `${slot}:${canonicalChipValue(value)}`;
+}
+
+/**
+ * The build answer as `slot:value` tokens. The inherent `a` is absence — an
+ * empty vowel slot emits no token, so an untouched vowel row checks correct
+ * (§9.1a: an untouched vowel row is an answer).
+ */
+export function stackAnswers(slots: StackSlots): readonly string[] {
+  const tokens: string[] = [];
+  const single: readonly (keyof StackSlots)[] = [
+    'prefix',
+    'superscript',
+    'root',
+    'vowel',
+    'suffix',
+    'suffix2',
+  ];
+  for (const slot of single) {
+    const value = slots[slot];
+    if (typeof value === 'string') {
+      tokens.push(stackSlotToken(slot, value));
+    }
+  }
+  for (const value of slots.subscript ?? []) {
+    tokens.push(stackSlotToken('subscript', value));
+  }
+  return tokens;
+}
+
+/**
+ * The tappable positions of a find-the-root stack: every code point of the
+ * glyph, `{index, bo}` in writing order, encoded as `index:bo` option ids.
+ * The payload's `answer_index` indexes exactly this decomposition — ཏྲ is
+ * position 0 = ཏ and position 1 = ྲ — which is what settles the unit: the
+ * fixture's answers name a letter INSIDE the stack, not a line letter.
+ */
+export function findTheRootOptions(glyph: string, answerIndex: number): readonly SessionOption[] {
+  return Array.from(glyph).map((bo, index) => ({
+    itemId: `${index}:${bo}`,
+    isAnswer: index === answerIndex,
+  }));
+}
+
+function toSeedChangePair(pair: ChangePair): SeedChangePair {
+  return {
+    itemId: pair.id,
+    bo: pair.bo,
+    roman: pair.reading,
+    bareBo: pair.bareBo,
+    bareRoman: pair.bareReading,
+    changed: pair.changed,
+  };
+}
+
+/** The R11 recap rows in the engine's vocabulary, shared with the end position. */
+export function toSeedChangePairs(pairs: readonly ChangePair[]): readonly SeedChangePair[] {
+  return pairs.map(toSeedChangePair);
+}
+
+/**
+ * What this type's renderer reads beyond the shared core, and the answers the
+ * engine checks against — populated at plan time so `handleCheck` never has to
+ * know a content type. Only the fields the payload actually carries are set.
+ */
+function seedExtras(exercise: Exercise): Partial<SeedExercise> {
+  switch (exercise.type) {
+    case 'spot-it':
+      return {
+        question: exercise.question,
+        ...(exercise.glyph === null ? {} : {glyph: exercise.glyph}),
+        ...(exercise.reason === null ? {} : {reason: exercise.reason}),
+      };
+    case 'find-the-root':
+      return {
+        glyph: exercise.glyph,
+        ...(exercise.reason === null ? {} : {reason: exercise.reason}),
+      };
+    case 'read-a-word':
+    case 'see-it-say-it':
+      return {glyph: exercise.glyph};
+    case 'sort-what-changed':
+      return {
+        question: exercise.question,
+        pairs: toSeedChangePairs(exercise.pairs),
+        answers: exercise.pairs.filter(pair => pair.changed).map(pair => pair.id),
+      };
+    case 'what-attaches':
+      return {
+        question: exercise.question,
+        root: exercise.root,
+        answers: exercise.answers,
+      };
+    case 'build-the-stack':
+      return {
+        ...(exercise.glyph === null ? {} : {glyph: exercise.glyph}),
+        reading: exercise.reading,
+        answers: stackAnswers(exercise.answerSlots),
+        tray: {
+          thirty: exercise.chips,
+          superscripts: exercise.superscriptChips,
+          subscripts: exercise.subscriptChips,
+          vowels: exercise.vowelChips,
+        },
+      };
+    default:
+      return {};
+  }
+}
+
 /**
  * Translate one exercise into the engine's vocabulary, or null when the
  * ladder hides it under this context.
@@ -183,17 +330,24 @@ export function toSeedExercise(
     return null;
   }
   const ordered = phraseArrangeOrder(exercise);
+  // find-the-root ships no option rows: its options ARE the glyph's positions.
+  const options =
+    exercise.type === 'find-the-root'
+      ? findTheRootOptions(exercise.glyph, exercise.answerIndex)
+      : exercise.options.map(option => ({
+          itemId: option.itemId,
+          isAnswer: option.isAnswer,
+          ...(option.label === null ? {} : {label: option.label}),
+        }));
   return {
     exerciseId: exercise.id,
     itemId: exercise.target?.id ?? null,
     exerciseType: exercise.type,
     presentation,
     commitMode: COMMIT_MODES[exercise.type],
-    options: exercise.options.map(option => ({
-      itemId: option.itemId,
-      isAnswer: option.isAnswer,
-    })),
+    options,
     ...(ordered === undefined ? {} : {ordered}),
     ...(warmUp ? {warmUp: true as const} : {}),
+    ...seedExtras(exercise),
   };
 }
