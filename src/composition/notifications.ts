@@ -12,6 +12,7 @@
 import {Platform} from 'react-native';
 
 import {isoDate, type IsoDate} from '../domain/date';
+import type {ReminderPermission} from '../ports/reminder-scheduler';
 import {planReminders} from '../usecases/reminder-plan';
 
 import {reminders, settings} from './container';
@@ -42,6 +43,17 @@ export async function syncReminders(): Promise<void> {
   await scheduler.replaceSchedule(
     planReminders({reminder, today: localToday(clock), now: localMinute(clock)}),
   );
+}
+
+/**
+ * The current notification permission, read without ever prompting.
+ *
+ * N4's gate: the in-app nudge substitutes for a declined push, so it needs the
+ * answer without any risk of the system dialog — that one ask stays with the
+ * O4/N3 flows below.
+ */
+export async function reminderPermission(): Promise<ReminderPermission> {
+  return (await reminders()).getPermission();
 }
 
 /**
