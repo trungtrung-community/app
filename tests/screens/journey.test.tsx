@@ -8,7 +8,7 @@
 import {fireEvent, screen} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 
-import Journey, {pairTwoDoors} from '../../app/(tabs)/journey/index';
+import Journey, {EXAM_SECTIONS, pairTwoDoors} from '../../app/(tabs)/journey/index';
 import {renderScreen} from './render';
 import {override, resetContainer} from '../../src/composition/container';
 import fixture from '../../src/infra/content/content.fixture.json';
@@ -30,6 +30,23 @@ const EMPTY: Progress = {walkedOn: [], items: {}, completedStops: [], version: 2
 const CORE_STOPS = (fixture as unknown as {stop: {id: string; district_id: string | null}[]}).stop
   .filter(stop => stop.district_id === 'district.core')
   .map(stop => stop.id);
+
+const ROWS = fixture as unknown as {
+  section: {id: string; track: string; number: number; name: string}[];
+  stop: {id: string; track: string; section_id: string; ordinal: number; name: string}[];
+};
+
+const READ_SECTIONS = ROWS.section.filter(section => section.track === 'read');
+
+/** The Read walk in walking order — section number, then ordinal — from the fixture. */
+const READ_WALK = ROWS.stop
+  .filter(stop => stop.track === 'read')
+  .sort((a, b) => {
+    const bySection =
+      (READ_SECTIONS.find(s => s.id === a.section_id)?.number ?? 0) -
+      (READ_SECTIONS.find(s => s.id === b.section_id)?.number ?? 0);
+    return bySection || a.ordinal - b.ordinal;
+  });
 
 /** A hand-made district, for the pairing unit tests below. */
 function makeDistrict(partial: Pick<District, 'slug' | 'number' | 'name'>): District {
@@ -95,6 +112,88 @@ describe('the journey map', () => {
     // Then
     expect(push).toHaveBeenCalledWith('/journey/district/core');
     expect(later.getAttribute('aria-disabled')).toBe('true');
+  });
+});
+
+describe('the Read map', () => {
+  beforeEach(() => {
+    resetContainer();
+    override('content', new JsonContentSource(fixture as unknown as ContentFixture));
+    push.mockClear();
+    useProgress.setState({progress: null});
+  });
+
+  /** Renders the journey and switches to the Read segment. */
+  async function openRead(): Promise<void> {
+    renderScreen(<Journey />);
+    await screen.findByText('Into Town');
+    fireEvent.click(screen.getByRole('tab', {name: 'Read'}));
+  }
+
+  it('binds the header counts to the fixture', async () => {
+    // Given
+    await openRead();
+
+    // Then
+    expect(
+      await screen.findByText(
+        `${READ_SECTIONS.length} sections · ${READ_WALK.length} stops · ${EXAM_SECTIONS.length} exams`,
+      ),
+    ).toBeTruthy();
+  });
+
+  it('opens the first stop and locks the one after it', async () => {
+    // Given
+    await openRead();
+    const first = await screen.findByRole('button', {name: READ_WALK[0]!.name});
+    const later = screen.getByRole('button', {name: READ_WALK[1]!.name});
+
+    // When
+    fireEvent.click(first);
+
+    // Then
+    expect(push).toHaveBeenCalledWith(`/stop/${READ_WALK[0]!.id}`);
+    expect(later.getAttribute('aria-disabled')).toBe('true');
+  });
+
+  it('unlocks a stop once its predecessor is done', async () => {
+    // Given
+    useProgress.setState({progress: {...EMPTY, completedStops: [READ_WALK[0]!.id]}});
+    await openRead();
+    const next = await screen.findByRole('button', {name: READ_WALK[1]!.name});
+    const after = screen.getByRole('button', {name: READ_WALK[2]!.name});
+
+    // When
+    fireEvent.click(next);
+
+    // Then
+    expect(push).toHaveBeenCalledWith(`/stop/${READ_WALK[1]!.id}`);
+    expect(after.getAttribute('aria-disabled')).toBe('true');
+  });
+
+  it('draws the two exam waymarks locked and doorless', async () => {
+    // Given
+    await openRead();
+    await screen.findByRole('button', {name: READ_WALK[0]!.name});
+
+    // Then
+    expect(screen.getByRole('button', {name: 'First exam'}).getAttribute('aria-disabled')).toBe(
+      'true',
+    );
+    const finals = screen.getAllByRole('button', {name: 'The final test'});
+    expect(finals.some(node => node.getAttribute('aria-disabled') === 'true')).toBe(true);
+  });
+
+  it('opens the section hub from a section header', async () => {
+    // Given
+    await openRead();
+    const header = await screen.findByRole('button', {name: 'The four vowels'});
+
+    // When
+    fireEvent.click(header);
+
+    // Then
+    expect(push).toHaveBeenCalledWith('/journey/section/1');
   });
 });
 
