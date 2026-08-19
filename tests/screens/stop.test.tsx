@@ -472,6 +472,96 @@ describe('the stop screen', () => {
     expect(planned).toHaveLength(0);
   });
 
+  it('renders the Read teaching surfaces of stop.6.1: the rule, the reprise, the stack card', async () => {
+    // Given
+    params.id = 'stop.6.1';
+    renderScreen(<Stop />);
+    const state = await ready();
+
+    // When — the rule statement (RS1)
+    const ruleAt = state.queue.findIndex(
+      entry => entry.position.kind === 'note' && entry.position.note === 'rule-statement',
+    );
+    expect(ruleAt).toBeGreaterThan(-1);
+    jumpTo(state, ruleAt);
+
+    // Then
+    expect(screen.getByText('The rule')).toBeTruthy();
+
+    // When — the reprise (RR1)
+    const repriseAt = state.queue.findIndex(
+      entry => entry.position.kind === 'note' && entry.position.note === 'rule-reprise',
+    );
+    expect(repriseAt).toBeGreaterThan(-1);
+    jumpTo(state, repriseAt);
+
+    // Then
+    expect(screen.getByText('You know this one')).toBeTruthy();
+
+    // When — a stack card (SK1), resolved through the exercise prompts
+    const stackAt = state.queue.findIndex(
+      entry => entry.position.kind === 'card' && entry.position.card === 'stack',
+    );
+    expect(stackAt).toBeGreaterThan(-1);
+    jumpTo(state, stackAt);
+
+    // Then
+    expect(screen.getByText('New stack')).toBeTruthy();
+  });
+
+  it('closes stop.6.1 on the sort, then the R11 recap', async () => {
+    // Given
+    params.id = 'stop.6.1';
+    renderScreen(<Stop />);
+    const state = await ready();
+
+    // When — the sort-what-changed entry
+    const sortAt = state.queue.findIndex(
+      entry =>
+        entry.position.kind === 'exercise' &&
+        entry.position.exercise.presentation === 'sort-what-changed',
+    );
+    expect(sortAt).toBeGreaterThan(-1);
+    jumpTo(state, sortAt);
+
+    // Then — the stop question over toggleable pairs, committing on Check
+    expect(screen.getByText(/Which of these did the/)).toBeTruthy();
+    expect(screen.getAllByRole('checkbox').length).toBeGreaterThan(0);
+    expect(screen.getByText('Check')).toBeTruthy();
+
+    // When — the end
+    const endAt = state.queue.findIndex(entry => entry.position.kind === 'end');
+    expect(endAt).toBeGreaterThan(-1);
+    jumpTo(state, endAt);
+
+    // Then — the recap table, one row per pair, before the capabilities
+    expect(screen.getByText('All of them, together')).toBeTruthy();
+    expect(screen.getByText('Stop complete')).toBeTruthy();
+  });
+
+  it('rides the cue-ladder rung on the band when a find-the-root commits', async () => {
+    // Given — stop.7.2 carries the six one-letter find-the-root drills
+    params.id = 'stop.7.2';
+    renderScreen(<Stop />);
+    const state = await ready();
+    const rootAt = state.queue.findIndex(
+      entry =>
+        entry.position.kind === 'exercise' &&
+        entry.position.exercise.presentation === 'find-the-root',
+    );
+    expect(rootAt).toBeGreaterThan(-1);
+    jumpTo(state, rootAt);
+    expect(screen.getByText('Which letter is the root?')).toBeTruthy();
+
+    // When — the subjoined part is tapped, which is the wrong position
+    fireEvent.click(screen.getByText('◌ྲ'));
+
+    // Then — the band's headline is the rung, not the syllable, and the
+    // dimmed redraw carries its text caption
+    expect(await screen.findByText(/single letter on the line/)).toBeTruthy();
+    expect(screen.getAllByText(/root/).length).toBeGreaterThan(0);
+  });
+
   it('renders a phrase-produce entry as E5: English prompt, record, skip', async () => {
     // Given
     // The fixture plans none today, so one is hand-marked, as the warm-up

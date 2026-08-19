@@ -78,6 +78,17 @@ function nextInput(state: SessionState, answer: 'right' | 'wrong'): CommitInput 
     const unmatched = exercise.options.find(option => !state.matched.includes(option.itemId));
     return {kind: 'pair', a: unmatched?.itemId ?? '', b: unmatched?.itemId ?? ''};
   }
+  if (exercise.commitMode === 'none') {
+    return {kind: 'continue'};
+  }
+  if (exercise.commitMode === 'check') {
+    // Always the complete set: an incomplete Check never advances, so a
+    // wrong-path walk would stall here rather than miss.
+    const answers =
+      exercise.answers ??
+      exercise.options.filter(option => option.isAnswer).map(option => option.itemId);
+    return {kind: 'check', picked: [...answers]};
+  }
   const options = entry.options ?? exercise.options;
   const pick =
     answer === 'right'
@@ -91,6 +102,7 @@ type Walked = {state: SessionState; progress: Progress};
 async function walk(
   store: ProgressStore,
   decide: (state: SessionState) => 'right' | 'wrong',
+  stopId: StopId = STOP_ID,
 ): Promise<Walked> {
   const source = new JsonContentSource(fixture as unknown as ContentFixture);
   const session = await startStop(
@@ -101,7 +113,7 @@ async function walk(
       script: source,
       audio: {isAvailable: async () => false},
     },
-    STOP_ID,
+    stopId,
     seededRng(42),
     {audioFree: false},
   );
@@ -179,6 +191,56 @@ describe('walking stop.core.c1.1 end to end', () => {
     const missedId = state.stillMissed[0] ?? '';
     expect(progress.items[missedId]?.missedOn).toEqual([TODAY]);
     expect(progress.completedStops).toEqual([STOP_ID]);
+  });
+});
+
+describe('walking the Read stops end to end', () => {
+  it('walks stop.6.1 through its notes, stack cards, the sort and the recap', async () => {
+    // Given
+    const store = memoryStore();
+
+    // When
+    const {state, progress} = await walk(store, () => 'right', 'stop.6.1' as StopId);
+
+    // Then — the session ended, and the WS3-C presentations actually surfaced
+    expect(state.phase).toBe('ended');
+    const presentations = state.queue
+      .filter(entry => entry.position.kind === 'exercise')
+      .map(entry =>
+        entry.position.kind === 'exercise' ? entry.position.exercise.presentation : '',
+      );
+    expect(presentations).toContain('see-it-say-it');
+    expect(presentations).toContain('sort-what-changed');
+    // The sort closes the drills: nothing asked after it (docs/03 §4.2)
+    expect(presentations[presentations.length - 1]).toBe('sort-what-changed');
+
+    // Then — the end carries the R11 recap: the eight rows stop.6.1 taught
+    const end = state.queue.find(entry => entry.position.kind === 'end');
+    const recap = end?.position.kind === 'end' ? end.position.recap : undefined;
+    expect(recap).toHaveLength(8);
+    expect(recap?.filter(pair => pair.changed)).toHaveLength(7);
+
+    // Then — the walk persisted like any other stop
+    expect(progress.completedStops).toEqual(['stop.6.1']);
+    expect(state.stillMissed).toEqual([]);
+  });
+
+  it('walks stop.7.2 through find-the-root and the build tray', async () => {
+    // Given
+    const store = memoryStore();
+
+    // When
+    const {state} = await walk(store, () => 'right', 'stop.7.2' as StopId);
+
+    // Then
+    expect(state.phase).toBe('ended');
+    const presentations = state.queue
+      .filter(entry => entry.position.kind === 'exercise')
+      .map(entry =>
+        entry.position.kind === 'exercise' ? entry.position.exercise.presentation : '',
+      );
+    expect(presentations).toContain('find-the-root');
+    expect(presentations).toContain('build-the-stack');
   });
 });
 
@@ -338,23 +400,41 @@ describe('planning the whole fixture', () => {
     return {decisions, byExercise};
   }
 
-  it('plans today byte-identically to the pre-ladder rule, the see-it-say-it correction aside', async () => {
+  /**
+   * The types the WS3-C renderers run as themselves, no gate: their prompts
+   * are written on the frame. see-it-say-it is the earlier commit-mode
+   * correction; the rest are the Read stop-loop set.
+   */
+  const SELF_RENDERED: ReadonlySet<string> = new Set([
+    'see-it-say-it',
+    'spot-it',
+    'find-the-root',
+    'sort-what-changed',
+    'what-attaches',
+    'read-a-word',
+    'build-the-stack',
+  ]);
+
+  it('plans today byte-identically to the pre-ladder rule, the self-rendered set aside', async () => {
     // When
     const {decisions, byExercise} = await planned(TODAY_CTX);
 
-    // Then — 410 drills: 363 as before (139 meaning-pick + 139 substituted
+    // Then — 446 drills: 363 as before (139 meaning-pick + 139 substituted
     // listen-pick + 40 pair-match + 45 phrase-recognise-script), plus the 47
-    // corrected see-it-say-it — 4 in §1 and 43 across §6/§7 now that the
-    // fixture carries the Read stops.
-    expect(decisions.length).toBe(410);
+    // corrected see-it-say-it, plus the 36 the WS3-C renderers surface —
+    // 12 find-the-root, 7 sort-what-changed, 17 build-the-stack. The fixture
+    // ships no spot-it, what-attaches or read-a-word rows yet (sections 8/10
+    // and the crossing), so those three grow nothing today.
+    expect(decisions.length).toBe(446);
     for (const {exerciseId, presentation} of decisions) {
       const exercise = byExercise.get(exerciseId);
       expect(exercise).toBeDefined();
       if (exercise === undefined) {
         continue;
       }
-      const expected =
-        exercise.type === 'see-it-say-it' ? 'see-it-say-it' : preLadderPresentation(exercise);
+      const expected = SELF_RENDERED.has(exercise.type)
+        ? exercise.type
+        : preLadderPresentation(exercise);
       expect(`${exerciseId}:${presentation}`).toBe(`${exerciseId}:${expected}`);
     }
   });
@@ -370,10 +450,10 @@ describe('planning the whole fixture', () => {
     );
 
     // Then — nothing vanished, and the audio types run their silent siblings.
-    // 488 = the 410 planned today plus the 78 audio-gated drills the shell
+    // 524 = the 446 planned today plus the 78 audio-gated drills the shell
     // renderers unhid (47 hear-it-find-it, 13 phrase-produce, 18 read-it-aloud):
     // unblocked with audio, they run as themselves.
-    expect(decisions.length).toBe(488);
+    expect(decisions.length).toBe(524);
     for (const {exerciseId, presentation} of decisions) {
       const type = byExercise.get(exerciseId)?.type;
       if (type === 'listen-pick') {
