@@ -121,14 +121,18 @@ describe('K1, the track choice', () => {
 });
 
 describe('O2, the pace', () => {
-  it('pre-selects the smallest pace, listed first', () => {
+  it('draws the four board options in order, the smallest pre-selected', () => {
     // When
     renderScreen(<PaceChoice />);
 
     // Then
     const options = screen.getAllByRole('radio');
-    expect(options.length).toBe(3);
-    expect(options[0]?.getAttribute('aria-label')).toBe('A few minutes');
+    expect(options.map(option => option.getAttribute('aria-label'))).toEqual([
+      'A few minutes',
+      'About ten minutes',
+      'Twenty minutes',
+      'As much as I can',
+    ]);
     expect(options[0]?.getAttribute('aria-checked')).toBe('true');
   });
 

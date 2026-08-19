@@ -67,7 +67,7 @@ describe('load', () => {
       wylie: true,
       sound: false,
       track: 'both',
-      pace: 'p15',
+      pace: 'p20',
       reminder: {enabled: true, hour: 7, minute: 30},
       onboardedOn: '2026-08-19',
     };
@@ -90,6 +90,17 @@ describe('load', () => {
 
     // Then
     expect(loaded).toEqual(DEFAULT_SETTINGS);
+  });
+
+  it("maps a v2 record's early 'p15' pace to 'p20', keeping every other field", async () => {
+    // Given
+    storage.plant('settings', JSON.stringify({...DEFAULT_SETTINGS, wylie: true, pace: 'p15'}));
+
+    // When
+    const loaded = await store.load();
+
+    // Then
+    expect(loaded).toEqual({...DEFAULT_SETTINGS, wylie: true, pace: 'p20'});
   });
 
   it('migrates an unversioned record as v1, keeping wylie and gaining the v2 defaults', async () => {

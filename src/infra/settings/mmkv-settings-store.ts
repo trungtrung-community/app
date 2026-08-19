@@ -18,7 +18,11 @@ export type {KeyValueStore} from '../progress/mmkv-progress-store';
 const KEY = 'settings';
 
 /** What a load may find: any past shape, so every field is optional. */
-type StoredSettings = Partial<Omit<Settings, 'version'>> & {readonly version?: number};
+type StoredSettings = Partial<Omit<Settings, 'version' | 'pace'>> & {
+  readonly version?: number;
+  /** Any pace ever written, including v2's short-lived `'p15'`. */
+  readonly pace?: Settings['pace'] | 'p15';
+};
 
 export class MmkvSettingsStore implements SettingsStore {
   constructor(private readonly storage: KeyValueStore) {}
@@ -51,7 +55,16 @@ export class MmkvSettingsStore implements SettingsStore {
 function migrate(stored: StoredSettings): Settings {
   const version = stored.version ?? 1;
   if (version === SETTINGS_VERSION) {
-    return {...DEFAULT_SETTINGS, ...stored, version: SETTINGS_VERSION};
+    // `'p15'` is v2's own early name for the third pace slot, renamed when the
+    // board's four options landed. Same shape version, so the map lives here
+    // rather than behind a bump.
+    const pace = stored.pace === 'p15' ? 'p20' : stored.pace;
+    return {
+      ...DEFAULT_SETTINGS,
+      ...stored,
+      version: SETTINGS_VERSION,
+      pace: pace ?? DEFAULT_SETTINGS.pace,
+    };
   }
   // A version-1 record keeps its `wylie` and takes the default for every field it
   // predates. Later migrations stack here, stepwise, so a learner two versions

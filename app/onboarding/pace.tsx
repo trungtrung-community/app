@@ -4,12 +4,6 @@
  * A deliberate refusal of the growth-hacked default: the pace a learner can
  * always meet beats the one they were flattered into, so "A few minutes" leads
  * the list and arrives already picked. Changing it later lives in Settings.
- *
- * The board's frame draws four options; Settings v2 holds three pace values,
- * so the first three labels are bound in order and the fourth, "As much as I
- * can", has no value to write and is not rendered. The third label reads
- * "Twenty minutes" against a value documented as fifteen — flagged in the
- * task report rather than silently rewritten here.
  */
 
 import {useRouter} from 'expo-router';
@@ -30,7 +24,8 @@ type Pace = Settings['pace'];
 const PACES: readonly {value: Pace; label: string}[] = [
   {value: 'p5', label: 'A few minutes'},
   {value: 'p10', label: 'About ten minutes'},
-  {value: 'p15', label: 'Twenty minutes'},
+  {value: 'p20', label: 'Twenty minutes'},
+  {value: 'open', label: 'As much as I can'},
 ];
 
 export default function PaceChoice() {

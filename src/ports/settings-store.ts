@@ -27,12 +27,13 @@ export type Settings = {
   /** What the learner came for: speaking, reading, or both. Chosen on K1. */
   readonly track: 'speak' | 'read' | 'both';
   /**
-   * Daily pace in minutes: 5, 10 or 15. Chosen on O2.
+   * Daily pace, one value per O2 radio: `p5` "A few minutes", `p10` "About ten
+   * minutes", `p20` "Twenty minutes", `open` "As much as I can".
    *
    * Defaults to the smallest — a deliberate product stance. A pace the learner can
    * always meet beats one they were flattered into.
    */
-  readonly pace: 'p5' | 'p10' | 'p15';
+  readonly pace: 'p5' | 'p10' | 'p20' | 'open';
   /**
    * The daily practice reminder. O4 asks for it; N3 schedules the notification.
    *
