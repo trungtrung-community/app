@@ -12,6 +12,13 @@
  * ProgressStore per session, a committing latch that drops a tap delivered
  * mid-commit, and every fold forwarded to `useProgress` so the browse screens
  * go live with no extra wiring.
+ *
+ * Exams (X1–X5) start here too, as `start` with the `recognise-mixed` mode and
+ * a `sample` — docs/07 2026-08-16: an exam is this drill machine with pool =
+ * the section. Nothing parks: leaving an exam drops the session, and a retake
+ * is a fresh start on a fresh rng — a different paper. ASSUMPTION, flagged for
+ * docs/07: exam answers feed the scheduler through the same `commit` fold as
+ * every drill — the docs are silent, and parity is the honest default.
  */
 
 import {create} from 'zustand';
@@ -26,6 +33,7 @@ import {
   createSession,
   dueOrder,
   planDrill,
+  planExam,
   planFlashcards,
   routeForSet,
   seededRng,
@@ -47,10 +55,21 @@ import {useSettings} from './settings';
 /** The fallback when hydration is unavailable: a first-launch record. */
 const EMPTY_PROGRESS: Progress = {walkedOn: [], items: {}, completedStops: [], version: 2};
 
+/**
+ * What `start` may run: a registered mode, or the exam's mixed recognition —
+ * both recognise modes planned together (`planExam`).
+ */
+export type DrillStartMode = DrillModeId | 'recognise-mixed';
+
+export type DrillStartOptions = {
+  /** Draw this many questions seeded-randomly — the exam knob (§4.6). */
+  readonly sample?: number;
+};
+
 type DrillSessionSlice = {
   status: 'idle' | 'loading' | 'ready' | 'error';
   /** The runner the session was started for; null for a picker's read. */
-  mode: DrillModeId | null;
+  mode: DrillStartMode | null;
   /** Where the resolved set routes; the picker redirects off it. */
   route: DrillRoute | null;
   pool: DrillPool | null;
@@ -63,7 +82,12 @@ type DrillSessionSlice = {
    * Resolve the pool and the set, and seed the runner when `mode` is given.
    * With `mode` null only the route decision is made — the picker's read.
    */
-  start(ref: DrillPoolRef, selection: DrillSelection, mode: DrillModeId | null): Promise<void>;
+  start(
+    ref: DrillPoolRef,
+    selection: DrillSelection,
+    mode: DrillStartMode | null,
+    opts?: DrillStartOptions,
+  ): Promise<void>;
   /** Q2: everything due today, recognition drills in the scheduler's order. */
   startReview(): Promise<void>;
   commit(input: CommitInput): Promise<void>;
@@ -116,7 +140,7 @@ export const useDrillSession = create<DrillSessionSlice>()((set, get) => ({
   state: null,
   deck: null,
 
-  async start(ref, selection, mode) {
+  async start(ref, selection, mode, opts = {}) {
     set({status: 'loading', mode, route: null, pool: null, set: null, state: null, deck: null});
     try {
       const {pool, ctx, progress} = await resolve(ref);
@@ -131,7 +155,16 @@ export const useDrillSession = create<DrillSessionSlice>()((set, get) => ({
         set({status: 'ready', route, pool, set: drillSet, deck});
         return;
       }
-      const seed = planDrill(drillSet, mode, ctx, sessionRng);
+      const seed =
+        mode === 'recognise-mixed'
+          ? planExam(drillSet, ctx, sessionRng, opts.sample ?? drillSet.itemIds.length)
+          : planDrill(
+              drillSet,
+              mode,
+              ctx,
+              sessionRng,
+              opts.sample === undefined ? {} : {sample: opts.sample},
+            );
       set({status: 'ready', route, pool, set: drillSet, state: createSession(seed, sessionRng)});
     } catch {
       set({status: 'error'});

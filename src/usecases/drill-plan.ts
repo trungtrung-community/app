@@ -146,6 +146,42 @@ export function planFlashcards(set: DrillSet): readonly FlashDeckCard[] {
 }
 
 /**
+ * Plan an exam over a set — docs/07 2026-08-16: an exam is this drill machine
+ * with the pool as its set, not a new concept.
+ *
+ * Both recognition modes plan together and merge, so a mixed set asks words
+ * and phrases alike. Each item is asked at most once. The paper is a seeded
+ * draw of `sample` questions, so a retake against a fresh rng is a different
+ * paper. Everything else — no second look, the firewalled `poolByItem` — is
+ * `planDrill`'s.
+ *
+ * @param sample The paper's size cap. A smaller set simply yields a shorter
+ *   paper.
+ */
+export function planExam(set: DrillSet, ctx: PlanContext, rng: Rng, sample: number): SessionSeed {
+  const words = planDrill(set, 'word-recognise', ctx, rng);
+  const phrases = planDrill(set, 'phrase-recognise', ctx, rng);
+  const merged = [...words.positions, ...phrases.positions].filter(
+    position => position.kind === 'exercise',
+  );
+  const asked = new Set<string>();
+  const oncePerItem = merged.filter(position => {
+    const itemId = position.exercise.itemId;
+    if (itemId === null || asked.has(itemId)) {
+      return itemId === null;
+    }
+    asked.add(itemId);
+    return true;
+  });
+  const paper = sampled(oncePerItem, rng, sample);
+  return {
+    ...words,
+    stopId: 'drill:exam',
+    positions: [...paper, {kind: 'end', capabilities: []}],
+  };
+}
+
+/**
  * The scheduler's order (Q2): most overdue first — `dueOn` ascending, never-due
  * last — then weakest, `intervalIndex` ascending, ties broken by a seeded
  * shuffle. Words and phrases then interleave by alternating draw while both

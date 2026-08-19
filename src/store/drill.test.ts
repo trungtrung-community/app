@@ -5,7 +5,7 @@
  * district double, a memory store, a silent build. Phases per docs/11.
  */
 
-import {beforeEach, describe, expect, it} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 
 import type {Exercise, ExerciseFamily} from '../ports/content-exercise';
 import type {AudioSource, ContentSource} from '../ports';
@@ -318,6 +318,68 @@ describe('the review', () => {
       .map(entry => (entry.position.kind === 'exercise' ? entry.position.exercise.itemId : null))
       .filter(itemId => itemId !== null);
     expect(asked).toEqual(['vocab.b', 'vocab.a']);
+  });
+});
+
+describe('the exam start — recognise-mixed with a sample', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  /** The ordered exercise ids — the paper, as drawn. */
+  function paper(): readonly string[] {
+    const state = useDrillSession.getState().state;
+    return (state?.queue ?? []).flatMap(entry =>
+      entry.position.kind === 'exercise' ? [entry.position.exercise.exerciseId] : [],
+    );
+  }
+
+  it('draws a sampled paper with one question per item', async () => {
+    // Given
+    useProgress.setState({progress: met(WORDS)});
+
+    // When
+    await useDrillSession
+      .getState()
+      .start(
+        {kind: 'section', sectionId: 'section.speak.1' as never, track: 'speak' as Track},
+        'all',
+        'recognise-mixed',
+        {sample: 2},
+      );
+
+    // Then — two questions and the end, each for a different item
+    const state = useDrillSession.getState().state;
+    expect(state?.queue.map(entry => entry.position.kind)).toEqual(['exercise', 'exercise', 'end']);
+    expect(state?.stopId).toBe('drill:exam');
+    const asked = state?.queue.flatMap(entry =>
+      entry.position.kind === 'exercise' ? [entry.position.exercise.itemId] : [],
+    );
+    expect(new Set(asked).size).toBe(2);
+  });
+
+  it('draws a different paper on a different start — a retake is not the same exam', async () => {
+    // Given
+    useProgress.setState({progress: met(WORDS)});
+    const ref = {
+      kind: 'section',
+      sectionId: 'section.speak.1' as never,
+      track: 'speak' as Track,
+    } as const;
+    const now = vi.spyOn(Date, 'now');
+
+    // When — two starts, seeded from different clocks
+    now.mockReturnValue(1_000);
+    await useDrillSession.getState().start(ref, 'all', 'recognise-mixed', {sample: 2});
+    const first = paper();
+    now.mockReturnValue(2_000);
+    await useDrillSession.getState().start(ref, 'all', 'recognise-mixed', {sample: 2});
+    const second = paper();
+
+    // Then
+    expect(first).toHaveLength(2);
+    expect(second).toHaveLength(2);
+    expect(second).not.toEqual(first);
   });
 });
 
