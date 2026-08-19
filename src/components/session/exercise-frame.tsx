@@ -17,9 +17,15 @@ import {PairBoard, type PairSide} from '../learning/pair-board';
 import {TibetanText} from '../learning/tibetan-text';
 import type {ContentItemId} from '../../ports/content-ids';
 import type {CommitInput} from '../../usecases/submit-answer';
+import {BuildTheStack} from './build-the-stack';
+import {FindTheRoot} from './find-the-root';
 import {HearItFindIt} from './hear-it-find-it';
+import {ReadAWord} from './read-a-word';
 import {RecordCompare} from './record-compare';
 import {SeeItSayIt} from './see-it-say-it';
+import {SortWhatChanged} from './sort-what-changed';
+import {SpotIt} from './spot-it';
+import {WhatAttaches} from './what-attaches';
 import type {Items, SessionAnswered, SessionEntry} from './types';
 
 export type ExerciseFrameProps = {
@@ -27,6 +33,11 @@ export type ExerciseFrameProps = {
   answered: SessionAnswered;
   /** Item ids already cleared on the pair board. */
   matched: readonly string[];
+  /**
+   * Right picks a Check kept — the multi-part renderers re-read these.
+   * Optional because the drill and exam frames run no multi-part drills yet.
+   */
+  filled?: readonly string[];
   itemsById: Items;
   onCommit: (input: CommitInput) => void;
 };
@@ -48,7 +59,14 @@ function headline(presentation: string): string {
 }
 
 /** The exercise entry of a stop session. */
-export function ExerciseFrame({entry, answered, matched, itemsById, onCommit}: ExerciseFrameProps) {
+export function ExerciseFrame({
+  entry,
+  answered,
+  matched,
+  filled = [],
+  itemsById,
+  onCommit,
+}: ExerciseFrameProps) {
   const [chosen, setChosen] = useState<string | null>(null);
   if (entry.position.kind !== 'exercise') {
     return null;
@@ -74,6 +92,30 @@ export function ExerciseFrame({entry, answered, matched, itemsById, onCommit}: E
     return (
       <HearItFindIt entry={entry} answered={answered} itemsById={itemsById} onCommit={onCommit} />
     );
+  }
+
+  // The Read stop-loop renderers, each with its own anatomy (docs/03 §7).
+  if (exercise.presentation === 'spot-it') {
+    return <SpotIt entry={entry} answered={answered} itemsById={itemsById} onCommit={onCommit} />;
+  }
+  if (exercise.presentation === 'read-a-word') {
+    return (
+      <ReadAWord entry={entry} answered={answered} itemsById={itemsById} onCommit={onCommit} />
+    );
+  }
+  if (exercise.presentation === 'find-the-root') {
+    return <FindTheRoot entry={entry} answered={answered} onCommit={onCommit} />;
+  }
+  if (exercise.presentation === 'sort-what-changed') {
+    return (
+      <SortWhatChanged entry={entry} answered={answered} filled={filled} onCommit={onCommit} />
+    );
+  }
+  if (exercise.presentation === 'what-attaches') {
+    return <WhatAttaches entry={entry} answered={answered} filled={filled} onCommit={onCommit} />;
+  }
+  if (exercise.presentation === 'build-the-stack') {
+    return <BuildTheStack entry={entry} answered={answered} filled={filled} onCommit={onCommit} />;
   }
 
   // The record-compare family has no verdict and no answer list — Again and

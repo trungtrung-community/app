@@ -260,13 +260,14 @@ function Entry({state, itemsById, stopName, outcome, onCommit, onDone}: EntryPro
         />
       );
     case 'note':
-      return <NoteCard text={position.text} onContinue={onContinue} />;
+      return <NoteCard text={position.text} note={position.note} onContinue={onContinue} />;
     case 'exercise':
       return (
         <ExerciseFrame
           entry={entry}
           answered={state.answered}
           matched={state.matched}
+          filled={state.filled}
           itemsById={itemsById}
           onCommit={onCommit}
         />
@@ -281,6 +282,7 @@ function Entry({state, itemsById, stopName, outcome, onCommit, onDone}: EntryPro
           taught={state.taught}
           stillMissed={state.stillMissed}
           capabilities={position.capabilities}
+          recap={position.recap}
           itemsById={itemsById}
           onDone={onDone}
         />
@@ -305,6 +307,14 @@ function Band({state, itemsById, onNext}: BandProps) {
     answered.answerItemId === null
       ? undefined
       : itemsById.get(answered.answerItemId as ContentItemId);
+  // Where the rule is the lesson the sentence rides the headline (docs/03 §2,
+  // amended 2026-08-16): the answered exercise's `reason` is the band's text,
+  // verdict and rule at once, and it displaces the answer line.
+  const entry = state.queue[state.index];
+  const reason =
+    entry?.position.kind === 'exercise' && entry.key === answered.key
+      ? entry.position.exercise.reason
+      : undefined;
   // S7·✓: the count rides above the correct band, from three in a row only,
   // and never leaves the session — the engine already resets it on a wrong.
   const mark =
@@ -312,13 +322,13 @@ function Band({state, itemsById, onNext}: BandProps) {
   return (
     <AnswerBand
       tone={answered.verdict === 'correct' ? 'correct' : 'wrong'}
-      roman={item?.roman}
+      roman={reason === undefined ? item?.roman : undefined}
       audio={false}
       pinned
       mark={mark}
       onAction={onNext}
     >
-      {item?.bo ?? ''}
+      {reason ?? item?.bo ?? ''}
     </AnswerBand>
   );
 }

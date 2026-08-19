@@ -25,3 +25,11 @@ export type SessionAnswered = SessionState['answered'];
 
 /** What a teaching card presents: word, phrase, or a script unit. */
 export type CardKind = Extract<SessionEntry['position'], {kind: 'card'}>['card'];
+
+/** Which register a between-entry note speaks in — RS1, RR1, the C-card, a tip. */
+export type NoteKind = Extract<SessionEntry['position'], {kind: 'note'}>['note'];
+
+/** The R11 recap's rows, as the end position carries them. */
+export type RecapPair = NonNullable<
+  Extract<SessionEntry['position'], {kind: 'end'}>['recap']
+>[number];
