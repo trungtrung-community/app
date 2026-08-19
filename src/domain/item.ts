@@ -59,8 +59,9 @@ export type ItemState = 'new' | 'met' | 'known';
  * `validate.py` rules 30-32 now hold the id to its slug, hold the slug unique,
  * and refuse any rename that is not recorded in `content/id-history.json`.
  *
- * Nothing here is wired to a vocabulary id yet, and this pass deliberately does
- * not wire it. The point is that doing so has become safe, not that it is done.
+ * `ContentItemId` in `src/ports/content-ids.ts` is a subtype of this, so every
+ * vocabulary and phrase id is an `ItemId` with no cast. The dependency points from
+ * ports to domain; this file knows nothing about content.
  */
 export type ItemId = string & {readonly __brand: 'ItemId'};
 
