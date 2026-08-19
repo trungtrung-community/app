@@ -236,6 +236,33 @@ gaps are named so they read as decisions, not oversights.*
     specimen is understood to be a still of something that moves. Not urgent: it has one
     caller and one signed surface.
 
+20. **Two upstream asks, both waiting on the design-system repo.** (2026-08-19/20)
+    First: **exam rows in content** — which sections carry an exam is app-side
+    data today, `EXAM_SECTIONS: readonly number[] = [5, 11]` in
+    `app/(tabs)/journey/index.tsx` (the section file imports it), with the
+    upstream ask written on the constant itself. The content set should say
+    where its exams are. Second: **the 46 stack-drill reason sentences are
+    unauthored** — all 41 `build-the-stack` and all 5 `what-attaches` records
+    in the corpus carry no `reason` (recounted 2026-08-20 against the
+    design-system export), and the 2026-08-16 ruling binds the answer band to
+    `reason` on exactly these families. Authoring them is new learner-facing
+    prose, which is a **human gate**, not a generator run.
+
+21. **The what-attaches offer set is a renderer constant.** (2026-08-19) The
+    exercise ships no option rows — only the correct `slot:letter` answers —
+    so the twelve affixes (five prefixes, three superscripts, four subscripts,
+    read spec §3.2) are stated once as `AFFIX_GROUPS` in
+    `src/components/session/what-attaches.tsx`, with the board's own group
+    labels. Sound while the offered set *is* the system itself; the constant
+    retires the day the records ship options, and this line is what remembers
+    that.
+
+22. **The content fixture is approaching its 2 MB line.** (2026-08-19, from
+    the WS3-A report; remeasured 2026-08-20 at 1,935,895 bytes — ~1.9 MB.)
+    The next whole-table addition crosses 2 MB. Before that happens, decide
+    what the fixture is for: a corpus copy that tracks the export forever, or
+    a curated sample that stops growing.
+
 ## Parked ideas
 
 - **A traveller character, to introduce animals that are not on the plateau.**
@@ -323,4 +350,7 @@ tablet & landscape · reset/relearn per district (Y6 wipes everything; V5
 undo covers the flashcard mis-tap) · B1 tier / grammar (different content
 model, different document) · Y4's docked "Practise these" (names a word-list
 pool the §4.6 table does not carry; the pool table's next revision decides it
-— `docs/07`, 2026-08-19).
+— `docs/07`, 2026-08-19) · RB16's stack-practice picker (the v1 drill
+registry has no stack mode; the two "Practise these stacks / this stack"
+doors on RB2 and RB11 are held absent, each with a comment naming RB16 —
+2026-08-19/20).

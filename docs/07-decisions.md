@@ -30,6 +30,90 @@ Every session that decides something appends here.*
 | O21 | ~~Check 53 gates a **handed, historical** board order~~ | — | **Closed** 2026-08-16: **retire the check.** The file it guards became a record of what was actually asked, and a gate that can only be silenced by damaging the record is not a gate. `validate_read` drops to 58 checks and goes fully green, so the next red result means something. `board_prompt.py` was never run to green it. |
 | O22 | ~~Where does the **card of the day** keep its daily entrance?~~ | — | **Closed** 2026-08-16 by removing the thing it asked about: **`T1` retires.** `Q1` and `G1` were both rejected as pollution, and Thosam declined a Journey row. A surface with no entrance cannot be "a reason to open it on a quiet day", so it is parked rather than left orphaned. Takes O8's widget with it. |
 
+## 2026-08-20 — B2 needs no surface of its own
+
+**Read-a-word drills are ordinary stop exercises at stop 10.2** (5a76711):
+`read-a-word` is a type in the content schema, its runner already lives in the
+stop session, and its twelve drills attach where Section 10 teaches them — B2
+asked for no new screen. What the crossing did need was **one definition of
+readable, used everywhere**: `src/usecases/read-progress.ts` derives O9's two
+sets from the snapshot and composes them with the domain's `readable()` into
+`readableWords()` — always computed, never stored. **One definition, two
+surfaces**: B4's readable count on the You tab binds it today, and RBH's
+readable-words block is the other named binding site — the section hub draws
+that block absent rather than disabled until the wiring follow-up lands, its
+header saying so.
+
+## 2026-08-20 — B3's once-rule is self-clearing
+
+**The Printing House invite gates on district-23-reached AND Read-at-zero**
+(5a76711, `app/(tabs)/journey/district/[slug].tsx`): one card on district 23's
+hub, shown while both hold — so starting to read retires it by the same rule
+that showed it, and no persisted once-flag exists to drift. The flag-free shape
+has a stated gap: `AppState` holds no honest once-flag, so **"Not now"
+dismisses for the visit only and the card returns next visit** — noted on the
+component rather than papered over.
+
+## 2026-08-20 — Training ground placement: §4.3 beats the older board frame
+
+**docs/03 §4.3 (2026-08-18) is the authority over the older board Q1 frame**
+(d58aefc): the training ground enters as **the fifth mode card on Q1**
+(`app/(tabs)/practice/index.tsx`, absent until a first stop is done so the
+first-launch empty state stays whole), with **the door from RBH as the map
+sibling's follow-up** — the section hub holds it absent, not disabled. The
+pile registry is data — eight rows, every count read from its source at the
+learner's ceiling — and nothing is scored or written: §4.3 says nothing about
+the scheduler, so the ratings reach no store. **The metronome defaults to 72**
+(`app/training-ground.tsx` — the board's "72 to the minute" is its only
+number); **±4 steps within 40–160 is the implementer's assumption**, recorded
+as such: "the board names no increments; a musician's four-per-step within a
+calm range." The board's stale "the card never advances itself" line is
+superseded by the 2026-08-07 metronome conditions, per their own text.
+
+## 2026-08-20 — Four section-7 sorts asked about a Python list; fixed upstream, sync pending
+
+**An upstream content defect, fixed at the generator** (design-system 93d1e83):
+`sort-what-changed`'s fallback question read the subscript slot — a list,
+because two can stack under one root — and the f-string printed it as source,
+so every section-7 sort asked *"Which of these did the ['ཡ'] change?"*. Four
+rows, all section 7 (`ex.7.1.018`, `ex.7.2.016`, `ex.7.3.016`, `ex.7.4.016`),
+fixed in `build_read.py` in the corpus's own list style; a bracket sweep of
+the whole rebuilt artifact finds no sibling. **The app's copy is still the
+defective one** — the four rows are verifiably present in
+`src/infra/content/content.fixture.json` today — and arrives with the next
+coordinated content sync, not before: syncs are coordinated, and this defect
+does not force one.
+
+## 2026-08-19 — Exams are configuration over the drill machine, and their answers count
+
+**An exam is `planExam` over the §4.6 machine, not a new engine** (8b5ef72,
+`src/usecases/drill-plan.ts`, `app/exam/[section].tsx`): both recognition modes
+merged, each item asked at most once, a seeded sample — so a retake is a fresh
+paper. **Section exams draw `min(10, set)` via `SECTION_EXAM_QUESTIONS = 10`**
+— the spec fixes only the 5–10 range, and the cap is a named constant, not a
+rule; a smaller set simply yields a shorter paper. **The final test draws
+`min(100, met)` with `FINAL_TEST_MARK = 90`**, the mark stated in the chrome
+from the first item — the one percentage surface in the product, per the
+2026-08-16 deletion entry below.
+
+**Exam answers feed the scheduler through the same commit fold as every
+drill.** The docs were silent; the implementer flagged parity as an assumption
+and it is adopted here as the decision: the scheduler cannot tell where an
+answer was earned, and an exam that taught the scheduler nothing would waste
+the most concentrated evidence the product ever collects. **X4·b ("Show me")
+is deferred**: it belongs to a deck-run final test, and the recognition engine
+has no reveal beat to reuse — a follow-up, not a cut.
+
+## 2026-08-19 — build-the-stack leaves the audio ladder
+
+**`build-the-stack` is no longer audio-gated** (de462f3,
+`AUDIO_LADDER` in `src/usecases/exercise-seed.ts`): the RB12 frame writes its
+prompt on screen — "It sounds like drip." — so the assembly runs audio-free and
+**a missing take degrades the drill rather than hiding it**. The take remains
+an enrichment for when recordings land; the board draws that line on the
+audio-only specimen itself. The ladder's comment carries the reasoning where
+the next reader of the gate will meet it.
+
 ## 2026-08-19 — V5's two buttons map onto §6's notches; the pile is the deck's job
 
 **Got it → `recordCorrect`. Again → `recordMiss` at most once per item per
