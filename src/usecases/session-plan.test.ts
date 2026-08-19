@@ -40,6 +40,7 @@ function core(id: string, over: CoreOverrides) {
     distractorRule: null,
     reason: null,
     options: options.map((optionItem, i) => ({
+      ordinal: i + 1,
       itemId: item(optionItem),
       label: null,
       isAnswer: i === 0,

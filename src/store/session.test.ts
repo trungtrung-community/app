@@ -64,8 +64,8 @@ const EXERCISE: Exercise = {
   distractorRule: null,
   reason: null,
   options: [
-    {itemId: 'vocab.cha' as ContentItemId, label: null, isAnswer: true},
-    {itemId: 'vocab.other' as ContentItemId, label: null, isAnswer: false},
+    {ordinal: 1, itemId: 'vocab.cha' as ContentItemId, label: null, isAnswer: true},
+    {ordinal: 2, itemId: 'vocab.other' as ContentItemId, label: null, isAnswer: false},
   ],
   chunks: [],
   type: 'meaning-pick',
