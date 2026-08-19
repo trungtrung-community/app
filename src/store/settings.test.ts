@@ -1,0 +1,95 @@
+/**
+ * @fileoverview The settings snapshot slice — hydrate once, write through `set`.
+ * Phases per docs/11-testing-conventions.md.
+ */
+
+import {beforeEach, describe, expect, it} from 'vitest';
+
+import type {Settings, SettingsStore} from '../ports/settings-store';
+
+import {override, resetContainer} from '../composition/container';
+import {useSettings} from './settings';
+
+const DEFAULTS: Settings = {wylie: false};
+
+/** A store double that records every load and save, so write-through is assertable. */
+function fakeStore(initial: Settings): SettingsStore & {
+  loads: () => number;
+  saved: () => readonly Settings[];
+} {
+  let loads = 0;
+  const saves: Settings[] = [];
+  return {
+    async load() {
+      loads += 1;
+      return initial;
+    },
+    async save(next) {
+      saves.push(next);
+    },
+    loads: () => loads,
+    saved: () => saves,
+  };
+}
+
+beforeEach(() => {
+  resetContainer();
+  useSettings.setState({settings: null});
+});
+
+describe('hydrate', () => {
+  it('loads the stored settings once', async () => {
+    // Given
+    const store = fakeStore({wylie: true});
+    override('settings', store);
+
+    // When
+    await useSettings.getState().hydrate();
+    await useSettings.getState().hydrate();
+
+    // Then
+    expect(useSettings.getState().settings).toEqual({wylie: true});
+    expect(store.loads()).toBe(1);
+  });
+});
+
+describe('set', () => {
+  it('merges the change into the current settings and persists the merged value', async () => {
+    // Given
+    const store = fakeStore(DEFAULTS);
+    override('settings', store);
+    await useSettings.getState().hydrate();
+
+    // When
+    await useSettings.getState().set({wylie: true});
+
+    // Then
+    expect(useSettings.getState().settings).toEqual({wylie: true});
+    expect(store.saved()).toEqual([{wylie: true}]);
+  });
+
+  it('updates state synchronously, before the save resolves', async () => {
+    // Given — a save that stays pending until the test releases it
+    let resolveSave: () => void = () => {};
+    const store: SettingsStore = {
+      async load() {
+        return DEFAULTS;
+      },
+      save() {
+        return new Promise(resolve => {
+          resolveSave = resolve;
+        });
+      },
+    };
+    override('settings', store);
+
+    // When
+    const setPromise = useSettings.getState().set({wylie: true});
+
+    // Then — state is already merged, though the save has not settled yet
+    expect(useSettings.getState().settings).toEqual({wylie: true});
+    await Promise.resolve();
+    resolveSave();
+    await setPromise;
+  });
+});

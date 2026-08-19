@@ -1,9 +1,9 @@
 /**
- * @fileoverview E2 — the phrase sheet, minimal first pass.
+ * @fileoverview E2 — the phrase sheet.
  *
  * The phrase whole: Tibetan, romanization, gloss, the literal reading where the
- * parts do not add up, and the usage note. The transcript row (A4) and practice
- * entry arrive with the district-hub package.
+ * parts do not add up, the usage note, and — where the content has chunked it —
+ * the syllable transcript. Practice entry arrives with a later package.
  */
 
 import {useLocalSearchParams} from 'expo-router';
@@ -13,13 +13,16 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {EmptyState} from '../../src/components/feedback/empty-state';
 import {Skeleton} from '../../src/components/feedback/skeleton';
 import {TibetanText} from '../../src/components/learning/tibetan-text';
+import {TranscriptRow} from '../../src/components/learning/transcript-row';
 import type {PhraseId} from '../../src/ports/content-ids';
 
+import {useSettings} from '../../src/store/settings';
 import {useContent} from '../../src/store/use-content';
 
 export default function Phrase() {
   const {id} = useLocalSearchParams<{id: string}>();
   const insets = useSafeAreaInsets();
+  const settings = useSettings(s => s.settings);
 
   const load = useContent(
     async source => {
@@ -54,6 +57,7 @@ export default function Phrase() {
                 unit="auto"
                 roman={load.data.phrase.roman}
                 gloss={load.data.phrase.en}
+                wylie={settings?.wylie ? (load.data.phrase.wylie ?? undefined) : undefined}
               >
                 {load.data.phrase.bo}
               </TibetanText>
@@ -65,6 +69,15 @@ export default function Phrase() {
             ) : null}
             {load.data.phrase.usageNote ? (
               <Text className="type-body text-fg-body">{load.data.phrase.usageNote}</Text>
+            ) : null}
+            {load.data.phrase.chunks.length > 0 ? (
+              <TranscriptRow
+                testID="phrase-transcript"
+                syllables={load.data.phrase.chunks.map(chunk => ({
+                  bo: chunk.bo,
+                  roman: chunk.roman ?? '',
+                }))}
+              />
             ) : null}
             <Text className="type-caption text-fg-muted">
               {`District ${load.data.district.number} · ${load.data.district.name}`}

@@ -15,6 +15,7 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {TABS, TabBar} from '../../src/components/core/tab-bar';
 import {useProgress} from '../../src/store/progress';
+import {useSettings} from '../../src/store/settings';
 
 export default function TabsLayout() {
   const router = useRouter();
@@ -23,8 +24,14 @@ export default function TabsLayout() {
 
   // Fire-and-forget: pre-hydration selectors answer as a first launch would, and a
   // platform without the native store keeps that answer rather than crashing.
+  // Settings hydrate here too, so a persisted Wylie toggle reaches the word and
+  // phrase sheets without the learner passing through the Settings screen first.
   useEffect(() => {
     useProgress
+      .getState()
+      .hydrate()
+      .catch(() => {});
+    useSettings
       .getState()
       .hydrate()
       .catch(() => {});

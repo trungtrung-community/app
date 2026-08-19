@@ -23,8 +23,33 @@
  *   sync semantics, conflict resolution, an offline write queue, schema versioning
  *   and migration of existing local data. The seam decides where that lands; it
  *   does not make it cheap.
+ *
+ * **`CuePlayer` joined them on 2026-08-18 and does not answer that question at all** — it
+ * will never go remote. Its reasons are platform isolation and a single gate for P2's
+ * off-switch, stated in its own file. It is named here rather than quietly added so that
+ * the paragraph above keeps meaning what it says: three of these are about migration, and
+ * the fourth is not.
  */
 
 export type {AudioSource} from './audio-source';
-export type {ContentSource} from './content-source';
+export type {CuePlayer} from './cue-player';
 export type {ProgressStore} from './progress-store';
+export type {SettingsStore} from './settings-store';
+
+/**
+ * `ContentSource` is one wired port and six capabilities.
+ *
+ * The container constructs one content adapter, because content lives in one medium
+ * with one lifecycle. A caller should still take only the capability it uses — a use
+ * case that walks a stop needs `WalkSource`, not the other fifteen methods — so the
+ * narrower types are exported beside the whole.
+ */
+export type {
+  CollectionSource,
+  ContentCatalog,
+  ContentSource,
+  DictionarySource,
+  ExerciseSource,
+  ScriptReferenceSource,
+  WalkSource,
+} from './content-source';
