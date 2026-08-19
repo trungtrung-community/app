@@ -193,7 +193,7 @@ export default function Card() {
           {/* The H2/H3 compositions, mounted off-stage so a row press has a live view to
               capture. Off the edge rather than at opacity zero: iOS snapshots what is
               drawn, and a fully transparent view is allowed to draw nothing. */}
-          <View style={OFFSTAGE} pointerEvents="none" aria-hidden>
+          <View style={OFFSTAGE} aria-hidden>
             <View ref={squareShot} collapsable={false}>
               <ShareCard
                 bo={bo}
@@ -261,7 +261,7 @@ export default function Card() {
       ) : null}
 
       {/* The board's dock: above the bottom edge, over whatever the card shows. */}
-      <View style={TOAST_DOCK} pointerEvents="none">
+      <View style={TOAST_DOCK}>
         <Toast visible={copied} testID="card-copied-toast">
           Copied
         </Toast>
@@ -289,6 +289,12 @@ function groupDisplayName(groupName: string | null): string {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
-const OFFSTAGE: ViewStyle = {position: 'absolute', left: -9999, top: 0};
+const OFFSTAGE: ViewStyle = {position: 'absolute', left: -9999, top: 0, pointerEvents: 'none'};
 
-const TOAST_DOCK: ViewStyle = {position: 'absolute', left: 16, right: 16, bottom: 20};
+const TOAST_DOCK: ViewStyle = {
+  position: 'absolute',
+  left: 16,
+  right: 16,
+  bottom: 20,
+  pointerEvents: 'none',
+};
