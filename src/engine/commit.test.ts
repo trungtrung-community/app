@@ -264,7 +264,7 @@ describe('the second look', () => {
   }
 
   it('splices the round at the boundary: intro first, then every miss in order', () => {
-    // Given / When
+    // When
     const {state, spliceEvents} = walkToClosing([]);
 
     // Then
