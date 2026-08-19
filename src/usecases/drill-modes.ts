@@ -10,9 +10,13 @@
  * own eligibility, its own fill — and no switch is edited, because
  * `availableModes` walks the array and asks each mode about itself.
  *
- * Titles come from docs/03 §1's catalogue ("Flashcards", "Which one means",
- * "Phrase recognise", "Match the pairs"); "Flashcards" also matches the
- * ModeCard specimen. Pending board reconciliation once the picker is drawn.
+ * Titles are the board's (V3/E3/Q8, reconciled 2026-08-19): our
+ * word-recognise is the board's "Listen and pick" — the mode that runs the
+ * meaning-picks and their audio-blocked listen-pick siblings — and
+ * phrase-recognise is "Listen and pick, phrases". The board's other cards
+ * ("Find the word", "Order what you heard", "Complete what you heard",
+ * "Say it") name modes without a v1 runner and are absent, never placeholder
+ * rows.
  */
 
 import type {Exercise} from '../ports/content-exercise';
@@ -73,7 +77,7 @@ export const DRILL_MODES: readonly DrillMode[] = [
   },
   {
     id: 'word-recognise',
-    title: 'Which one means',
+    title: 'Listen and pick',
     unit: 'questions',
     material: 'words',
     runner: 'engine',
@@ -83,7 +87,7 @@ export const DRILL_MODES: readonly DrillMode[] = [
   },
   {
     id: 'phrase-recognise',
-    title: 'Phrase recognise',
+    title: 'Listen and pick, phrases',
     unit: 'questions',
     material: 'phrases',
     runner: 'engine',

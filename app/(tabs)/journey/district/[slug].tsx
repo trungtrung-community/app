@@ -11,10 +11,12 @@ import {useState} from 'react';
 import {ScrollView, Text, View, type ViewStyle} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
+import {Button} from '../../../../src/components/core/button';
 import {IconButton} from '../../../../src/components/core/icon-button';
 import {ListRow} from '../../../../src/components/core/list-row';
 import {SegmentedControl, type Segment} from '../../../../src/components/core/segmented-control';
 import {EmptyState} from '../../../../src/components/feedback/empty-state';
+import {Sheet} from '../../../../src/components/feedback/sheet';
 import {Skeleton} from '../../../../src/components/feedback/skeleton';
 import {WordRow} from '../../../../src/components/learning/word-row';
 import type {District, PhraseItem, Stop, VocabularyItem} from '../../../../src/ports/content-model';
@@ -23,6 +25,7 @@ import type {Progress} from '../../../../src/ports/progress-store';
 import {previousDistrict} from '../../../../src/domain/district';
 import {selectItemState, selectStopDone, useProgress} from '../../../../src/store/progress';
 import {useContent} from '../../../../src/store/use-content';
+import {poolParam} from '../../../../src/usecases/drill-pool';
 
 const SEGMENTS: readonly Segment[] = [
   {label: 'Stops'},
@@ -97,6 +100,8 @@ export default function DistrictHub() {
   const insets = useSafeAreaInsets();
   const progress = useProgress(s => s.progress);
   const [segment, setSegment] = useState(0);
+  // D1·done: a done stop has two reasonable meanings, so only it opens a sheet.
+  const [doneStop, setDoneStop] = useState<Stop | null>(null);
 
   const load = useContent<HubData>(
     async source => {
@@ -135,9 +140,67 @@ export default function DistrictHub() {
           onWord={id => router.push(`/word/${id}`)}
           onPhrase={id => router.push(`/phrase/${id}`)}
           onStop={id => router.push(`/stop/${id}`)}
+          onDoneStop={setDoneStop}
         />
       ) : null}
+      <DoneStopSheet
+        stop={doneStop}
+        onClose={() => setDoneStop(null)}
+        onWalk={id => {
+          setDoneStop(null);
+          router.push(`/stop/${id}`);
+        }}
+        onPractise={id => {
+          setDoneStop(null);
+          router.push(
+            `/practice/picker?pool=${poolParam({kind: 'stop', stopId: id as never})}&entry=district`,
+          );
+        }}
+      />
     </View>
+  );
+}
+
+type DoneStopSheetProps = {
+  stop: Stop | null;
+  onClose: () => void;
+  onWalk: (id: string) => void;
+  onPractise: (id: string) => void;
+};
+
+/**
+ * D1·done — tapping a stop already finished. Replaying stays the primary
+ * action, and the practice door carries the stop's counts so the size of the
+ * thing is known before it is chosen (board frame D1·done → Q8·stop).
+ */
+function DoneStopSheet({stop, onClose, onWalk, onPractise}: DoneStopSheetProps) {
+  const words = stop?.items.filter(item => item.kind === 'vocab').length ?? 0;
+  const phrases = stop?.items.filter(item => item.kind === 'phrase').length ?? 0;
+  const counts = [
+    words > 0 ? `${words} ${words === 1 ? 'word' : 'words'}` : null,
+    phrases > 0 ? `${phrases} ${phrases === 1 ? 'phrase' : 'phrases'}` : null,
+  ]
+    .filter(part => part !== null)
+    .join(' · ');
+
+  return (
+    <Sheet
+      open={stop !== null}
+      title={stop?.name ?? ''}
+      onClose={onClose}
+      footer={
+        <View className="w-full gap-2">
+          <Button fullWidth onPress={() => stop && onWalk(stop.id)}>
+            Do this stop again
+          </Button>
+          <Button variant="secondary" fullWidth onPress={() => stop && onPractise(stop.id)}>
+            {counts ? `Practise this stop · ${counts}` : 'Practise this stop'}
+          </Button>
+        </View>
+      }
+    >
+      <Text className="type-body text-fg-body">{stop?.outcome ?? ''}</Text>
+    </Sheet>
   );
 }
 
@@ -150,6 +213,7 @@ function Hub({
   onWord,
   onPhrase,
   onStop,
+  onDoneStop,
 }: {
   data: HubData;
   progress: Progress | null;
@@ -159,6 +223,7 @@ function Hub({
   onWord: (id: string) => void;
   onPhrase: (id: string) => void;
   onStop: (id: string) => void;
+  onDoneStop: (stop: Stop) => void;
 }) {
   const {district, stops, vocabulary, phrases, previous, previousStops} = data;
   const locked = isDistrictLocked(district.number, stops, previousStops, progress);
@@ -190,6 +255,7 @@ function Hub({
               locked={locked}
               unlockLine={unlockLine}
               onStop={onStop}
+              onDoneStop={onDoneStop}
             />
           ) : null}
           {segment === 1 ? (
@@ -211,12 +277,14 @@ function StopsView({
   locked,
   unlockLine,
   onStop,
+  onDoneStop,
 }: {
   stops: readonly Stop[];
   progress: Progress | null;
   locked: boolean;
   unlockLine: string;
   onStop: (id: string) => void;
+  onDoneStop: (stop: Stop) => void;
 }) {
   if (stops.length === 0) {
     return <EmptyState title="This district's stops arrive as the walk is written" />;
@@ -229,16 +297,23 @@ function StopsView({
     <>
       {locked ? <Text className="type-body text-fg-muted">{unlockLine}</Text> : null}
       <View className="gap-2" style={locked ? DIMMED : undefined}>
-        {ordered.map(stop => (
-          <ListRow
-            key={stop.id}
-            label={stop.name}
-            sub={stop.outcome}
-            value={selectStopDone(progress, stop.id) ? 'Done' : undefined}
-            chevron={walkable.has(stop.id)}
-            onPress={walkable.has(stop.id) ? () => onStop(stop.id) : undefined}
-          />
-        ))}
+        {ordered.map(stop => {
+          const done = selectStopDone(progress, stop.id);
+          return (
+            <ListRow
+              key={stop.id}
+              label={stop.name}
+              sub={stop.outcome}
+              value={done ? 'Done' : undefined}
+              chevron={walkable.has(stop.id)}
+              onPress={
+                walkable.has(stop.id)
+                  ? () => (done ? onDoneStop(stop) : onStop(stop.id))
+                  : undefined
+              }
+            />
+          );
+        })}
       </View>
     </>
   );

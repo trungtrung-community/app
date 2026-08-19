@@ -178,4 +178,25 @@ describe('the district hub', () => {
     expect(await screen.findByRole('button', {name: /Names, and where you are from/})).toBeTruthy();
     expect(screen.queryByText(/to walk here/)).toBeNull();
   });
+
+  it('opens the done-stop sheet, and its second action carries the counts', async () => {
+    // Given
+    useProgress.setState({progress: {...EMPTY, completedStops: ['stop.core.c1.1']}});
+    renderScreen(<DistrictHub />);
+    const done = await screen.findByRole('button', {name: /Hello, and a way out/});
+
+    // When — a done stop opens the sheet rather than walking straight in
+    fireEvent.click(done);
+
+    // Then
+    expect(await screen.findByText('Do this stop again')).toBeTruthy();
+    expect(screen.getByText('Practise this stop · 8 words · 4 phrases')).toBeTruthy();
+    expect(push).not.toHaveBeenCalled();
+
+    // When — the practice door
+    fireEvent.click(screen.getByText('Practise this stop · 8 words · 4 phrases'));
+
+    // Then
+    expect(push).toHaveBeenCalledWith('/practice/picker?pool=stop:stop.core.c1.1&entry=district');
+  });
 });
