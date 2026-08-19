@@ -28,14 +28,29 @@ type ProgressSlice = {
   apply(next: Progress): void;
 };
 
+/** The in-flight load, shared by concurrent hydrates and cleared when it settles. */
+let loading: Promise<void> | null = null;
+
 export const useProgress = create<ProgressSlice>()((set, get) => ({
   progress: null,
-  async hydrate() {
+  hydrate() {
     if (get().progress !== null) {
-      return;
+      return Promise.resolve();
     }
-    const store = await progressStore();
-    set({progress: await store.load()});
+    loading ??= (async () => {
+      try {
+        const store = await progressStore();
+        const snapshot = await store.load();
+        // An `apply` may have landed while the load ran; what a use case
+        // persisted is newer than what the store held, so it wins.
+        if (get().progress === null) {
+          set({progress: snapshot});
+        }
+      } finally {
+        loading = null;
+      }
+    })();
+    return loading;
   },
   apply(next) {
     set({progress: next});

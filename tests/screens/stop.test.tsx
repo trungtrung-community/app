@@ -63,6 +63,28 @@ describe('the stop screen', () => {
     expect(screen.getByTestId('stop-progress')).toBeTruthy();
   });
 
+  it('says the stop is off the map when it does not load', async () => {
+    // Given — a content source whose loads all refuse
+    const broken = {
+      getStop: async () => {
+        throw new Error('no such stop');
+      },
+      getStopScript: async () => {
+        throw new Error('no such stop');
+      },
+      listExercisesByStop: async () => {
+        throw new Error('no such stop');
+      },
+    } as unknown as JsonContentSource;
+    override('content', broken);
+
+    // When
+    renderScreen(<Stop />);
+
+    // Then
+    expect(await screen.findByText('That stop is off the map')).toBeTruthy();
+  });
+
   it('teaches the first word from its card', async () => {
     // Given
     renderScreen(<Stop />);

@@ -63,6 +63,33 @@ describe('hydrate', () => {
 });
 
 describe('apply', () => {
+  it('wins over a hydrate that resolves later', async () => {
+    // Given — a load that stays pending until the test releases it
+    let release!: (progress: Progress) => void;
+    const pending = new Promise<Progress>(resolve => {
+      release = resolve;
+    });
+    const store: ProgressStore = {
+      load: () => pending,
+      async save() {},
+      async export() {
+        return '';
+      },
+      async clear() {},
+    };
+    override('progress', store);
+    const hydrating = useProgress.getState().hydrate();
+
+    // When — a use case applies fresh progress before the load resolves
+    const next: Progress = {...EMPTY, walkedOn: [TODAY]};
+    useProgress.getState().apply(next);
+    release({...EMPTY, walkedOn: ['2026-08-18' as IsoDate]});
+    await hydrating;
+
+    // Then — the late snapshot does not overwrite what was persisted meanwhile
+    expect(useProgress.getState().progress).toBe(next);
+  });
+
   it('replaces the snapshot with what a use case persisted', () => {
     // Given
     const next: Progress = {...EMPTY, walkedOn: [TODAY]};

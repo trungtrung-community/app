@@ -1,11 +1,13 @@
 /**
  * @fileoverview The running stop — session state for the lesson screen.
  *
- * `start` loads through the container, plans, and holds one seeded rng for the
- * whole session. `commit` updates the session synchronously before awaiting the
- * save, so the UI never waits on storage, and forwards the persisted snapshot to
- * `useProgress` — which is how the map, the shelves and the stats go live with no
- * browse-code change.
+ * `start` loads through the container, plans, and holds one seeded rng and one
+ * resolved ProgressStore for the whole session. `commit` sets the next session
+ * state without waiting on storage — the save runs behind it — and forwards the
+ * computed snapshot to `useProgress`, which is how the map, the shelves and the
+ * stats go live with no browse-code change. One commit runs at a time: a tap
+ * delivered while a commit is in flight is dropped, which manual advance makes
+ * correct.
  */
 
 import {create} from 'zustand';
@@ -13,7 +15,7 @@ import {create} from 'zustand';
 import {toIsoDate} from '../domain/date';
 import type {ContentItemId, StopId} from '../ports/content-ids';
 import type {PhraseItem, Stop, VocabularyItem} from '../ports/content-model';
-import type {Progress} from '../ports/progress-store';
+import type {Progress, ProgressStore} from '../ports/progress-store';
 
 import {content, progress as progressStore} from '../composition/container';
 import {seededRng, startStop, type Rng, type SessionState} from '../usecases/start-stop';
@@ -28,7 +30,7 @@ import {useProgress} from './progress';
 const EMPTY_PROGRESS: Progress = {walkedOn: [], items: {}, completedStops: [], version: 2};
 
 type StopSessionSlice = {
-  status: 'idle' | 'loading' | 'ready';
+  status: 'idle' | 'loading' | 'ready' | 'error';
   stop: Stop | null;
   state: SessionState | null;
   itemsById: ReadonlyMap<ContentItemId, VocabularyItem | PhraseItem>;
@@ -39,6 +41,12 @@ type StopSessionSlice = {
 
 /** One rng per running session, so a stop's chance is drawn once. */
 let sessionRng: Rng = seededRng(0);
+
+/** The progress store, resolved once in `start` and reused by every commit. */
+let store: ProgressStore | null = null;
+
+/** A commit is running; a tap delivered meanwhile is dropped, not queued. */
+let committing = false;
 
 export const useStopSession = create<StopSessionSlice>()((set, get) => ({
   status: 'idle',
@@ -53,33 +61,49 @@ export const useStopSession = create<StopSessionSlice>()((set, get) => ({
       .hydrate()
       .catch(() => {});
     sessionRng = seededRng(Date.now());
-    const source = await content();
-    const session = await startStop(
-      {walk: source, exercises: source, dictionary: source},
-      id,
-      sessionRng,
-    );
-    set({status: 'ready', stop: session.stop, state: session.state, itemsById: session.itemsById});
+    try {
+      const [source, progressPort] = await Promise.all([content(), progressStore()]);
+      store = progressPort;
+      const session = await startStop(
+        {walk: source, exercises: source, dictionary: source},
+        id,
+        sessionRng,
+      );
+      set({
+        status: 'ready',
+        stop: session.stop,
+        state: session.state,
+        itemsById: session.itemsById,
+      });
+    } catch {
+      set({status: 'error'});
+    }
   },
 
   async commit(input) {
     const state = get().state;
-    if (state === null) {
+    if (state === null || store === null || committing) {
       return;
     }
-    const before = useProgress.getState().progress ?? EMPTY_PROGRESS;
-    const store = await progressStore();
-    const result = await submitAnswer(
-      {store},
-      before,
-      state,
-      input,
-      sessionRng,
-      toIsoDate(new Date()),
-    );
-    set({state: result.state});
-    if (result.progress !== before) {
-      useProgress.getState().apply(result.progress);
+    committing = true;
+    try {
+      const before = useProgress.getState().progress ?? EMPTY_PROGRESS;
+      const result = await submitAnswer(
+        {store},
+        before,
+        state,
+        input,
+        sessionRng,
+        toIsoDate(new Date()),
+      );
+      set({state: result.state});
+      if (result.progress !== before) {
+        useProgress.getState().apply(result.progress);
+      }
+      // The snapshot is already live; a failed save must not take the turn down.
+      result.persisted.catch(() => {});
+    } finally {
+      committing = false;
     }
   },
 

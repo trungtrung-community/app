@@ -113,10 +113,10 @@ function byId(...exercises: readonly Exercise[]): ReadonlyMap<ExerciseId, Exerci
 
 describe('the warm-up and assembly trap', () => {
   it('keeps the exercises that hang off warm-up and assembly positions', () => {
-    // Given — 17 Read exercises sit on these kinds in the full data, not on 'exercise'
+    // Given — exercises sit on these kinds in the full data, not only on 'exercise'
     const warm: StopPosition = {...POSITION, kind: 'warm-up', exerciseId: 'ex.warm' as ExerciseId};
     const asm: StopPosition = {...POSITION, kind: 'assembly', exerciseId: 'ex.asm' as ExerciseId};
-    const exercises = byId(meaningPick('ex.warm'), buildTheStack('ex.asm'));
+    const exercises = byId(meaningPick('ex.warm'), meaningPick('ex.asm'));
 
     // When
     const seed = planSession([warm, asm], exercises);
@@ -129,7 +129,7 @@ describe('the warm-up and assembly trap', () => {
       }),
       expect.objectContaining({
         kind: 'exercise',
-        exercise: expect.objectContaining({exerciseId: 'ex.asm', commitMode: 'check'}),
+        exercise: expect.objectContaining({exerciseId: 'ex.asm', commitMode: 'tap'}),
       }),
     ]);
   });
@@ -160,17 +160,23 @@ describe('the audio gate', () => {
     );
   });
 
-  it('leaves an unblocked listen-pick audible', () => {
+  it('hides an unblocked listen-pick until a player exists', () => {
     // When
     const seed = planSession([exercisePosition('ex.1')], byId(listenPick('ex.1')));
 
+    // Then — the prompt IS the audio; the target script would show the answer
+    expect(seed.positions).toHaveLength(0);
+  });
+
+  it('hides the drill types the screen has no renderer for', () => {
+    // Given — check-mode and none-mode drills, none of them audio-blocked
+    const exercises = byId(phraseArrange('ex.1'), buildTheStack('ex.2'), phraseProduce('ex.3'));
+
+    // When
+    const seed = planSession(['ex.1', 'ex.2', 'ex.3'].map(exercisePosition), exercises);
+
     // Then
-    expect(seed.positions[0]).toEqual(
-      expect.objectContaining({
-        kind: 'exercise',
-        exercise: expect.objectContaining({presentation: 'listen-pick'}),
-      }),
-    );
+    expect(seed.positions).toHaveLength(0);
   });
 
   it('substitutes a blocked phrase-recognise to the script-prompted variant', () => {
@@ -273,24 +279,16 @@ describe('the other position kinds', () => {
 });
 
 describe('commit modes', () => {
-  it('decides how each type commits, once', () => {
+  it('decides how each planned drill commits, once', () => {
     // Given
-    const exercises = byId(
-      phraseCloze('ex.cloze'),
-      buildTheStack('ex.stack'),
-      pairMatch('ex.pairs'),
-      phraseProduce('ex.produce'),
-    );
+    const exercises = byId(meaningPick('ex.pick'), pairMatch('ex.pairs'));
 
     // When
-    const seed = planSession(
-      ['ex.cloze', 'ex.stack', 'ex.pairs', 'ex.produce'].map(exercisePosition),
-      exercises,
-    );
+    const seed = planSession(['ex.pick', 'ex.pairs'].map(exercisePosition), exercises);
 
     // Then
     const modes = seed.positions.map(p => (p.kind === 'exercise' ? p.exercise.commitMode : null));
-    expect(modes).toEqual(['tap', 'check', 'pairs', 'none']);
+    expect(modes).toEqual(['tap', 'pairs']);
   });
 });
 

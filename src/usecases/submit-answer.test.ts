@@ -1,6 +1,7 @@
 /**
  * @fileoverview submitAnswer — the engine's events become persisted progress.
- * One call: commit, fold, save. Phases per docs/11.
+ * One call: commit, fold, start the save; `persisted` says when it landed.
+ * Phases per docs/11.
  */
 
 import {describe, expect, it} from 'vitest';
@@ -77,6 +78,7 @@ describe('submitAnswer', () => {
 
     // Then
     expect(result.progress.items['vocab.cha']?.state).toBe('met');
+    await result.persisted;
     expect(store.saved()).toBe(result.progress);
   });
 
@@ -84,8 +86,16 @@ describe('submitAnswer', () => {
     // Given — advance past the card to the exercise
     const store = memoryStore();
     let state = createSession(seed(), seededRng(1));
-    state = (await submitAnswer({store}, EMPTY, state, {kind: 'continue'}, seededRng(1), TODAY))
-      .state;
+    const taught = await submitAnswer(
+      {store},
+      EMPTY,
+      state,
+      {kind: 'continue'},
+      seededRng(1),
+      TODAY,
+    );
+    await taught.persisted;
+    state = taught.state;
     const options = state.queue[state.index]?.options ?? [];
     const answer = options.find(option => option.isAnswer);
 
@@ -107,8 +117,16 @@ describe('submitAnswer', () => {
     // Given
     const store = memoryStore();
     let state = createSession(seed(), seededRng(1));
-    state = (await submitAnswer({store}, EMPTY, state, {kind: 'continue'}, seededRng(1), TODAY))
-      .state;
+    const taught = await submitAnswer(
+      {store},
+      EMPTY,
+      state,
+      {kind: 'continue'},
+      seededRng(1),
+      TODAY,
+    );
+    await taught.persisted;
+    state = taught.state;
     const options = state.queue[state.index]?.options ?? [];
     const wrong = options.find(option => !option.isAnswer);
 
@@ -175,9 +193,17 @@ describe('submitAnswer', () => {
     );
 
     // When
-    await submitAnswer({store}, EMPTY, state, {kind: 'continue'}, seededRng(1), TODAY);
+    const result = await submitAnswer(
+      {store},
+      EMPTY,
+      state,
+      {kind: 'continue'},
+      seededRng(1),
+      TODAY,
+    );
 
     // Then
+    await result.persisted;
     expect(store.saved()).toBeNull();
   });
 });

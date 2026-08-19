@@ -23,6 +23,7 @@ import type {Track} from '../../../src/ports/content-ids';
 import type {District, Section, Stop} from '../../../src/ports/content-model';
 import type {Progress} from '../../../src/ports/progress-store';
 
+import {previousDistrict} from '../../../src/domain/district';
 import {selectStopDone, useProgress} from '../../../src/store/progress';
 import {useContent} from '../../../src/store/use-content';
 
@@ -249,7 +250,7 @@ type Unlock = {
  * Whether a district's node opens or stays locked — the same rule the district
  * hub applies: the first district opens, a district with its own progress opens
  * (a restored backup must never lock a learner out), and otherwise every stop
- * of the district one number down must be done.
+ * of the listed district before this one must be done.
  */
 function districtState(progress: Progress | null, district: District, unlock: Unlock): Openness {
   const own = unlock.stopsBySlug.get(district.slug) ?? [];
@@ -259,7 +260,7 @@ function districtState(progress: Progress | null, district: District, unlock: Un
   if (district.number === 1) {
     return 'open';
   }
-  const previous = unlock.districts.find(candidate => candidate.number === district.number - 1);
+  const previous = previousDistrict(unlock.districts, district.number);
   const previousStops = previous ? (unlock.stopsBySlug.get(previous.slug) ?? []) : [];
   return previousStops.length > 0 && previousStops.every(stop => selectStopDone(progress, stop.id))
     ? 'open'

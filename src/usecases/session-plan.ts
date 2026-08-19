@@ -8,6 +8,10 @@
  * substitutes, and what disappears. A hidden drill emits no seed position at
  * all, so the progress bar never counts it.
  *
+ * The plan emits only presentations the stop screen can render — the
+ * `RENDERABLE_PRESENTATIONS` allow-list. Everything else hides, whatever its
+ * commit mode, until a renderer (or an audio player) exists for it.
+ *
  * Pure: no ports, no randomness. The shuffle belongs to the engine.
  */
 
@@ -39,10 +43,30 @@ const COMMIT_MODES: Record<Exercise['type'], CommitMode> = {
 };
 
 /**
- * The audio gate. Returns the presentation to run the drill under, or null when
- * the drill cannot run without a take (its prompt IS the audio) and must hide.
+ * What the stop screen renders today. A presentation outside this set hides —
+ * an unblocked listen-pick has no audio control yet, and rendering the target
+ * script as its prompt would show the answer.
+ */
+const RENDERABLE_PRESENTATIONS: ReadonlySet<string> = new Set([
+  'meaning-pick',
+  'meaning-pick-substitute',
+  'phrase-recognise-script',
+  'pair-match',
+]);
+
+/**
+ * The audio gate and the renderable gate, in that order. Returns the
+ * presentation to run the drill under, or null when the drill must hide —
+ * because it cannot run without a take (its prompt IS the audio), or because no
+ * renderer for it exists yet.
  */
 function presentationFor(exercise: Exercise): string | null {
+  const presentation = substitutedPresentation(exercise);
+  return RENDERABLE_PRESENTATIONS.has(presentation) ? presentation : null;
+}
+
+/** The audio substitutions of docs/03 §7: a blocked prompt swaps to a silent sibling. */
+function substitutedPresentation(exercise: Exercise): string {
   if (exercise.blockedOn !== 'audio') {
     return exercise.type;
   }
@@ -52,25 +76,8 @@ function presentationFor(exercise: Exercise): string | null {
       return 'meaning-pick-substitute';
     case 'phrase-recognise':
       return 'phrase-recognise-script';
-    case 'meaning-pick':
-    case 'pair-match':
-    case 'spot-it':
-    case 'sort-what-changed':
-    case 'find-the-root':
-    case 'read-a-word':
-    case 'what-attaches':
-      // Already silent; the block is advisory here.
-      return exercise.type;
-    case 'phrase-arrange':
-    case 'phrase-cloze':
-    case 'phrase-produce':
-    case 'hear-it-find-it':
-    case 'see-it-say-it':
-    case 'read-it-aloud':
-    case 'build-the-stack':
-      return null;
     default:
-      return assertNever(exercise);
+      return exercise.type;
   }
 }
 

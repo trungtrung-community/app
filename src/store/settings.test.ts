@@ -68,6 +68,28 @@ describe('set', () => {
     expect(store.saved()).toEqual([{wylie: true}]);
   });
 
+  it('wins over a hydrate that resolves later', async () => {
+    // Given — a load that stays pending until the test releases it
+    let release!: (settings: Settings) => void;
+    const pending = new Promise<Settings>(resolve => {
+      release = resolve;
+    });
+    const store: SettingsStore = {
+      load: () => pending,
+      async save() {},
+    };
+    override('settings', store);
+    const hydrating = useSettings.getState().hydrate();
+
+    // When — the learner changes a setting before the load resolves
+    const changed = useSettings.getState().set({wylie: true});
+    release({wylie: false});
+    await Promise.all([hydrating, changed]);
+
+    // Then — the late snapshot does not overwrite the change
+    expect(useSettings.getState().settings).toEqual({wylie: true});
+  });
+
   it('updates state synchronously, before the save resolves', async () => {
     // Given — a save that stays pending until the test releases it
     let resolveSave: () => void = () => {};

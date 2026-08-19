@@ -55,7 +55,7 @@ export function commit(state: SessionState, input: CommitInput, rng: Rng): Commi
     case 'check':
       return handleCheck(state, input.picked);
     case 'pair':
-      return handlePair(state, input.a, input.b);
+      return handlePair(state, input.a, input.b, rng);
     case 'finish':
       return handleFinish(state);
     default:
@@ -98,12 +98,14 @@ function handleContinue(state: SessionState, rng: Rng): CommitOutcome {
 }
 
 /**
- * Step forward one entry. Arriving at the closing boundary with misses in hand
- * is the one place the second look can splice in, and it does so exactly once.
+ * Step forward one entry. `matched` and `filled` accumulate per entry, so the
+ * new entry starts clean — a later board sharing a tile id must not arrive
+ * pre-matched. Arriving at the closing boundary with misses in hand is the one
+ * place the second look can splice in, and it does so exactly once.
  */
 function advance(state: SessionState, rng: Rng, events: readonly SessionEvent[]): CommitOutcome {
   const index = state.index + 1;
-  let next: SessionState = {...state, index};
+  let next: SessionState = {...state, index, matched: [], filled: []};
   if (index === next.closingAt && !next.secondLookAdded && next.misses.length > 0) {
     const intro: QueueEntry = {
       key: 'sl',
@@ -277,7 +279,7 @@ function handleCheck(state: SessionState, picked: readonly string[]): CommitOutc
   return {state: {...state, filled}, events: []};
 }
 
-function handlePair(state: SessionState, a: string, b: string): CommitOutcome {
+function handlePair(state: SessionState, a: string, b: string, rng: Rng): CommitOutcome {
   const entry = current(state);
   const exercise = currentExercise(state);
   if (entry === undefined || exercise === null || state.answered !== null) {
@@ -296,14 +298,11 @@ function handlePair(state: SessionState, a: string, b: string): CommitOutcome {
   if (!cleared) {
     return {state: {...state, matched}, events: []};
   }
-  const next: SessionState = {
-    ...state,
-    matched,
-    answered: {key: entry.key, verdict: 'correct', answerItemId: null},
-  };
+  // A cleared board has no answer to show, so it advances directly rather than
+  // raising a band over an empty board.
   const events: SessionEvent[] =
     exercise.itemId === null ? [] : [{kind: 'correct', itemId: exercise.itemId}];
-  return {state: next, events};
+  return advance({...state, matched}, rng, events);
 }
 
 function handleFinish(state: SessionState): CommitOutcome {

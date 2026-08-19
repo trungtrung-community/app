@@ -17,7 +17,9 @@ import {SearchField} from '../src/components/forms/search-field';
 import {SectionHeader} from '../src/components/learning/section-header';
 import {WordRow} from '../src/components/learning/word-row';
 import type {PhraseItem, VocabularyItem} from '../src/ports/content-model';
+import type {Progress} from '../src/ports/progress-store';
 
+import {selectItemState, useProgress} from '../src/store/progress';
 import {useContent} from '../src/store/use-content';
 
 /** Below this the adapters would prefix-match half the dictionary. */
@@ -34,6 +36,7 @@ export default function Search() {
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
   const settled = useDeferredValue(query);
+  const progress = useProgress(s => s.progress);
 
   const load = useContent<Results | null>(
     async source => {
@@ -67,6 +70,7 @@ export default function Search() {
           {load.status === 'ready' && load.data !== null ? (
             <ResultList
               results={load.data}
+              progress={progress}
               onWord={id => router.push(`/word/${id}`)}
               onPhrase={id => router.push(`/phrase/${id}`)}
             />
@@ -79,10 +83,12 @@ export default function Search() {
 
 function ResultList({
   results,
+  progress,
   onWord,
   onPhrase,
 }: {
   results: Results;
+  progress: Progress | null;
   onWord: (id: string) => void;
   onPhrase: (id: string) => void;
 }) {
@@ -103,7 +109,7 @@ function ResultList({
           bo={word.bo}
           roman={word.roman}
           en={word.en}
-          status="new"
+          status={selectItemState(progress, word.id)}
           register={word.register}
           audio={word.audio.available}
           onPress={() => onWord(word.id)}
@@ -116,7 +122,7 @@ function ResultList({
           bo={phrase.bo}
           roman={phrase.roman}
           en={phrase.en}
-          status="new"
+          status={selectItemState(progress, phrase.id)}
           register={phrase.register}
           audio={phrase.audio.available}
           onPress={() => onPhrase(phrase.id)}

@@ -26,14 +26,29 @@ type SettingsSlice = {
   set(next: Partial<Settings>): Promise<void>;
 };
 
+/** The in-flight load, shared by concurrent hydrates and cleared when it settles. */
+let loading: Promise<void> | null = null;
+
 export const useSettings = create<SettingsSlice>()((set, get) => ({
   settings: null,
-  async hydrate() {
+  hydrate() {
     if (get().settings !== null) {
-      return;
+      return Promise.resolve();
     }
-    const store = await settingsStore();
-    set({settings: await store.load()});
+    loading ??= (async () => {
+      try {
+        const store = await settingsStore();
+        const snapshot = await store.load();
+        // A `set` may have landed while the load ran; the learner's change is
+        // newer than what the store held, so it wins.
+        if (get().settings === null) {
+          set({settings: snapshot});
+        }
+      } finally {
+        loading = null;
+      }
+    })();
+    return loading;
   },
   async set(next) {
     const merged = {...(get().settings ?? DEFAULTS), ...next};

@@ -1,11 +1,15 @@
 /**
  * @fileoverview submitAnswer — commit to the engine, fold the events into
- * progress, write through.
+ * progress, start the write-through.
  *
  * The engine states what happened; this is the one place that decides what it
  * means for the record: taught marks `met`, correct and missed carry the injected
  * day into the item's history, and the ended event stamps the day walked and the
  * stop completed. The clock arrives as a value, like the engine's rng.
+ *
+ * The save is started, never awaited: the caller gets the next state and
+ * progress immediately and holds `persisted` for whoever needs the write to have
+ * landed — the UI advances without waiting on storage.
  */
 
 import type {IsoDate} from '../domain/date';
@@ -26,6 +30,8 @@ export type SubmitAnswerResult = {
   readonly state: SessionState;
   readonly progress: Progress;
   readonly events: readonly SessionEvent[];
+  /** Resolves when the started save lands; already resolved when nothing changed. */
+  readonly persisted: Promise<void>;
 };
 
 export async function submitAnswer(
@@ -67,10 +73,8 @@ export async function submitAnswer(
     }
   }
 
-  if (next !== progress) {
-    await deps.store.save(next);
-  }
-  return {state: outcome.state, progress: next, events: outcome.events};
+  const persisted = next !== progress ? deps.store.save(next) : Promise.resolve();
+  return {state: outcome.state, progress: next, events: outcome.events, persisted};
 }
 
 function withItem(

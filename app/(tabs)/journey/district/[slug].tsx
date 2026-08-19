@@ -20,6 +20,7 @@ import {WordRow} from '../../../../src/components/learning/word-row';
 import type {District, PhraseItem, Stop, VocabularyItem} from '../../../../src/ports/content-model';
 import type {Progress} from '../../../../src/ports/progress-store';
 
+import {previousDistrict} from '../../../../src/domain/district';
 import {selectItemState, selectStopDone, useProgress} from '../../../../src/store/progress';
 import {useContent} from '../../../../src/store/use-content';
 
@@ -85,7 +86,7 @@ type HubData = {
   stops: readonly Stop[];
   vocabulary: readonly VocabularyItem[];
   phrases: readonly PhraseItem[];
-  /** The district one number down, and its stops — the unlock rule reads them. */
+  /** The listed district before this one, and its stops — the unlock rule reads them. */
   previous: District | null;
   previousStops: readonly Stop[];
 };
@@ -106,8 +107,7 @@ export default function DistrictHub() {
         source.listPhrasesByDistrict(slug),
         source.listDistricts(),
       ]);
-      const previous =
-        districts.find(candidate => candidate.number === district.number - 1) ?? null;
+      const previous = previousDistrict(districts, district.number);
       const previousStops =
         previous === null ? [] : await source.listStopsByDistrict(previous.slug);
       return {district, stops, vocabulary, phrases, previous, previousStops};

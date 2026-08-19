@@ -142,6 +142,30 @@ describe('start', () => {
   });
 });
 
+describe('a stop that does not load', () => {
+  it('lands on error instead of loading forever', async () => {
+    // Given — a content source whose loads all refuse
+    const broken = {
+      getStop: async () => {
+        throw new Error('no such stop');
+      },
+      getStopScript: async () => {
+        throw new Error('no such stop');
+      },
+      listExercisesByStop: async () => {
+        throw new Error('no such stop');
+      },
+    } as unknown as ContentSource;
+    override('content', broken);
+
+    // When
+    await useStopSession.getState().start(STOP_ID);
+
+    // Then
+    expect(useStopSession.getState().status).toBe('error');
+  });
+});
+
 describe('commit', () => {
   it('advances the session and forwards persisted progress to the snapshot', async () => {
     // Given
@@ -153,6 +177,28 @@ describe('commit', () => {
     // Then
     expect(useStopSession.getState().state?.index).toBe(1);
     expect(useProgress.getState().progress?.items['vocab.cha']?.state).toBe('met');
+  });
+});
+
+describe('a second tap during a running commit', () => {
+  it('drops the tap delivered while the first commit runs', async () => {
+    // Given — the session stands on the exercise
+    await useStopSession.getState().start(STOP_ID);
+    await useStopSession.getState().commit({kind: 'continue'});
+    const state = useStopSession.getState().state;
+    const options = state?.queue[state.index]?.options ?? [];
+    const answer = options.find(option => option.isAnswer);
+    const wrong = options.find(option => !option.isAnswer);
+
+    // When — a wrong tap lands before the correct tap's commit resolves
+    const first = useStopSession.getState().commit({kind: 'tap', itemId: answer?.itemId ?? ''});
+    const second = useStopSession.getState().commit({kind: 'tap', itemId: wrong?.itemId ?? ''});
+    await Promise.all([first, second]);
+
+    // Then — exactly one commit took effect
+    const after = useStopSession.getState().state;
+    expect(after?.answered?.verdict).toBe('correct');
+    expect(after?.misses).toEqual([]);
   });
 });
 

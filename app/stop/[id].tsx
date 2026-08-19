@@ -16,6 +16,7 @@ import {Badge} from '../../src/components/core/badge';
 import {Button} from '../../src/components/core/button';
 import {IconButton} from '../../src/components/core/icon-button';
 import {Confetti} from '../../src/components/feedback/confetti';
+import {EmptyState} from '../../src/components/feedback/empty-state';
 import {MascotSpeech} from '../../src/components/feedback/mascot-speech';
 import {Skeleton} from '../../src/components/feedback/skeleton';
 import {AnswerBand} from '../../src/components/learning/answer-band';
@@ -80,7 +81,16 @@ export default function Stop() {
           />
         </View>
       </View>
-      {slice.status !== 'ready' || state === undefined || state === null || entry === undefined ? (
+      {slice.status === 'error' ? (
+        <View className="px-5 pt-6">
+          <EmptyState title="That stop is off the map">
+            Head back to the district and pick the walk up from there.
+          </EmptyState>
+        </View>
+      ) : slice.status !== 'ready' ||
+        state === undefined ||
+        state === null ||
+        entry === undefined ? (
         <StopSkeleton />
       ) : (
         <ScrollView className="flex-1">

@@ -418,17 +418,60 @@ describe('pair', () => {
     return {stopId: 'stop.test', positions: [ex(board), END], poolByItem: {}};
   }
 
-  it('accumulates matches and completes when the board clears', () => {
+  it('accumulates a matched pair while the board is uncleared', () => {
     // Given
-    let state = createSession(pairSeed(), seededRng(1));
+    const state = createSession(pairSeed(), seededRng(1));
 
     // When
+    const outcome = commit(state, {kind: 'pair', a: 'vocab.a', b: 'vocab.a'}, LOW);
+
+    // Then
+    expect(outcome.state.matched).toEqual(['vocab.a']);
+    expect(outcome.state.index).toBe(0);
+    expect(outcome.state.answered).toBeNull();
+  });
+
+  it('advances off a cleared board with the correct event and no band', () => {
+    // Given
+    let state = createSession(pairSeed(), seededRng(1));
     state = commit(state, {kind: 'pair', a: 'vocab.a', b: 'vocab.a'}, LOW).state;
+
+    // When
     const outcome = commit(state, {kind: 'pair', a: 'vocab.b', b: 'vocab.b'}, LOW);
 
     // Then
-    expect(outcome.state.matched).toEqual(['vocab.a', 'vocab.b']);
-    expect(outcome.state.answered?.verdict).toBe('correct');
+    expect(outcome.state.index).toBe(1);
+    expect(outcome.state.answered).toBeNull();
+    expect(outcome.events).toContainEqual({kind: 'correct', itemId: 'vocab.cha'});
+  });
+
+  it('starts the next board clean when two boards share a tile', () => {
+    // Given — two boards in one seed, both holding 'vocab.shared'
+    const board = (id: string, tiles: readonly string[]): SeedExercise =>
+      exercise(id, 'vocab.cha', {
+        commitMode: 'pairs',
+        options: tiles.map(tile => ({itemId: tile, isAnswer: false})),
+      });
+    const seed: SessionSeed = {
+      stopId: 'stop.test',
+      positions: [
+        ex(board('ex.b1', ['vocab.a', 'vocab.shared'])),
+        ex(board('ex.b2', ['vocab.shared', 'vocab.c'])),
+        END,
+      ],
+      poolByItem: {},
+    };
+    let state = createSession(seed, seededRng(1));
+    state = commit(state, {kind: 'pair', a: 'vocab.a', b: 'vocab.a'}, LOW).state;
+    state = commit(state, {kind: 'pair', a: 'vocab.shared', b: 'vocab.shared'}, LOW).state;
+
+    // When — board 1 cleared and advanced; the shared tile matches again on board 2
+    const outcome = commit(state, {kind: 'pair', a: 'vocab.shared', b: 'vocab.shared'}, LOW);
+
+    // Then
+    expect(state.index).toBe(1);
+    expect(state.matched).toEqual([]);
+    expect(outcome.state.matched).toEqual(['vocab.shared']);
   });
 
   it('leaves a wrong pair alone: no state change, no miss', () => {
