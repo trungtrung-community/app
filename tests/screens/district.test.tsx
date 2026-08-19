@@ -13,6 +13,15 @@ import {override, resetContainer} from '../../src/composition/container';
 import fixture from '../../src/infra/content/content.fixture.json';
 import {JsonContentSource} from '../../src/infra/content/json-content-source';
 import type {ContentFixture} from '../../src/infra/content/rows.generated';
+import type {Progress} from '../../src/ports/progress-store';
+import {useProgress} from '../../src/store/progress';
+
+const EMPTY: Progress = {walkedOn: [], items: {}, completedStops: [], version: 2};
+
+/** Every stop of district `core`, in fixture order. */
+const CORE_STOPS = (fixture as unknown as {stop: {id: string; district_id: string | null}[]}).stop
+  .filter(stop => stop.district_id === 'district.core')
+  .map(stop => stop.id);
 
 const {push, params} = vi.hoisted(() => ({push: vi.fn(), params: {slug: 'core'}}));
 vi.mock('expo-router', () => ({
@@ -26,6 +35,7 @@ describe('the district hub', () => {
     override('content', new JsonContentSource(fixture as unknown as ContentFixture));
     params.slug = 'core';
     push.mockClear();
+    useProgress.setState({progress: null});
   });
 
   it('shows the district name and number', async () => {
@@ -118,9 +128,56 @@ describe('the district hub', () => {
     renderScreen(<DistrictHub />);
 
     // Then — the district still shows its stops, greyed, rather than hiding them.
-    expect(
-      await screen.findByText('Finish the district before this one to walk here.'),
-    ).toBeTruthy();
+    expect(await screen.findByText('Finish First Words to walk here.')).toBeTruthy();
     expect(screen.getByText('Names, and where you are from')).toBeTruthy();
+  });
+
+  it('walks into the first stop from its row', async () => {
+    // Given — a fresh district: the first stop is the walkable one
+    renderScreen(<DistrictHub />);
+    const row = await screen.findByRole('button', {name: /Hello, and a way out/});
+
+    // When
+    fireEvent.click(row);
+
+    // Then
+    expect(push).toHaveBeenCalledWith('/stop/stop.core.c1.1');
+  });
+
+  it('keeps stops beyond the next one inert', async () => {
+    // When
+    renderScreen(<DistrictHub />);
+    await screen.findByText('Hello, and a way out');
+
+    // Then
+    expect(screen.queryByRole('button', {name: /The greeting, answered/})).toBeNull();
+  });
+
+  it('opens the next stop once the one before is done', async () => {
+    // Given
+    useProgress.setState({progress: {...EMPTY, completedStops: ['stop.core.c1.1']}});
+    renderScreen(<DistrictHub />);
+    const next = await screen.findByRole('button', {name: /The greeting, answered/});
+
+    // When
+    fireEvent.click(next);
+
+    // Then
+    expect(push).toHaveBeenCalledWith('/stop/stop.core.c1.2');
+  });
+
+  it('opens a district once the one before it is finished', async () => {
+    // Given — every stop of district 1 done
+    useProgress.setState({progress: {...EMPTY, completedStops: CORE_STOPS}});
+    params.slug = 'meeting';
+
+    // When
+    renderScreen(<DistrictHub />);
+
+    // Then
+    expect(
+      await screen.findByRole('button', {name: /Names, and where you are from/}),
+    ).toBeTruthy();
+    expect(screen.queryByText(/to walk here/)).toBeNull();
   });
 });

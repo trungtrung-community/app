@@ -30,30 +30,55 @@ const SEGMENTS: readonly Segment[] = [
   {label: 'Cards'},
 ];
 
-/**
- * What a locked district states, once no district-name lookup is worth the extra
- * read. Provisional and kept as one line so the fan-in can replace it wholesale.
- */
-const UNLOCK_LINE = 'Finish the district before this one to walk here.';
-
 const DIMMED: ViewStyle = {opacity: 0.5};
 
 /**
  * Whether a district is out of reach yet.
  *
- * Provisional rule, kept as one small pure function so a later package can change
- * it without touching the screen around it: district 1 always opens, and every
- * other district opens once it has a completed stop.
+ * Stops are walked in order, so a district opens when the one before it is
+ * finished: district 1 always opens, own progress opens (a restored backup must
+ * never lock a learner out of their own ground), and otherwise every stop of the
+ * previous district must be done.
  */
 function isDistrictLocked(
   districtNumber: number,
   stops: readonly Stop[],
+  previousStops: readonly Stop[],
   progress: Progress | null,
 ): boolean {
   if (districtNumber === 1) {
     return false;
   }
-  return !stops.some(stop => selectStopDone(progress, stop.id));
+  if (stops.some(stop => selectStopDone(progress, stop.id))) {
+    return false;
+  }
+  return (
+    previousStops.length === 0 ||
+    !previousStops.every(stop => selectStopDone(progress, stop.id))
+  );
+}
+
+/**
+ * The stops a row may open: every done stop (a walk can be repeated), plus the
+ * first undone one — the "no skipping" order.
+ *
+ * `ordinal` counts within a circuit, so the walk order is circuit first, then
+ * ordinal — sorting on ordinal alone interleaves the two circuits.
+ */
+function walkableStopIds(stops: readonly Stop[], progress: Progress | null): ReadonlySet<string> {
+  const walkable = new Set<string>();
+  const ordered = [...stops].sort(
+    (a, b) => (a.circuit ?? 0) - (b.circuit ?? 0) || a.ordinal - b.ordinal,
+  );
+  for (const stop of ordered) {
+    if (selectStopDone(progress, stop.id)) {
+      walkable.add(stop.id);
+    } else {
+      walkable.add(stop.id);
+      break;
+    }
+  }
+  return walkable;
 }
 
 type HubData = {
@@ -61,6 +86,9 @@ type HubData = {
   stops: readonly Stop[];
   vocabulary: readonly VocabularyItem[];
   phrases: readonly PhraseItem[];
+  /** The district one number down, and its stops — the unlock rule reads them. */
+  previous: District | null;
+  previousStops: readonly Stop[];
 };
 
 export default function DistrictHub() {
@@ -72,13 +100,17 @@ export default function DistrictHub() {
 
   const load = useContent<HubData>(
     async source => {
-      const [district, stops, vocabulary, phrases] = await Promise.all([
+      const [district, stops, vocabulary, phrases, districts] = await Promise.all([
         source.getDistrict(slug),
         source.listStopsByDistrict(slug),
         source.listVocabularyByDistrict(slug),
         source.listPhrasesByDistrict(slug),
+        source.listDistricts(),
       ]);
-      return {district, stops, vocabulary, phrases};
+      const previous = districts.find(candidate => candidate.number === district.number - 1) ?? null;
+      const previousStops =
+        previous === null ? [] : await source.listStopsByDistrict(previous.slug);
+      return {district, stops, vocabulary, phrases, previous, previousStops};
     },
     [slug],
   );
@@ -102,6 +134,7 @@ export default function DistrictHub() {
           onSearch={() => router.push('/search')}
           onWord={id => router.push(`/word/${id}`)}
           onPhrase={id => router.push(`/phrase/${id}`)}
+          onStop={id => router.push(`/stop/${id}`)}
         />
       ) : null}
     </View>
@@ -116,6 +149,7 @@ function Hub({
   onSearch,
   onWord,
   onPhrase,
+  onStop,
 }: {
   data: HubData;
   progress: Progress | null;
@@ -124,9 +158,14 @@ function Hub({
   onSearch: () => void;
   onWord: (id: string) => void;
   onPhrase: (id: string) => void;
+  onStop: (id: string) => void;
 }) {
-  const {district, stops, vocabulary, phrases} = data;
-  const locked = isDistrictLocked(district.number, stops, progress);
+  const {district, stops, vocabulary, phrases, previous, previousStops} = data;
+  const locked = isDistrictLocked(district.number, stops, previousStops, progress);
+  const unlockLine =
+    previous === null
+      ? 'Finish the district before this one to walk here.'
+      : `Finish ${previous.name} to walk here.`;
 
   return (
     <>
@@ -144,7 +183,15 @@ function Hub({
       </View>
       <ScrollView>
         <View className="gap-2 px-5 pb-8">
-          {segment === 0 ? <StopsView stops={stops} progress={progress} locked={locked} /> : null}
+          {segment === 0 ? (
+            <StopsView
+              stops={stops}
+              progress={progress}
+              locked={locked}
+              unlockLine={unlockLine}
+              onStop={onStop}
+            />
+          ) : null}
           {segment === 1 ? (
             <WordsView vocabulary={vocabulary} progress={progress} onPress={onWord} />
           ) : null}
@@ -162,27 +209,34 @@ function StopsView({
   stops,
   progress,
   locked,
+  unlockLine,
+  onStop,
 }: {
   stops: readonly Stop[];
   progress: Progress | null;
   locked: boolean;
+  unlockLine: string;
+  onStop: (id: string) => void;
 }) {
   if (stops.length === 0) {
     return <EmptyState title="This district's stops arrive as the walk is written" />;
   }
+  const walkable = locked ? new Set<string>() : walkableStopIds(stops, progress);
+  const ordered = [...stops].sort(
+    (a, b) => (a.circuit ?? 0) - (b.circuit ?? 0) || a.ordinal - b.ordinal,
+  );
   return (
     <>
-      {locked ? <Text className="type-body text-fg-muted">{UNLOCK_LINE}</Text> : null}
+      {locked ? <Text className="type-body text-fg-muted">{unlockLine}</Text> : null}
       <View className="gap-2" style={locked ? DIMMED : undefined}>
-        {stops.map(stop => (
+        {ordered.map(stop => (
           <ListRow
             key={stop.id}
             label={stop.name}
             sub={stop.outcome}
             value={selectStopDone(progress, stop.id) ? 'Done' : undefined}
-            // The stop route does not exist yet; the fan-in wires the push and
-            // restores the chevron alongside it.
-            chevron={false}
+            chevron={walkable.has(stop.id)}
+            onPress={walkable.has(stop.id) ? () => onStop(stop.id) : undefined}
           />
         ))}
       </View>
