@@ -1,0 +1,126 @@
+/**
+ * @fileoverview B2 district hub — Stops, Words, Phrases and Cards for one place on
+ * the Speak map. Renders the real route against the real fixture. Phases per
+ * docs/11.
+ */
+
+import {fireEvent, screen} from '@testing-library/react';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
+
+import DistrictHub from '../../app/(tabs)/journey/district/[slug]';
+import {renderScreen} from './render';
+import {override, resetContainer} from '../../src/composition/container';
+import fixture from '../../src/infra/content/content.fixture.json';
+import {JsonContentSource} from '../../src/infra/content/json-content-source';
+import type {ContentFixture} from '../../src/infra/content/rows.generated';
+
+const {push, params} = vi.hoisted(() => ({push: vi.fn(), params: {slug: 'core'}}));
+vi.mock('expo-router', () => ({
+  useRouter: () => ({push}),
+  useLocalSearchParams: () => params,
+}));
+
+describe('the district hub', () => {
+  beforeEach(() => {
+    resetContainer();
+    override('content', new JsonContentSource(fixture as unknown as ContentFixture));
+    params.slug = 'core';
+    push.mockClear();
+  });
+
+  it('shows the district name and number', async () => {
+    // When
+    renderScreen(<DistrictHub />);
+
+    // Then
+    expect(await screen.findByText('First Words')).toBeTruthy();
+    expect(screen.getByText('District 1')).toBeTruthy();
+  });
+
+  it('shows stop rows for the default Stops view', async () => {
+    // When
+    renderScreen(<DistrictHub />);
+
+    // Then
+    expect(await screen.findByText('Hello, and a way out')).toBeTruthy();
+    expect(screen.getByText('The greeting, answered')).toBeTruthy();
+  });
+
+  it('switches to Words and lists word rows from the fixture', async () => {
+    // Given
+    renderScreen(<DistrictHub />);
+    await screen.findByText('First Words');
+
+    // When
+    fireEvent.click(screen.getByRole('tab', {name: 'Words'}));
+
+    // Then
+    expect(await screen.findByRole('button', {name: 'trashi delek'})).toBeTruthy();
+  });
+
+  it('switches to Phrases and lists phrase rows from the fixture', async () => {
+    // Given
+    renderScreen(<DistrictHub />);
+    await screen.findByText('First Words');
+
+    // When
+    fireEvent.click(screen.getByRole('tab', {name: 'Phrases'}));
+
+    // Then
+    expect(
+      await screen.findByRole('button', {name: 'ka dri shiik shuu na drikkire pe'}),
+    ).toBeTruthy();
+  });
+
+  it('switches to Cards and points forward to the collection', async () => {
+    // Given
+    renderScreen(<DistrictHub />);
+    await screen.findByText('First Words');
+
+    // When
+    fireEvent.click(screen.getByRole('tab', {name: 'Cards'}));
+
+    // Then
+    expect(await screen.findByText('Cards you find here join your collection')).toBeTruthy();
+  });
+
+  it('pushes the word sheet from a word row', async () => {
+    // Given
+    renderScreen(<DistrictHub />);
+    await screen.findByText('First Words');
+    fireEvent.click(screen.getByRole('tab', {name: 'Words'}));
+    const row = await screen.findByRole('button', {name: 'trashi delek'});
+
+    // When
+    fireEvent.click(row);
+
+    // Then
+    expect(push).toHaveBeenCalledWith('/word/vocab.tashi-delek');
+  });
+
+  it('pushes search from the header icon', async () => {
+    // Given
+    renderScreen(<DistrictHub />);
+    await screen.findByText('First Words');
+
+    // When
+    fireEvent.click(screen.getByRole('button', {name: 'Search'}));
+
+    // Then
+    expect(push).toHaveBeenCalledWith('/search');
+  });
+
+  it('states what opens a locked district and greys its stops', async () => {
+    // Given
+    params.slug = 'meeting';
+
+    // When
+    renderScreen(<DistrictHub />);
+
+    // Then — the district still shows its stops, greyed, rather than hiding them.
+    expect(
+      await screen.findByText('Finish the district before this one to walk here.'),
+    ).toBeTruthy();
+    expect(screen.getByText('Names, and where you are from')).toBeTruthy();
+  });
+});
