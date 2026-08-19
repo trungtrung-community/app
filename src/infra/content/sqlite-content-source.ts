@@ -4,11 +4,72 @@
  * Depends on a two-method query interface rather than on expo-sqlite, so the SQL,
  * the schema assertion and the search escaping are all testable in a plain Vitest
  * run. The real `SQLiteDatabase` satisfies the interface structurally.
+ *
+ * **Queries select `*`.** The row types are generated from the same manifest this
+ * database was built against, so the column set is already the contract — and a
+ * hand-written column list is the one way to fetch fewer columns than the row type
+ * promises, which surfaces as `undefined` rather than as a build failure. Joins
+ * qualify the star so two tables cannot contribute the same column name.
  */
 
-import type {ContentSource, VocabId, VocabularyItem} from '../../ports/content-source';
-import {toVocabularyItem} from './mappers';
-import {CONTENT_SCHEMA_VERSION, type VocabularyRow} from './rows.generated';
+import type {
+  Collection,
+  CollectionId,
+  ContentSource,
+  District,
+  Exercise,
+  ExerciseChunkRef,
+  ExerciseId,
+  Letter,
+  LetterId,
+  PhraseId,
+  PhraseItem,
+  ReadRule,
+  ReadRuleId,
+  Section,
+  SectionId,
+  Stop,
+  StopId,
+  StopPosition,
+  Track,
+  VocabId,
+  VocabularyItem,
+} from '../../ports/content-source';
+import {groupBy, indexBy} from './collect';
+import {toFtsPrefixQuery} from './fts-query';
+import {
+  toCollection,
+  toDistrict,
+  toExercise,
+  toExerciseChunkRef,
+  toLetter,
+  toPhraseItem,
+  toReadRule,
+  toSection,
+  toStop,
+  toStopPosition,
+  toVocabularyItem,
+} from './mappers';
+import {
+  CONTENT_SCHEMA_VERSION,
+  type ChunkRow,
+  type CollectionCardRow,
+  type CollectionRow,
+  type DistrictRow,
+  type ExerciseChunkRefRow,
+  type ExerciseOptionRow,
+  type ExerciseRow,
+  type LetterConfusableRow,
+  type LetterRow,
+  type PhraseRow,
+  type ReadRuleRequiresRow,
+  type ReadRuleRow,
+  type SectionRow,
+  type StopItemRow,
+  type StopPositionRow,
+  type StopRow,
+  type VocabularyRow,
+} from './rows.generated';
 
 /** What SQLite accepts as a bound parameter. Mirrors expo-sqlite's own union. */
 export type BindValue = string | number | boolean | null | Uint8Array;
@@ -25,54 +86,89 @@ export type ContentDatabase = {
   getAllAsync<T>(source: string, params: BindValue[]): Promise<T[]>;
 };
 
-const VOCAB_COLUMNS =
-  'id, slug, district, district_number, bo, roman, en, en_definition, ' +
-  'wylie, thl, thl_note, pos, register, status, audio_natural, word_id';
-
 const DEFAULT_SEARCH_LIMIT = 20;
 
-export class SqliteContentSource implements ContentSource {
-  private checked = false;
+/** A stop with the slug of the district it belongs to, which the stop row cannot hold. */
+type StopWithSlug = StopRow & {district_slug: string | null};
+
+/**
+ * The database, with the schema checked once before the first query reaches it.
+ *
+ * A decorator rather than a flag on the adapter. The check has one reason to change
+ * and the queries have another, and without this every one of the twenty query
+ * methods below would have to remember to await the same guard — which is the kind
+ * of thing that is right nineteen times.
+ */
+class SchemaCheckedDatabase implements ContentDatabase {
+  private checked: Promise<void> | null = null;
 
   constructor(private readonly db: ContentDatabase) {}
 
-  async getVocabulary(id: VocabId): Promise<VocabularyItem> {
+  async getFirstAsync<T>(source: string, params: BindValue[]): Promise<T | null> {
     await this.assertSchema();
-    const row = await this.db.getFirstAsync<VocabularyRow>(
-      `SELECT ${VOCAB_COLUMNS} FROM vocabulary WHERE id = ?`,
-      [id],
-    );
-    if (!row) {
-      throw new Error(`no vocabulary record ${id}`);
-    }
-    return toVocabularyItem(row);
+    return this.db.getFirstAsync<T>(source, params);
+  }
+
+  async getAllAsync<T>(source: string, params: BindValue[]): Promise<T[]> {
+    await this.assertSchema();
+    return this.db.getAllAsync<T>(source, params);
   }
 
   /**
-   * Every word a district teaches, which is not the same as every word it
-   * coined.
+   * Confirm the database was built against the schema this code was generated for.
+   *
+   * Checked once, not per query, and memoised as the promise so that concurrent
+   * first queries share one check rather than racing. A mismatch means a column may
+   * have been renamed under us, which would otherwise surface as `undefined` in the
+   * UI rather than as an error — so it throws, and says how to fix it.
+   */
+  private assertSchema(): Promise<void> {
+    this.checked ??= this.db
+      .getFirstAsync<{value: string}>("SELECT value FROM meta WHERE key = 'schema_version'", [])
+      .then(row => {
+        if (Number(row?.value) !== CONTENT_SCHEMA_VERSION) {
+          throw new Error(
+            `content schema mismatch: database reports ${row?.value ?? 'nothing'}, ` +
+              `this build expects ${CONTENT_SCHEMA_VERSION}. Run: npm run sync:content`,
+          );
+        }
+      });
+    return this.checked;
+  }
+}
+
+export class SqliteContentSource implements ContentSource {
+  private readonly db: ContentDatabase;
+
+  constructor(db: ContentDatabase) {
+    this.db = new SchemaCheckedDatabase(db);
+  }
+
+  // ── Words and phrases ────────────────────────────────────────────────────────
+
+  async getVocabulary(id: VocabId): Promise<VocabularyItem> {
+    return toVocabularyItem(await this.one<VocabularyRow>('vocabulary', id));
+  }
+
+  /**
+   * Every word a district teaches, which is not the same as every word it coined.
    *
    * This was `WHERE district = ?` — the record's own home field — and it hid 79
-   * words from the districts that teach them, across 18 of the 24 districts
-   * there were then. Departure teaches 16 and the query returned 7. The join is the fix: `placement` holds
-   * one `home` row per record plus a `reuse` row for every further district,
-   * and the reuse rows are exactly what the old query could not see.
+   * words from the districts that teach them, across 18 of the 24 districts there
+   * were then. Departure teaches 16 and the query returned 7. The join is the fix:
+   * `placement` holds one `home` row per record plus a `reuse` row for every further
+   * district, and the reuse rows are exactly what the old query could not see.
    *
-   * `placement_district` serves the ordering now; `vocabulary_district` no
-   * longer does, because the rows no longer come from a scan of one district's
-   * own records. Sorting on the slug is what keeps both adapters agreeing.
+   * Sorting on the slug is what keeps both adapters agreeing.
    */
   async listVocabularyByDistrict(district: string): Promise<readonly VocabularyItem[]> {
-    await this.assertSchema();
     const rows = await this.db.getAllAsync<VocabularyRow>(
-      `SELECT ${VOCAB_COLUMNS.split(', ')
-        .map(c => `v.${c}`)
-        .join(', ')}
-       FROM placement p
-       JOIN vocabulary v ON v.id = p.vocab_id
-       WHERE p.district_id = ?
-       ORDER BY v.slug`,
-      [`district.${district}`],
+      `SELECT v.* FROM placement p
+         JOIN vocabulary v ON v.id = p.item_id
+         JOIN district d ON d.id = p.district_id
+        WHERE d.slug = ? AND p.kind = 'vocab'
+        ORDER BY v.slug`,
+      [district],
     );
     return rows.map(toVocabularyItem);
   }
@@ -90,23 +186,169 @@ export class SqliteContentSource implements ContentSource {
     query: string,
     limit = DEFAULT_SEARCH_LIMIT,
   ): Promise<readonly VocabularyItem[]> {
-    await this.assertSchema();
-    const match = toFtsPrefixQuery(query);
-    if (match === null) {
-      return [];
-    }
-    const rows = await this.db.getAllAsync<VocabularyRow>(
-      `SELECT ${VOCAB_COLUMNS.split(', ')
-        .map(c => `v.${c}`)
-        .join(', ')}
-       FROM vocabulary_fts f
-       JOIN vocabulary v ON v.rowid = f.rowid
-       WHERE vocabulary_fts MATCH ?
-       ORDER BY rank
-       LIMIT ?`,
-      [match, limit],
-    );
+    const rows = await this.search<VocabularyRow>('vocabulary', query, limit);
     return rows.map(toVocabularyItem);
+  }
+
+  async getPhrase(id: PhraseId): Promise<PhraseItem> {
+    const row = await this.one<PhraseRow>('phrase', id);
+    const chunks = await this.db.getAllAsync<ChunkRow>(
+      'SELECT * FROM chunk WHERE phrase_id = ? ORDER BY ordinal',
+      [id],
+    );
+    return toPhraseItem(row, chunks);
+  }
+
+  /** Taught, not homed — the same correction `listVocabularyByDistrict` makes. */
+  async listPhrasesByDistrict(district: string): Promise<readonly PhraseItem[]> {
+    const rows = await this.db.getAllAsync<PhraseRow>(
+      `SELECT r.* FROM placement p
+         JOIN phrase r ON r.id = p.item_id
+         JOIN district d ON d.id = p.district_id
+        WHERE d.slug = ? AND p.kind = 'phrase'
+        ORDER BY r.slug`,
+      [district],
+    );
+    return this.withChunks(rows);
+  }
+
+  async searchPhrases(query: string, limit = DEFAULT_SEARCH_LIMIT): Promise<readonly PhraseItem[]> {
+    return this.withChunks(await this.search<PhraseRow>('phrase', query, limit));
+  }
+
+  // ── The map and the walk ─────────────────────────────────────────────────────
+
+  async listSections(track: Track): Promise<readonly Section[]> {
+    const rows = await this.db.getAllAsync<SectionRow>(
+      'SELECT * FROM section WHERE track = ? ORDER BY number',
+      [track],
+    );
+    return rows.map(toSection);
+  }
+
+  async listDistricts(): Promise<readonly District[]> {
+    const rows = await this.db.getAllAsync<DistrictRow>(
+      'SELECT * FROM district ORDER BY number',
+      [],
+    );
+    return rows.map(toDistrict);
+  }
+
+  async getDistrict(slug: string): Promise<District> {
+    const row = await this.db.getFirstAsync<DistrictRow>('SELECT * FROM district WHERE slug = ?', [
+      slug,
+    ]);
+    if (!row) {
+      throw new Error(`no district record ${slug}`);
+    }
+    return toDistrict(row);
+  }
+
+  async getStop(id: StopId): Promise<Stop> {
+    const row = await this.db.getFirstAsync<StopWithSlug>(
+      `SELECT s.*, d.slug AS district_slug FROM stop s
+         LEFT JOIN district d ON d.id = s.district_id
+        WHERE s.id = ?`,
+      [id],
+    );
+    if (!row) {
+      throw new Error(`no stop record ${id}`);
+    }
+    return (await this.withItems([row]))[0] as Stop;
+  }
+
+  /**
+   * A district's stops, in walking order.
+   *
+   * Circuit first, because `ordinal` counts within a circuit and not across the
+   * district — nine of District 1's stops share three ordinals between two circuits.
+   * The id breaks any remaining tie so that both adapters return one order.
+   */
+  async listStopsByDistrict(district: string): Promise<readonly Stop[]> {
+    const rows = await this.db.getAllAsync<StopWithSlug>(
+      `SELECT s.*, d.slug AS district_slug FROM stop s
+         JOIN district d ON d.id = s.district_id
+        WHERE d.slug = ?
+        ORDER BY COALESCE(s.circuit, 0), s.ordinal, s.id`,
+      [district],
+    );
+    return this.withItems(rows);
+  }
+
+  async listStopsBySection(sectionId: SectionId): Promise<readonly Stop[]> {
+    const rows = await this.db.getAllAsync<StopWithSlug>(
+      `SELECT s.*, d.slug AS district_slug FROM stop s
+         LEFT JOIN district d ON d.id = s.district_id
+        WHERE s.section_id = ?
+        ORDER BY COALESCE(s.circuit, 0), s.ordinal, s.id`,
+      [sectionId],
+    );
+    return this.withItems(rows);
+  }
+
+  async getStopScript(id: StopId): Promise<readonly StopPosition[]> {
+    const rows = await this.db.getAllAsync<StopPositionRow>(
+      'SELECT * FROM stop_position WHERE stop_id = ? ORDER BY n',
+      [id],
+    );
+    return rows.map(toStopPosition);
+  }
+
+  // ── The drills ───────────────────────────────────────────────────────────────
+
+  async getExercise(id: ExerciseId): Promise<Exercise> {
+    const row = await this.one<ExerciseRow>('exercise', id);
+    return (await this.withOptionsAndChunks([row]))[0] as Exercise;
+  }
+
+  async listExercisesByStop(id: StopId): Promise<readonly Exercise[]> {
+    const rows = await this.db.getAllAsync<ExerciseRow>(
+      'SELECT * FROM exercise WHERE stop_id = ? ORDER BY ordinal',
+      [id],
+    );
+    return this.withOptionsAndChunks(rows);
+  }
+
+  // ── The shelves ──────────────────────────────────────────────────────────────
+
+  async listCollections(): Promise<readonly Collection[]> {
+    const rows = await this.db.getAllAsync<CollectionRow>(
+      'SELECT * FROM collection ORDER BY id',
+      [],
+    );
+    return this.withCards(rows);
+  }
+
+  async getCollection(id: CollectionId): Promise<Collection> {
+    const row = await this.one<CollectionRow>('collection', id);
+    return (await this.withCards([row]))[0] as Collection;
+  }
+
+  // ── The Read reference ───────────────────────────────────────────────────────
+
+  async listLetters(): Promise<readonly Letter[]> {
+    const rows = await this.db.getAllAsync<LetterRow>(
+      'SELECT * FROM letter ORDER BY section, COALESCE(row, 0), COALESCE(col, 0), id',
+      [],
+    );
+    return this.withConfusables(rows);
+  }
+
+  async getLetter(id: LetterId): Promise<Letter> {
+    return (await this.withConfusables([await this.one<LetterRow>('letter', id)]))[0] as Letter;
+  }
+
+  async listReadRules(): Promise<readonly ReadRule[]> {
+    const rows = await this.db.getAllAsync<ReadRuleRow>(
+      'SELECT * FROM read_rule ORDER BY section, id',
+      [],
+    );
+    return this.withPrerequisites(rows);
+  }
+
+  async getReadRule(id: ReadRuleId): Promise<ReadRule> {
+    const row = await this.one<ReadRuleRow>('read_rule', id);
+    return (await this.withPrerequisites([row]))[0] as ReadRule;
   }
 
   async contentVersion(): Promise<string> {
@@ -117,53 +359,153 @@ export class SqliteContentSource implements ContentSource {
     return row?.value ?? 'unknown';
   }
 
-  /**
-   * Confirm the database was built against the schema this code was generated for.
-   *
-   * Checked once, not per query. A mismatch means a column may have been renamed
-   * under us, which would otherwise surface as `undefined` in the UI rather than as
-   * an error — so it throws, and says how to fix it.
-   */
-  private async assertSchema(): Promise<void> {
-    if (this.checked) {
-      return;
+  // ── Assembling nested values ─────────────────────────────────────────────────
+  //
+  // Each of these fetches the child rows for a whole batch in one query and groups
+  // them, so listing a district's 45 phrases costs two queries rather than 46.
+
+  private async withChunks(rows: readonly PhraseRow[]): Promise<readonly PhraseItem[]> {
+    if (rows.length === 0) {
+      return [];
     }
-    const row = await this.db.getFirstAsync<{value: string}>(
-      "SELECT value FROM meta WHERE key = 'schema_version'",
-      [],
+    const chunks = await this.db.getAllAsync<ChunkRow>(
+      `SELECT * FROM chunk WHERE phrase_id IN (${placeholders(rows.length)})
+        ORDER BY phrase_id, ordinal`,
+      rows.map(r => r.id),
     );
-    const found = Number(row?.value);
-    if (found !== CONTENT_SCHEMA_VERSION) {
-      throw new Error(
-        `content schema mismatch: database reports ${row?.value ?? 'nothing'}, ` +
-          `this build expects ${CONTENT_SCHEMA_VERSION}. Run: npm run sync:content`,
-      );
+    const byPhrase = groupBy(chunks, c => c.phrase_id);
+    return rows.map(row => toPhraseItem(row, byPhrase.get(row.id) ?? []));
+  }
+
+  private async withItems(rows: readonly StopWithSlug[]): Promise<readonly Stop[]> {
+    if (rows.length === 0) {
+      return [];
     }
-    this.checked = true;
+    const items = await this.db.getAllAsync<StopItemRow>(
+      `SELECT * FROM stop_item WHERE stop_id IN (${placeholders(rows.length)})
+        ORDER BY stop_id, ordinal`,
+      rows.map(r => r.id),
+    );
+    const byStop = groupBy(items, i => i.stop_id);
+    return rows.map(row => toStop(row, row.district_slug, byStop.get(row.id) ?? []));
+  }
+
+  private async withOptionsAndChunks(rows: readonly ExerciseRow[]): Promise<readonly Exercise[]> {
+    if (rows.length === 0) {
+      return [];
+    }
+    const ids = rows.map(r => r.id);
+    const marks = placeholders(rows.length);
+    const options = await this.db.getAllAsync<ExerciseOptionRow>(
+      `SELECT * FROM exercise_option WHERE exercise_id IN (${marks})
+        ORDER BY exercise_id, ordinal`,
+      ids,
+    );
+    const refs = await this.db.getAllAsync<ExerciseChunkRefRow>(
+      `SELECT * FROM exercise_chunk_ref WHERE exercise_id IN (${marks})
+        ORDER BY exercise_id, ordinal`,
+      ids,
+    );
+    // Two queries rather than a join, because `exercise_chunk_ref` and `chunk` both
+    // have an `ordinal` and a qualified star cannot keep them apart.
+    const chunks = refs.length
+      ? await this.db.getAllAsync<ChunkRow>(
+          `SELECT * FROM chunk WHERE id IN (${placeholders(refs.length)})`,
+          refs.map(r => r.chunk_id),
+        )
+      : [];
+    const chunkById = indexBy(chunks, c => c.id);
+    const optionsByExercise = groupBy(options, o => o.exercise_id);
+    const refsByExercise = groupBy(refs, r => r.exercise_id);
+
+    return rows.map(row =>
+      toExercise(
+        row,
+        optionsByExercise.get(row.id) ?? [],
+        (refsByExercise.get(row.id) ?? []).map(ref => {
+          const chunk = chunkById.get(ref.chunk_id);
+          if (!chunk) {
+            throw new Error(`content: ${row.id} names a missing chunk ${ref.chunk_id}`);
+          }
+          return toExerciseChunkRef(ref, chunk);
+        }) satisfies ExerciseChunkRef[],
+      ),
+    );
+  }
+
+  private async withCards(rows: readonly CollectionRow[]): Promise<readonly Collection[]> {
+    if (rows.length === 0) {
+      return [];
+    }
+    const cards = await this.db.getAllAsync<CollectionCardRow>(
+      `SELECT * FROM collection_card WHERE collection_id IN (${placeholders(rows.length)})
+        ORDER BY collection_id, ordinal`,
+      rows.map(r => r.id),
+    );
+    const byCollection = groupBy(cards, c => c.collection_id);
+    return rows.map(row => toCollection(row, byCollection.get(row.id) ?? []));
+  }
+
+  private async withConfusables(rows: readonly LetterRow[]): Promise<readonly Letter[]> {
+    if (rows.length === 0) {
+      return [];
+    }
+    const confusables = await this.db.getAllAsync<LetterConfusableRow>(
+      `SELECT * FROM letter_confusable WHERE letter_id IN (${placeholders(rows.length)})
+        ORDER BY letter_id, ordinal`,
+      rows.map(r => r.id),
+    );
+    const byLetter = groupBy(confusables, c => c.letter_id);
+    return rows.map(row => toLetter(row, byLetter.get(row.id) ?? []));
+  }
+
+  private async withPrerequisites(rows: readonly ReadRuleRow[]): Promise<readonly ReadRule[]> {
+    if (rows.length === 0) {
+      return [];
+    }
+    const requires = await this.db.getAllAsync<ReadRuleRequiresRow>(
+      `SELECT * FROM read_rule_requires WHERE rule_id IN (${placeholders(rows.length)})
+        ORDER BY rule_id, requires_id`,
+      rows.map(r => r.id),
+    );
+    const byRule = groupBy(requires, r => r.rule_id);
+    return rows.map(row => toReadRule(row, byRule.get(row.id) ?? []));
+  }
+
+  // ── Query plumbing ───────────────────────────────────────────────────────────
+
+  /** One row by id, or a named error. Every table here keys on `id`. */
+  private async one<T>(table: string, id: string): Promise<T> {
+    const row = await this.db.getFirstAsync<T>(`SELECT * FROM ${table} WHERE id = ?`, [id]);
+    if (!row) {
+      throw new Error(`no ${table} record ${id}`);
+    }
+    return row;
+  }
+
+  /**
+   * Ranked full-text search over one of the two indexed tables.
+   *
+   * The index is external-content, so the hit joins back to the table on rowid and
+   * the caller gets whole rows rather than the three indexed columns.
+   */
+  private async search<T>(table: string, query: string, limit: number): Promise<T[]> {
+    const match = toFtsPrefixQuery(query);
+    if (match === null) {
+      return [];
+    }
+    return this.db.getAllAsync<T>(
+      `SELECT t.* FROM ${table}_fts f
+         JOIN ${table} t ON t.rowid = f.rowid
+        WHERE ${table}_fts MATCH ?
+        ORDER BY rank
+        LIMIT ?`,
+      [match, limit],
+    );
   }
 }
 
-/**
- * Turn what a learner typed into an FTS5 prefix query.
- *
- * FTS5 has its own syntax, so raw input can be a syntax error rather than a search —
- * a stray quote or `NEAR` would throw at the learner. Every token is quoted and a
- * `*` appended, which makes search feel like it filters as you type. Tibetan works
- * unchanged: the index tokenizes the script, and prefix matching on `བཀྲ` finds
- * `བཀྲ་ཤིས`.
- *
- * Returns null when there is nothing searchable, so the caller returns no results
- * rather than running a query that matches everything.
- */
-export function toFtsPrefixQuery(query: string): string | null {
-  const tokens = query
-    .trim()
-    // Anything that is punctuation to FTS5 becomes a separator. The tsheg is a
-    // Tibetan word separator, so it splits here too.
-    .split(/[\s"'*():^,.;!?/\\[\]{}་།-]+/u)
-    .filter(Boolean);
-  if (tokens.length === 0) {
-    return null;
-  }
-  return tokens.map(t => `"${t}"*`).join(' ');
+/** `?, ?, ?` for an `IN` list of `count` bound values. */
+function placeholders(count: number): string {
+  return new Array(count).fill('?').join(', ');
 }

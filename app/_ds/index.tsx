@@ -6,11 +6,17 @@
  * entry shows as pending, which makes the port's progress a fact on screen rather
  * than a note somewhere.
  *
- * Dev-only. `app/_layout.tsx` does not register this group in a production build.
+ * **Corrected 2026-08-18: this is NOT dev-only, and the sentence here said it was.**
+ * `app/_layout.tsx` registers nothing — expo-router discovers routes from the filesystem,
+ * and no file in the project mentions `__DEV__`. A web export was inspected to be sure:
+ * this screen's copy is in the entry bundle. The gallery and its 2,178-line specimen file
+ * ship to a learner today. Recorded in `docs/09`; fixing it is a decision about how the
+ * group is excluded, not a comment change.
  */
 
 import {Link} from 'expo-router';
 import {ScrollView, Text, View} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {DS_ROSTER, type DsGroup} from '../../src/components/ds-roster.generated';
 import {PORTED} from '../../src/components/specimens';
@@ -19,15 +25,39 @@ const GROUP_ORDER: DsGroup[] = ['core', 'forms', 'feedback', 'learning'];
 
 export default function GalleryIndex() {
   const ported = DS_ROSTER.filter(entry => PORTED[entry.name]).length;
+  const insets = useSafeAreaInsets();
 
   return (
-    <ScrollView className="flex-1 bg-surface-app" contentContainerClassName="p-5 gap-6">
+    <ScrollView
+      className="flex-1 bg-surface-app"
+      contentContainerClassName="p-5 gap-6"
+      // See app/_ds/feel.tsx for why the insets go on the content container.
+      contentContainerStyle={{paddingTop: insets.top, paddingBottom: insets.bottom}}
+    >
       <View className="gap-1">
         <Text className="type-title text-fg-heading">Design system</Text>
         <Text className="type-caption text-fg-muted">
           {`${ported} of ${DS_ROSTER.length} ported`}
         </Text>
       </View>
+
+      {/*
+       * Hand-written rather than generated, because it is not a component and never will
+       * be. The roster below comes from the design system's manifest and cannot list a
+       * surface the board does not know about — which is exactly what the feel testbed is:
+       * the layer the board has no way to draw.
+       */}
+      <Link href="/_ds/feel" className="rounded-card bg-surface-card">
+        <View className="flex-row items-center gap-3 px-4 py-3">
+          <View className="h-2 w-2 rounded-pill bg-surface-accent" />
+          <View className="flex-1 gap-0.5">
+            <Text className="type-body text-fg-heading">Feel</Text>
+            <Text className="type-caption text-fg-subtle">
+              Cues, the two switches, and the motion curves
+            </Text>
+          </View>
+        </View>
+      </Link>
 
       {GROUP_ORDER.map(group => {
         const entries = DS_ROSTER.filter(entry => entry.group === group);

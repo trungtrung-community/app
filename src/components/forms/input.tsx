@@ -28,7 +28,7 @@ import {
 
 import {Icon, type IconName} from '../core/icon';
 import {tibetanBox} from '../learning/tibetan-text';
-import {color, elevation, fontFamily, fontSize, leading, space} from '../../theme/tokens.generated';
+import {color, elevation, fontFamily, fontSize, space} from '../../theme/tokens.generated';
 
 /**
  * The web original's `type`, mapped to what React Native actually has.
@@ -163,22 +163,28 @@ const LATIN_FIELD: ViewStyle = {minHeight: LATIN_MIN_HEIGHT};
 /** Tall enough for the tallest stack rather than tight enough to clip it. */
 const TIBETAN_FIELD: ViewStyle = {minHeight: tibetanBox('md')};
 
+/**
+ * **Neither face sets `lineHeight`, and that is the fix rather than an omission.**
+ *
+ * A single-line field never breaks, so leading has nothing to do in it — and a
+ * `lineHeight` on a React Native `TextInput` shifts the glyphs off the vertical centre.
+ * The room they need comes from the field's own height and its row's `items-center`.
+ *
+ * The Tibetan face has said this since it was ported, naming Android. The Latin face kept
+ * its `lineHeight` — `--text-md` × 1.55, so a 24.8pt line box inside a 52pt field — until
+ * 2026-08-18, when Thosam reported the text sitting off centre while typing **in the two
+ * Latin fields and not in the Tibetan one**. That contrast is the whole diagnosis: the
+ * fields that were wrong were exactly the fields that still had the property, and the
+ * behaviour is not Android's alone.
+ */
 const BASE_TEXT: TextStyle = {flex: 1, minWidth: 0, color: color.textHeading};
 
 const LATIN_TEXT: TextStyle = {
   ...BASE_TEXT,
   fontFamily: fontFamily.bodyMedium,
   fontSize: fontSize.md,
-  lineHeight: fontSize.md * leading.latin,
 };
 
-/**
- * No `lineHeight`, deliberately.
- *
- * A single-line field never breaks, so leading has nothing to do in it — and a
- * `lineHeight` on a React Native `TextInput` shifts the text off the vertical centre on
- * Android. The room the glyphs need comes from the field's own height instead.
- */
 const TIBETAN_TEXT: TextStyle = {
   ...BASE_TEXT,
   // adherence-allow: tibetan-outside-tibetantext — TibetanText renders; a TextInput's

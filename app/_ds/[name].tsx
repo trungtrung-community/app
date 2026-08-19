@@ -8,12 +8,14 @@
 
 import {useLocalSearchParams} from 'expo-router';
 import {ScrollView, Text, View} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {DS_ROSTER} from '../../src/components/ds-roster.generated';
 import {mixedTibetan} from '../../src/components/learning/tibetan-text';
 import {PORTED} from '../../src/components/specimens';
 
 export default function ComponentSpecimens() {
+  const insets = useSafeAreaInsets();
   const {name} = useLocalSearchParams<{name: string}>();
   const entry = DS_ROSTER.find(candidate => candidate.name === name);
   const ported = name ? PORTED[name] : undefined;
@@ -26,7 +28,15 @@ export default function ComponentSpecimens() {
   }
 
   return (
-    <ScrollView className="flex-1 bg-surface-app" contentContainerClassName="p-5 gap-5">
+    <ScrollView
+      className="flex-1 bg-surface-app"
+      contentContainerClassName="p-5 gap-5"
+      contentContainerStyle={{paddingTop: insets.top, paddingBottom: insets.bottom}}
+      // The Input specimens are typed into. Without these the keyboard covers the field
+      // being typed in, and the first tap on any control only dismisses it.
+      automaticallyAdjustKeyboardInsets
+      keyboardShouldPersistTaps="handled"
+    >
       <View className="gap-1">
         <Text className="type-title text-fg-heading">{entry.name}</Text>
         <Text className="type-caption text-fg-muted">

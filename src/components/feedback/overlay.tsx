@@ -11,7 +11,7 @@
  */
 
 import {Pressable, Text, View, type ViewStyle} from 'react-native';
-import Animated, {FadeIn} from 'react-native-reanimated';
+import Animated, {FadeIn, FadeOut} from 'react-native-reanimated';
 
 import {IconButton} from '../core/icon-button';
 import {duration} from '../core/motion';
@@ -27,7 +27,13 @@ import {color, space} from '../../theme/tokens.generated';
  */
 export function Scrim({onPress}: {onPress?: () => void}) {
   return (
-    <Animated.View entering={FadeIn.duration(duration.base)} style={SCRIM}>
+    <Animated.View
+      entering={FadeIn.duration(duration.base)}
+      // The panel leaves with the scrim rather than after it: a scrim that lingers reads
+      // as the surface failing to close. Faster than the entrance, per `core/motion`.
+      exiting={FadeOut.duration(duration.fast)}
+      style={SCRIM}
+    >
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Close"

@@ -67,6 +67,15 @@ export default defineConfig({
   test: {
     passWithNoTests: true,
     exclude: ['**/node_modules/**', '**/dist/**', 'tests/e2e/**'],
+    // Collected only under `npm run test:coverage` — CI feeds the lcov file to
+    // SonarCloud. Root-level so all three projects report into one directory.
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      include: ['src/**', 'app/**', 'scripts/**'],
+      exclude: ['**/*.generated.ts', '**/*.test.ts', '**/*.test.tsx'],
+      reportsDirectory: 'coverage',
+    },
     projects: [
       {
         extends: true,

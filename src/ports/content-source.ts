@@ -2,7 +2,7 @@
  * @fileoverview Read-only access to the bundled content set.
  *
  * Content is generated outside this repo — the design system's Python pipeline
- * validates it against 38 rules and compiles it to a SQLite artifact. The app
+ * validates it against 41 rules and compiles it to a SQLite artifact. The app
  * consumes that artifact and contains no conversion logic, so this port describes
  * capabilities rather than tables.
  *
@@ -10,72 +10,60 @@
  * SQLite on native, and a curated JSON fixture on web and in tests. `expo-sqlite`
  * web support is alpha and `docs/06` runs the whole end-to-end suite on the Expo
  * web build, so the second adapter is load-bearing immediately.
+ *
+ * **Six capabilities, one wired port.** Content lives in one medium with one
+ * lifecycle, so `src/composition/container.ts` constructs one object and the app
+ * asks it for everything — a repository per entity would double the wiring for
+ * nothing. But a caller should not depend on twenty methods to use two. The
+ * capabilities below are separate types so that a use case can take
+ * `WalkSource` and be testable with a double that has five methods on it, while
+ * `ContentSource` remains the single thing an adapter implements and the container
+ * hands out.
+ *
+ * The domain types the capabilities are written in live beside this file, and are
+ * re-exported from here so an adapter has one import path for the whole content
+ * vocabulary:
+ *
+ * - `content-ids.ts`      identifiers, kinds, tracks, audio references
+ * - `content-model.ts`    words, phrases, chunks, stops, script positions, letters
+ * - `content-exercise.ts` the sixteen drill types as one discriminated union
  */
 
-/** Placeholder domain shapes. These fill in as the content tables are built out. */
-export type DistrictId = string & {readonly __brand: 'DistrictId'};
-export type StopId = string & {readonly __brand: 'StopId'};
-export type VocabId = string & {readonly __brand: 'VocabId'};
+import type {
+  CollectionId,
+  ExerciseId,
+  LetterId,
+  PhraseId,
+  ReadRuleId,
+  SectionId,
+  StopId,
+  Track,
+  VocabId,
+} from './content-ids';
+import type {Exercise} from './content-exercise';
+import type {
+  Collection,
+  District,
+  Letter,
+  PhraseItem,
+  ReadRule,
+  Section,
+  Stop,
+  StopPosition,
+  VocabularyItem,
+} from './content-model';
+
+export type * from './content-ids';
+export type * from './content-model';
+export type * from './content-exercise';
 
 /**
- * One vocabulary record.
+ * Words and phrases, looked up and searched.
  *
- * The naming triple is a design-system rule, not a display preference: Tibetan
- * first, then the romanization, then the English gloss, everywhere. `roman` is the
- * Trungtrung romanization and the one a learner reads. `thl` is the older scheme
- * and appears in exactly one place in the product — the "also written" row on the
- * word sheet — so it stays in the data but never becomes a label or a label's
- * accessible name.
+ * The dictionary screens and the word sheet. Also what a card reaches for when a
+ * script position names an item and the screen has to draw it.
  */
-export type VocabularyItem = {
-  readonly id: VocabId;
-  readonly slug: string;
-  /**
-   * The **home** district — where this word was coined, and the one the record
-   * itself names. It is NOT the only district that teaches the word: 79
-   * records are taught elsewhere as well, so a district list comes from
-   * `listVocabularyByDistrict`, never from filtering on this field.
-   */
-  readonly district: string;
-  /** The home district's number. Same caveat as `district`. */
-  readonly districtNumber: number;
-  /**
-   * The lexical identity this entry belongs to.
-   *
-   * A word and a card are not the same thing. གྲང་མོ is one word taught as
-   * cold-of-a-drink, cold-of-a-room and cold-of-weather — three entries, one
-   * `wordId`. ཐང is two different words that share a spelling, so its two
-   * entries have different ones. Search returns rows, not words; grouping them
-   * is the screen's decision and this is what it groups by.
-   */
-  readonly wordId: string;
-  readonly bo: string;
-  readonly roman: string;
-  readonly en: string;
-  readonly enDefinition: string | null;
-  readonly wylie: string | null;
-  readonly thl: string | null;
-  /** The one place THL is allowed to surface: the word sheet's "also written" row. */
-  readonly thlNote: string | null;
-  readonly pos: string | null;
-  /** Drawn by WordRow as the register marker. */
-  readonly register: string | null;
-  /**
-   * The clip id, not a URI. Turning one into something playable is `AudioSource`'s
-   * job, which is what lets audio move behind a network later without touching
-   * content.
-   *
-   * There is one recording per item and no slow variant. A slower reading is the
-   * same clip played at a reduced rate with pitch correction, so nothing is stored
-   * twice and a word cannot drift from its own slow reading.
-   *
-   * Null means no recording exists. The listen control is hidden rather than shown
-   * broken.
-   */
-  readonly audio: {readonly natural: string | null};
-};
-
-export type ContentSource = {
+export type DictionarySource = {
   getVocabulary(id: VocabId): Promise<VocabularyItem>;
   /**
    * Every vocabulary record a district teaches, in teaching order.
@@ -86,6 +74,92 @@ export type ContentSource = {
   listVocabularyByDistrict(district: string): Promise<readonly VocabularyItem[]>;
   /** Backed by FTS5 on native. Matches Tibetan, romanization and gloss. */
   searchVocabulary(query: string, limit?: number): Promise<readonly VocabularyItem[]>;
-  /** The content build this adapter is serving, for the version gate. */
+  /** With its chunks, in spoken order. */
+  getPhrase(id: PhraseId): Promise<PhraseItem>;
+  /** Taught, not homed, exactly as the vocabulary list is. */
+  listPhrasesByDistrict(district: string): Promise<readonly PhraseItem[]>;
+  /** A separate index from the vocabulary one, because a phrase is not a word. */
+  searchPhrases(query: string, limit?: number): Promise<readonly PhraseItem[]>;
+};
+
+/**
+ * The map and the walk: what there is to do, and in what order.
+ *
+ * A stop's script is the ordered list of positions the learner moves through. It is
+ * generated at build time and validated there, so the app reads a walk rather than
+ * assembling one.
+ */
+export type WalkSource = {
+  /** The chapters of one track, in order. */
+  listSections(track: Track): Promise<readonly Section[]>;
+  /** Every district on the Speak map, in map order. */
+  listDistricts(): Promise<readonly District[]>;
+  getDistrict(slug: string): Promise<District>;
+  getStop(id: StopId): Promise<Stop>;
+  /** The Speak walk: a district's stops, in walking order. */
+  listStopsByDistrict(district: string): Promise<readonly Stop[]>;
+  /** The Read walk, which is by section rather than by place. */
+  listStopsBySection(sectionId: SectionId): Promise<readonly Stop[]>;
+  /**
+   * The stop's positions, in order.
+   *
+   * What the engine appends at run time — a re-queued miss, the second look at the
+   * end of a circuit — is not here and cannot be. This is the part that was decided
+   * before the learner arrived.
+   */
+  getStopScript(id: StopId): Promise<readonly StopPosition[]>;
+};
+
+/**
+ * The drills, with their options and chunks already resolved.
+ *
+ * Resolved rather than referenced, because every caller needs the text: a chip tray
+ * cannot draw a chunk id, and an answer choice cannot draw an item id.
+ */
+export type ExerciseSource = {
+  getExercise(id: ExerciseId): Promise<Exercise>;
+  /** In the stop's own exercise order, which is not the script's position order. */
+  listExercisesByStop(id: StopId): Promise<readonly Exercise[]>;
+};
+
+/** The keepsake shelves, and what is on them. */
+export type CollectionSource = {
+  listCollections(): Promise<readonly Collection[]>;
+  getCollection(id: CollectionId): Promise<Collection>;
+};
+
+/**
+ * The Read track's reference surfaces: the letters, and the rules.
+ *
+ * Scoped to what both adapters can serve. The committed fixture holds Read section
+ * 1, which is letters and rules; stacks, syllables, affixes, combiners and marks
+ * begin at section 5 and are 18,000 rows, which is more than a committed fixture
+ * should carry. Adding a method only the native adapter could answer would make the
+ * two adapters disagree, and the contract test exists to prove they do not.
+ */
+export type ScriptReferenceSource = {
+  /** All fifty-five: the thirty, the four vowels, the ten digits, the Sanskrit eleven. */
+  listLetters(): Promise<readonly Letter[]>;
+  getLetter(id: LetterId): Promise<Letter>;
+  listReadRules(): Promise<readonly ReadRule[]>;
+  getReadRule(id: ReadRuleId): Promise<ReadRule>;
+};
+
+/** Which content build is being served, for the version gate. */
+export type ContentCatalog = {
   contentVersion(): Promise<string>;
 };
+
+/**
+ * Everything the bundled content set can answer.
+ *
+ * What an adapter implements and what the container hands out. Depend on one of the
+ * capabilities above instead wherever you can; depend on this where you genuinely
+ * need several.
+ */
+export type ContentSource = DictionarySource &
+  WalkSource &
+  ExerciseSource &
+  CollectionSource &
+  ScriptReferenceSource &
+  ContentCatalog;

@@ -76,9 +76,11 @@ language becomes a strings file, not a pass over the whole app.
 - **The streak cannot break.** `Days walking` is cumulative, forever.
 - **Human recordings only — for anything the learner imitates.** Every word,
   phrase and syllable is recorded by a person, no synthesis. **Interface sounds
-  are a separate class** (07, 2026-08-16): the correct tick, the run, and the
-  stop-complete moment may be synthesised, because nobody is asked to repeat
-  them. P2's sound row turns them off.
+  are a separate class** (07, 2026-08-16): the correct tick, the run, the
+  stop-complete moment and — added 2026-08-18 — **a quiet tone for a wrong
+  answer** may be synthesised, because nobody is asked to repeat them. The
+  wrong tone is sound only: the phone does not buzz at a miss, and `docs/05`'s
+  "nothing for wrong" still governs haptics. P2's sound row turns them off.
 
 ## The never-do list
 

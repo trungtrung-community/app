@@ -9,8 +9,10 @@
  */
 
 import {Pressable, Text, View, type StyleProp, type TextStyle, type ViewStyle} from 'react-native';
+import Animated, {ReduceMotion, ZoomIn} from 'react-native-reanimated';
 
 import {Icon, type IconName} from '../core/icon';
+import {duration, easing} from '../core/motion';
 import {keycap} from '../core/press';
 import {withAlpha} from '../core/tint';
 import {color, fontFamily, fontSize, leading, radius, space} from '../../theme/tokens.generated';
@@ -47,9 +49,29 @@ export type AnswerChoiceState = keyof typeof STATES;
 
 const MIN_HEIGHT = 64;
 const INDEX_BOX = 28;
+const MARK_SIZE = 24;
 
 /** The index badge's fill: the row's own ink at 14%, which is what `color-mix` said. */
 const INDEX_TINT = 0.14;
+
+/**
+ * How the result mark arrives.
+ *
+ * The tick and the cross are the only things on this row that appear rather than change,
+ * and appearing instantly reads as a redraw rather than as an answer being judged. This
+ * is the beat the sound and the tick land on — see `src/domain/cue.ts`.
+ *
+ * `easing.settle` is the curve with the single overshoot, and this is precisely what
+ * `docs/04` reserves it for: a thing travelling to a stop. The mark passes its size by a
+ * hair and comes back, once, with no wobble.
+ *
+ * Kept local rather than promoted to `core/motion` because one component uses it. The
+ * moment `LetterTile` or `SyllableChip` wants the same arrival, it moves — the same rule
+ * `docs/architecture.md` states for UI used on exactly one screen.
+ */
+const MARK_IN = ZoomIn.duration(duration.fast)
+  .easing(easing.settle)
+  .reduceMotion(ReduceMotion.System);
 
 export type AnswerChoiceProps = {
   /** The Latin answer. Either this or `tibetan`, or both. */
@@ -124,7 +146,11 @@ export function AnswerChoice({
         ) : null}
         {wylie ? <Text style={[WYLIE, {color: ink}]}>{wylie}</Text> : null}
       </View>
-      {mark ? <Icon name={mark} size={24} color={ink} /> : null}
+      {mark ? (
+        <Animated.View entering={MARK_IN}>
+          <Icon name={mark} size={MARK_SIZE} color={ink} />
+        </Animated.View>
+      ) : null}
     </Pressable>
   );
 }

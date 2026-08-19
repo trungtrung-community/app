@@ -6,6 +6,14 @@ is deleted once the results below are absorbed)._
 
 **Status: web and iOS complete. Android not run.**
 
+> **Superseded in part, 2026-08-18.** The clipping conclusion below is wrong. iOS _does_
+> clip at `--leading-tibetan: 2.1` — `སྤོས་` lost its `ོ` at 44pt on a device. The check
+> that cleared it used `བསྒྲིབས`, which clears the top of the 2.1 box by 0.04 x the font
+> size and therefore fits; a glyph marginally taller does not. Finding 2's own numbers give
+> the threshold as `lineHeight ≥ 2.02 · s`, which 2.1 satisfies by almost nothing. See
+> `docs/07`, 2026-08-18, and `lineBox` in `src/components/learning/tibetan-text.tsx`.
+> Finding 2's headroom advice is unchanged and, if anything, understated.
+
 iOS was checked by Thosam on a device build. Shaping is correct and nothing is
 clipped — the pale teal box behind every Tibetan run is the spike's own clipping
 detector, so a glyph crossing its edge would have been obvious. That closes the

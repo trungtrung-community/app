@@ -185,7 +185,12 @@ export function HeadRail({
               glyph={node.glyph}
               icon={node.icon}
               label={node.label}
-              labelSide={variant === 'winding' ? (index % 2 === 0 ? 'left' : 'right') : 'bottom'}
+              // Alternating in BOTH variants, not only the winding one. A straight rail
+              // puts every node on `centreX` and draws its line through `centreX`, so a
+              // label placed below a node lands on top of the rail — reported from a
+              // device on 2026-08-18. `RailNode` positions a side label absolutely, so a
+              // long name still cannot move the stop it names.
+              labelSide={index % 2 === 0 ? 'left' : 'right'}
               size={nodeSize}
               onPress={onSelect ? () => onSelect(node, index) : undefined}
             />

@@ -36,6 +36,9 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
+# vitest coverage output, consumed by the SonarCloud scan in CI
+coverage/
+
 # generated native folders
 /ios
 /android

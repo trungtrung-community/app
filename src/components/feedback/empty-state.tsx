@@ -78,7 +78,14 @@ export function EmptyState({
       ) : null}
       {action ? (
         <View style={ACTION}>
-          <Button variant="secondary" onPress={onAction}>
+          {/*
+           * Primary, not `secondary`. An empty state has exactly one action and it points
+           * forward, which is the definition of a primary action — and `docs/04` allows
+           * "two button skins only: teal primary and ghost. Nothing else — no white
+           * shadowed pill", which is what `secondary` draws. It shipped as `secondary`
+           * until 2026-08-18 and read as a white button on a white ground.
+           */}
+          <Button variant="primary" onPress={onAction}>
             {action}
           </Button>
         </View>

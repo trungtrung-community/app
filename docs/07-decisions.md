@@ -30,6 +30,272 @@ Every session that decides something appends here.*
 | O21 | ~~Check 53 gates a **handed, historical** board order~~ | — | **Closed** 2026-08-16: **retire the check.** The file it guards became a record of what was actually asked, and a gate that can only be silenced by damaging the record is not a gate. `validate_read` drops to 58 checks and goes fully green, so the next red result means something. `board_prompt.py` was never run to green it. |
 | O22 | ~~Where does the **card of the day** keep its daily entrance?~~ | — | **Closed** 2026-08-16 by removing the thing it asked about: **`T1` retires.** `Q1` and `G1` were both rejected as pollution, and Thosam declined a Journey row. A surface with no entrance cannot be "a reason to open it on a quiet day", so it is parked rather than left orphaned. Takes O8's widget with it. |
 
+## 2026-08-19 — CI runs a reduced gate; the full gate stays on pre-push
+
+GitHub Actions (`.github/workflows/ci.yml`) runs `validate:ci` on every PR and
+push to main: `validate` minus the three checks that read the sibling
+design-system repo (`sync:design -- --check`, `check:content`,
+`sync:cards -- --check`). That repo is private and `assets/content.db` is
+rebuilt from it, not committed — so CI has nothing to check them against.
+The SQLite half of the content-source contract skips itself in CI for the same
+reason (`describe.skipIf(!DB_PRESENT)`); the JSON half still runs. Locally
+nothing is skipped: `check:content` fails the pre-push gate first.
+
+- **Coverage + SonarCloud**: `test:coverage` (`@vitest/coverage-v8`, lcov)
+  feeds `sonarqube-scan-action` on project `trungtrung-community_app`.
+  Automatic Analysis must stay off — it conflicts with CI-based analysis.
+- **Node pinned to 24** (`.nvmrc` + `engines`): `node:sqlite` and
+  `node scripts/*.ts` type stripping need it; nothing declared it before.
+- **CodeRabbit** reviews as a GitHub App (`.coderabbit.yaml`), no CI job.
+  Dependabot: weekly, grouped, majors on `expo*`/`react-native*` ignored —
+  those move only via `npx expo install --fix`.
+- Rejected: a `DESIGN_SYSTEM_TOKEN` PAT + second checkout (full `validate` in
+  CI). That is the upgrade path if the reduced gate ever proves too weak:
+  fine-grained PAT with `contents:read` on design-system, checkout as a
+  sibling, `npm run sync:content` before `validate`.
+- Rejected: committing `content.db` (the `.gitignore` reasoning stands) and
+  EAS build automation (paid, pre-release; manual `eas build` for now).
+
+## 2026-08-18 — The Tibetan line box clips, and the spike said it did not
+
+*Second device pass. Six reports; two of them were one defect, and that one contradicts a
+finding already recorded in `docs/spikes/2026-08-17-tibetan-rendering.md`.*
+
+**1 · `--leading-tibetan: 2.1` cannot be a `lineHeight` on iOS.** The spike measured the
+font's declared box at 2.8x and read 2.1 as a safe compression, having checked `བསྒྲིབས` —
+one of the tallest stacks in the language — and found it fits. It does fit. **Fitting is not
+clearance.** Working the numbers through:
+
+    ink_top = (lineHeight − 2.8·s) / 2 + 1.45·s − 1.06·s
+
+using the spike's own figures — declared ascent 32 (1.45x) and painted ascent 23.3 (1.06x)
+at 22pt — that is non-negative only for **lineHeight ≥ 2.02 · s**. At 2.1 the clearance is
+**0.04 · s**: 1.8pt at `FlashCard`'s 44pt. So the tall stack the spike measured clears the
+top by a hair and a glyph slightly taller does not. `སྤོས་` — the word `FlashCard`'s own
+specimen draws — had its `ོ` shaved off on a device.
+
+**Decided:** `TibetanText` renders the **font's declared box** and gives the difference back
+with **negative vertical margins**, so the ink cannot be clipped and the occupied space is
+still `--leading-tibetan`. The same idea as CSS `leading-trim`, in the two properties React
+Native has. `leading.tibetan` is untouched — it is a generated token and `sync:design
+--check` guards it, so widening it was never an option. *Rejected: dropping `lineHeight`
+altogether (the block then occupies 2.8x, which the spike had already found visibly worse in
+`LetterTile`); a diagnostic round before fixing (offered, and Thosam chose the fix).*
+
+**The cost, stated:** a Tibetan block that wraps to two lines gets 2.8 leading between them
+rather than 2.1. Most blocks are one word.
+
+**2 · A mixed Tibetan/Latin row grew to fit its glyphs, so adjacent rows disagreed.** Under
+the `Divider` specimen, `ཇ་ཐང · chhaathang` and `བོད་ཇ · phööcha` sat differently — the
+second has a vowel above, so its line grew and its text read as stuck to the top of a box
+that had opened up underneath it.
+
+Margins do not apply to text inside text, so the block fix cannot be reused. **Inline runs
+take the declared box instead** — which cannot clip, and is *the same number for every glyph
+at a given size*, which is what makes two rows match. **Mixed rows are therefore taller than
+Latin ones**, by a fixed amount. That is not a defect to fix later: a 14pt Tibetan run on a
+16pt Latin line either clips or grows the line, and there is no third option. The lever, if
+it reads heavy on a device, is `--text-tib-xs` — a design-system call, not this repo's.
+
+**3 · `Sheet` and `Dialog` vanished instead of leaving.** A `Modal` tears its whole tree down
+in the frame `visible` goes false, so a panel gated on `open` had nothing left to animate.
+Both now keep the Modal up one animation longer, with the panel and scrim conditional on
+`open` so their `exiting` can run — `SlideOutDown`, `ZoomOut`, and a `FadeOut` scrim, each
+at `--dur-base`, quicker than its entrance.
+
+**The unmount is on a timer, not on the animation's callback**, and that is the deliberate
+part: Reanimated exits inside a React Native `Modal` are the fragile piece here, and a
+callback that never fires would leave the surface **stuck open** — strictly worse than the
+abrupt close it replaces. The timer closes either way; the animation is what is allowed to
+fail.
+
+**4 · A `Tooltip` could leave the screen.** The bubble is centred on its trigger with a
+`-50%` transform and nothing measured anything, so a trigger at the gutter put half of it
+past the edge. React Native has no `position: fixed` and no way for an absolutely-positioned
+child to escape its ancestors, so there is no styling answer: the trigger is measured with
+`measureInWindow` and the bubble is nudged back inside, flipping top/bottom when the chosen
+side has no room. The arithmetic is `src/components/feedback/tooltip-position.ts`, separated
+from the component so it can be tested without a screen. Plus a 240pt cap and a second line
+allowed, so a long label makes a taller bubble rather than a wider one.
+
+**5 · The straight `HeadRail` drew its labels under its own rail.** Every node sits on
+`centreX` and the rail is a vertical line through `centreX`, so `labelSide="bottom"` put each
+label on top of it. Labels now alternate left and right in **both** variants, which is the
+mechanism the winding rail already used.
+
+*Raised, not acted on:* the straight variant is drawn as a **vertical** line, and the dbu it
+is named after is horizontal — "letters hang off a head line". Whether the board draws it
+vertically cannot be seen from this repo.
+
+**6 · The confetti was where nobody would look.** It fires from the `stop-complete` row's
+Play button in `/_ds/feel`, and nothing said so. The row now names `confetti` among its
+traits and its button reads `Play · confetti`. Not a component change: the cue player fires
+sound and haptics, the screen draws the confetti, and that separation stands.
+
+## 2026-08-18 — First pass on a real phone: four defects, and the confetti that never existed
+
+*Thosam ran the build on an iPhone the hour the feel layer landed and came back with six
+things. **Three of the four defects were in ported design-system components**, not in the
+new code — invisible in a specimen gallery on a simulator, obvious within a minute of
+holding the device. That is the argument for the testbed, made by the testbed.*
+
+**1 · A press moved everything below it, and the reasoning was inverted.** `keycap()` in
+`src/components/core/press.ts` returned `marginBottom: pressed ? SINK : 0` alongside its
+`boxShadow` and `transform`. **Both of those are applied after layout**, so a keycap's
+footprint was already constant by construction — the margin was the only property in the
+function that could move anything, and it moved every control below a pressed button down
+by 2pt. Its docstring argued the design system's own sources shift their surroundings
+*because* they animate the shadow and the transform but not the margin, which is precisely
+backwards. Deleted, along with `edgeReserve()`, which computed the same number for the same
+wrong reason and was never imported. **One deletion fixed `Button`, `AnswerChoice`,
+`SyllableChip`, `LetterTile` and `RailNode`.**
+
+`src/components/core/press.test.ts` is new and is the guard: `keycap()` may return no
+layout property in either state. It was checked against the old implementation before being
+kept — it fails it in three places.
+
+**2 · `lineHeight` on a `TextInput` throws the text off centre.** `LATIN_TEXT` in
+`Input` set `--text-md × 1.55`, a 24.8pt line box inside a 52pt field. **The report is its
+own diagnosis:** Thosam named the two Latin fields and not the Tibetan one, and the Tibetan
+face had already dropped `lineHeight` when it was ported — with a comment naming Android.
+The behaviour is not Android's alone. Removed from both, with the comment widened to cover
+them together.
+
+**3 · Nothing in the project handled the keyboard, and nothing consumed the safe area.**
+No `KeyboardAvoidingView`, no `automaticallyAdjustKeyboardInsets`, no
+`keyboardShouldPersistTaps`, no `useSafeAreaInsets` — `SafeAreaProvider` had been mounted in
+the root layout since the port with no consumer. With `headerShown: false` every screen
+started at pixel zero, under the Dynamic Island. Fixed on the three `_ds` screens; the
+general rules are now in `docs/04` under *The device the board does not draw*, because the
+question was about the app and not the gallery.
+
+**4 · `EmptyState`'s action was a white pill on a white ground.** It shipped
+`variant="secondary"` — fill `--surface-card`, edge `--ground-300`. `docs/04` allows "two
+button skins only: teal primary and ghost. Nothing else — no white shadowed pill." An empty
+state has exactly one action and it points forward, which is a primary action. Now
+`primary`. Thosam's framing was that it is a UI detail rather than a bug; the rule it
+happened to be breaking is what settled which way to fix it.
+
+**5 · Confetti has never existed.** No `Confetti` in the 51-component manifest and no
+confetti code anywhere — only `docs/01`'s signed S12 exception and two references to it in
+`src/domain/cue.ts`. `src/components/feedback/confetti.tsx` is new, Reanimated only, no new
+dependency.
+
+**It is deliberately outside the design-system manifest**, which is the part worth signing
+rather than quietly doing. The board has never drawn confetti and structurally cannot:
+**confetti is motion, and the board draws states.** That is the same category as the cue
+layer, not the category of a component someone forgot. If the DS ever ships a `Confetti`
+entry, this is its port. Recorded as a gap in `docs/09`.
+
+**The palette is `teal600 · beak600 · teal300 · grass600`.** Thosam picked three off a
+screenshot — `#1f8a91`, `#f6a724`, `#80cbce` — and every one was already a token, within a
+digit or two of what he read. `beak600` is documented in the palette as *"beak orange — XP,
+rewards, highlights"*: the reward colour by name. **`crown600` was considered and left
+out** — `docs/04` fixes crown red as destructive-only and it is the family `--surface-alert`
+draws a wrong answer in, so red falling at a completion would argue with the band a learner
+saw thirty seconds earlier. The prayer-flag five (`flagBlue/White/Red/Green/Yellow`,
+sky/air/fire/water/earth) are already tokens and were offered; "basic colors" was the
+answer. Swapping to them is one line and needs no new token.
+
+**Under Reduce Motion it renders nothing at all** — not a shortened burst and not a static
+scatter, which would be a flash of debris rather than a celebration. `onDone` still fires,
+so a screen waiting on it cannot hang.
+
+**Confetti is not wired into `CuePlayer`.** `cue()` fires sound and haptics; confetti is
+drawn. The screen composes the two, which is what S12 will do. Putting rendering behind a
+port whose stated point is that it has no appearance would undo the 2026-08-18 decision
+above within a day of taking it.
+
+## 2026-08-18 — The feel layer: a fourth interface sound, a fourth port, and no press tick
+
+*Written from `trungtrung-community/app`. All 51 design-system components are ported and
+no screen exists. The board specifies every state and can express **none** of what
+follows: it is silent and still. These are the rules for the layer it cannot draw.*
+
+**1 · A wrong answer gains a quiet tone. Sound only, no haptic.** The 2026-08-16 entry
+below signed three interface sounds — the correct tick, the run, the stop-complete
+moment. It is now **four**. Thosam's call, asked directly, with the alternatives on the
+table.
+
+**Reason.** A miss should register as *heard* without being scolded. The band's fill
+already says which tone it is before the sentence is read; a soft low tone says the tap
+landed, which is the one thing silence cannot say. **The phone does not buzz at a miss**,
+so `docs/05`'s "one soft tick for correct, nothing for wrong" is untouched and still
+governs haptics — this widens the sound class only. *Rejected: no cue at all (the
+strictest reading of the signed three); sound plus a soft haptic (would have required
+amending `docs/05`); haptic only (inaudible is the wrong direction for a listening app).*
+
+**2 · Press feedback is declined, deliberately.** Ordinary controls — buttons, chips,
+tiles, answer rows before they are judged — get **no tick and no vibration**. The keycap
+sink (`press.ts`) stays the whole press response. **Cues mark outcomes, never taps.**
+
+**Reason.** "Calm is the product", and a phone that ticks on every press stops
+distinguishing *something happened in the lesson* from *you touched the screen*. This is
+recorded as a decision rather than an omission because the obvious next request is a
+selection tick on `AnswerChoice`, and it should have to argue against this line.
+
+**3 · A fourth port: `CuePlayer`.** Sound and haptics go behind `src/ports/cue-player.ts`
+with adapters in `src/infra/cues/`, wired by `src/composition/`. `docs/architecture.md`
+frames the existing three ports around *going remote*, and this one never will — so its
+justification is different and is stated plainly: **platform isolation and testability.**
+Web and Vitest get the silent adapter the way `ContentSource` gets `JsonContentSource`
+today, and no component ever imports `expo-haptics`. *Rejected: a plain module in
+`src/components/core/` (puts platform code in the layer that answers "what does this look
+like?"); extending `AudioSource` (conflates teaching recordings, which may go remote and
+be cached, with UI ticks, which never will).*
+
+**4 · The audio session is settled once, app-wide.** `setAudioModeAsync` is a single
+session for the whole app, not a per-player setting, so teaching audio and interface
+sounds share it. Decided: `playsInSilentMode: true`, `interruptionMode: 'mixWithOthers'`.
+
+**Reason.** A listening app that goes quiet on the ring switch is broken, so silent mode
+cannot suppress a recording. The consequence is that interface sounds also play with the
+ringer off — and **P2's sound row is the answer to that**, exactly as the 2026-08-16
+entry says. `mixWithOthers` is what `expo-audio` documents for short UI clips and does
+not kill a learner's music. **Open:** whether the lesson player wants `duckOthers` when it
+lands. Recorded here rather than as a TODO in code.
+
+**5 · The four clips ship as WAV, not m4a, and their format is generated.** The four
+files added to `sounds/` are **Ogg Vorbis, and could never have played**: this project's
+resolved Metro `assetExts` has 31 entries and `ogg` is not among them, so they would not
+be bundled — and iOS has no Vorbis decoder, so they would be silent on iPhone even if it
+were. `scripts/build-sounds.ts` transcodes them to **mono 44.1 kHz 16-bit WAV** in
+`assets/sounds/`, with a `--check` mode in `npm run validate`.
+
+**Why WAV over m4a**, which is smaller: as mono AAC the four total ~50 KB, as WAV ~350 KB.
+That 0.3 MB is **0.1% of the smallest bundle estimate in `docs/05`** (200–300 MB), and WAV
+has no decoder to spin up. Latency is what feel is made of; 0.3 MB is not a cost worth
+paying attention to.
+
+**6 · `run` is declared and bound to nothing.** The vocabulary carries four cues. Three
+have clips. `notification.ogg` is **not** the run's sound: at 1.60 s it is far too long
+for a pill that says `4 in a row`, and it is reserved for the actual local notification
+(N1/N2) — a different mechanism entirely, through the `expo-notifications` config plugin,
+where Android wants a `.wav` in a notification channel. The run stays silent until a clip
+fits it, rather than being mis-bound to fill the slot.
+
+**Per-cue gain is not baked into the files.** It lives in `src/infra/cues/clips.ts` and is
+tuned by ear on a device from `/_ds/feel`. Normalising 0.3 s transients with `loudnorm` is
+unreliable, and a number set while holding the phone beats one a filter guessed.
+
+**7 · A `Platform.OS` check does not keep a module out of a bundle** — found on the way
+in, and it had nothing to do with cues. `container.ts` reaches SQLite through
+`await import(...)` behind a web guard. **Metro resolves a dynamic import at build time
+like any other**, so `expo-sqlite` was in the web graph regardless, and its web
+implementation imports `wa-sqlite.wasm` — which is neither in this project's `assetExts`
+nor present in the package. **The entire web bundle failed to build.**
+
+It had been failing silently since the container was written, because **nothing imported
+the container until today**. `docs/06` runs the whole Playwright suite against the Expo
+web build, so this was not a dev-only corner. Fixed with
+`src/infra/content/open-content-database.web.ts`: Metro prefers `.web.ts`, so the web
+graph resolves a file that throws and never traverses `expo-sqlite`. The web bundle also
+stopped carrying `content.db`, which it never used.
+
+**Provenance is open.** The four clips are dated 2020 and their licence is not
+established. `sounds/PROVENANCE.md` exists to carry the answer, and P8 · About & licences
+needs it before the beta. Raised, and Thosam chose to keep them.
+
 ## 2026-08-17 — the app repo: six decisions the port had to make
 
 *This entry is written from `trungtrung-community/app`, which did not exist when the

@@ -56,6 +56,75 @@ source of truth for screens.*
 - **No dead ends.** A screen about one member of a set offers its siblings.
   Finishing ར་མགོ must not require two taps backwards to reach ལ་མགོ.
 
+## The device the board does not draw
+
+*Added 2026-08-18, after the first pass on a real iPhone. The board draws a flat 390×760
+frame: no Dynamic Island, no home indicator, no keyboard. Everything below is a rule the
+frame has no way to state, and each one is here because it was found by holding the phone
+rather than by looking at a screenshot.*
+
+- **Insets go on the content container, never on a wrapping `SafeAreaView`.** Content
+  should scroll *under* the island with an inset in front of it, which is what iOS does
+  everywhere else. A `SafeAreaView` cuts the scroll off at the inset line and leaves a dead
+  band. `useSafeAreaInsets()` from `react-native-safe-area-context` is the mechanism;
+  `SafeAreaProvider` is already mounted in `app/_layout.tsx`.
+- **On a product screen the app bar owns the top inset.** `--appbar-height` is 60pt and it
+  sits *below* `insets.top`, not at zero. A screen with no app bar takes the inset itself.
+- **Any scroll that contains a field takes `automaticallyAdjustKeyboardInsets` and
+  `keyboardShouldPersistTaps="handled"`.** The first lifts the field clear of the keyboard
+  on iOS — Android resizes the window instead, through Expo's default
+  `softwareKeyboardLayoutMode: 'resize'`. The second is a separate bug: without it the
+  first tap on any control with the keyboard open is swallowed dismissing it, so every
+  button needs pressing twice.
+- **A press must never move anything but the control pressed.** The keycap edge is a
+  `boxShadow` and the sink is a `transform`; both are applied after layout, and nothing in
+  `press.ts` may set a layout property. It did until 2026-08-18 — see `07`.
+- **Tibetan leading is a layout rule, not a `lineHeight`.** `--leading-tibetan: 2.1` sets a
+  box tighter than the font's own 2.8, and React Native shaves the top off any glyph that
+  does not fit — the margin at 2.1 is 0.04 x the font size, which `བསྒྲིབས` clears and
+  `སྤོས་` does not. `TibetanText` therefore renders the font's box and gives the difference
+  back with negative margins, so the *occupied* space is still 2.1. A Tibetan block that
+  wraps gets 2.8 between its lines rather than 2.1; that is the price and it is rare.
+- **A mixed Tibetan/Latin row is taller than a Latin one.** A 14pt Tibetan run cannot sit
+  inside a 16pt Latin line without either clipping or growing it. `mixedTibetan` grows it,
+  by a fixed amount per size, so that two rows in one card are the same height whatever
+  glyphs are in them — an uneven pair was the reported symptom.
+- **No `lineHeight` on a `TextInput`.** A single-line field never wraps, so leading has no
+  work to do, and setting it throws the glyphs off the vertical centre. The room comes from
+  the field's height and its row's `items-center`.
+
+## Feel — motion, sound, haptics
+
+*Added 2026-08-18. The board draws states; it cannot draw the travel between two of
+them, and it has no way at all to say "this makes a sound". So this layer is specified
+here, where the rules that live outside the design-system code live. The decisions
+themselves are in `07`, 2026-08-18.*
+
+- **Motion communicates what happened. It never decorates.** If a movement would not
+  survive the question *what did that tell the learner?*, it does not ship.
+- **Tokens only, same as colour.** Durations and curves come from
+  `src/components/core/motion.ts`, which parses the generated tokens once. A raw `300`
+  or a hand-typed bezier is the same class of mistake as a raw hex.
+- **One soft overshoot, no wobble.** `easeSettle` is the only curve that passes its
+  target, and it is for a thing arriving at rest — never for a thing leaving, and never
+  for a colour (see `clamp01`).
+- **Reduce Motion is honoured everywhere**, via Reanimated's `ReduceMotion.System`. A
+  collapsed animation must leave the state legible: `FlashCard` cuts between faces,
+  `RecordButton`'s ring is drawn but still. Nothing is *only* animated.
+- **Cues mark outcomes, never taps.** Four moments make a sound: a correct answer, a
+  wrong answer, the run, a lesson stop completing. **Nothing else does**, and adding a
+  fifth is a decision entry in `07`, not a call site. Ordinary presses answer with the
+  keycap sink and nothing more.
+- **One haptic, and it is the correct tick.** Nothing for wrong, nothing for a press,
+  nothing for navigation. `docs/05`'s line is the whole specification.
+- **Sound and haptics are one call.** `cue('correct')` from `src/composition/cue.ts`.
+  A screen never reaches for `expo-audio` or `expo-haptics`, so the off-switch cannot be
+  forgotten at one call site out of fifty.
+- **A cue must never break a lesson.** `cue()` is fire-and-forget and swallows its own
+  errors. A tick that fails is silence, not a crash.
+- **P2's sound row is the single off-switch**, and it gates the whole class. It is
+  separate from Reduce Motion, which is the operating system's to own.
+
 ## Teaching surfaces
 
 Three rules that came out of the 2026-08-08 competitor review. All three are

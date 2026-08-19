@@ -19,11 +19,11 @@
  *
  * - `lineHeight` is absolute, not a ratio, so it is computed per size.
  * - `fontWeight` does nothing on a bundled family, so weight is a family name.
- * - The font *declares* a line box of ~2.8x the size, so 2.1 leading compresses it. The
- *   0.35x that hangs outside is half-leading and contains no ink: the tallest stacks
- *   measure well inside the 2.1 box. See `DECLARED_LINE_BOX` below, and the dated
- *   correction in the spike — the first reading of this had it as ink overflowing, which
- *   makes every fixed-height Tibetan box a third taller than it needs to be.
+ * - The font *declares* a line box of ~2.8x the size, and **2.1 cannot be applied to a
+ *   `Text` as a compression of it without shaving the top off tall glyphs** — the margin
+ *   is 0.04x the font size, which some stacks clear and some do not. The leading rule is
+ *   honoured as layout instead: the font's box is rendered and the difference is taken
+ *   back with negative margins. See `lineBox` and `leadingTrim`.
  * - `--measure-tibetan` is 34ch, which has no point equivalent and on a phone is always
  *   wider than the screen. Omitted rather than guessed at.
  */
@@ -82,17 +82,16 @@ const TIBETAN_LANGUAGE = {
  * Measured at five sizes in docs/spikes/2026-08-17-tibetan-rendering.md, where the ratio
  * held between 2.80 and 2.86 — at 22pt, an ascent of 32 and a descent of 30.
  *
- * **This is not how much room the ink needs.** The font declares that much because it
- * reserves space for the tallest stack it could ever be asked to draw. Real ink is far
+ * **More than the ink needs, and less than optional.** The font declares that much because
+ * it reserves room for the tallest stack it could ever be asked to draw. Real ink is
  * smaller: at 22pt, `ཀ` measures 25.3pt and `བསྒྲིབས` — one of the tallest stacks in the
- * language — measures 33.5pt, against `--leading-tibetan`'s 46.2pt box. Both fit, with
- * room over.
+ * language — measures 33.5pt, against `--leading-tibetan`'s 46.2pt box.
  *
- * The spike's finding 2 read the 0.35x overflow as ink escaping the line box. It is not:
- * 0.35 x 22 is 7.7, which is the *half-leading* — the amount the font's declared box hangs
- * outside a compressed line box, above and below, with no ink in it. Corrected here rather
- * than left to be rediscovered, because the wrong reading makes every fixed-height Tibetan
- * box a third taller than it needs to be.
+ * **Both fitting is not the same as there being room**, which is what the reading here said
+ * until 2026-08-18. Inside a 2.1 box the tall stack clears the top by 0.04 x the font size,
+ * so it fits and a glyph slightly taller does not — `སྤོས་` was reported clipped on a device
+ * at 44pt. `lineBox` carries the arithmetic. The declared box is therefore what gets
+ * rendered, and it is the only figure that is safe for arbitrary content.
  */
 const DECLARED_LINE_BOX = 2.8;
 
@@ -108,6 +107,50 @@ const DECLARED_LINE_BOX = 2.8;
  */
 export function tibetanBox(size: TibetanSize): number {
   return Math.ceil(TIB_SIZES[size] * DECLARED_LINE_BOX);
+}
+
+/**
+ * The line box a Tibetan run is given: the font's own, never a compression of it.
+ *
+ * **`--leading-tibetan: 2.1` cannot be applied as a `lineHeight` on iOS without clipping.**
+ * Worked out from the spike's own measurements at 22pt — a declared ascent of 32 (1.45x)
+ * and a painted ascent of 23.3 (1.06x) for `བསྒྲིབས`, one of the tallest stacks in the
+ * language. React Native centres a compressed box on the font's, so the top of the ink
+ * lands at:
+ *
+ *     ink_top = (lineHeight − 2.8·s) / 2 + 1.45·s − 1.06·s
+ *
+ * which is only non-negative for **lineHeight ≥ 2.02 · s**. At 2.1 the clearance is
+ * 0.04 · s — 1.8pt at `FlashCard`'s 44pt — so any glyph a hair taller than `བསྒྲིབས` has
+ * its top shaved off. `སྤོས་` is one, reported from a device on 2026-08-18, and the spike
+ * had recorded iOS as clipping nothing because the stack it measured happens to fit.
+ *
+ * So the box is the font's declared one, which cannot clip whatever glyph it is handed.
+ * `--leading-tibetan` is still what the *layout* gets — see `leadingTrim`.
+ */
+function lineBox(glyphSize: number): number {
+  return glyphSize * DECLARED_LINE_BOX;
+}
+
+/**
+ * The layout space `lineBox` costs, given back.
+ *
+ * The glyph `Text` now measures 2.8x rather than 2.1x, which would push everything under a
+ * Tibetan run down by 0.7x its size. Negative margins take that back, so the rendered box
+ * is the font's and the *occupied* box is `--leading-tibetan`'s — spacing identical to
+ * before the fix, ink no longer clipped.
+ *
+ * This is the one place the design system's leading rule survives in React Native. It is
+ * the same idea as CSS `leading-trim`, done with the two properties React Native has.
+ *
+ * **Inline runs get no trim**, and cannot: margins do not apply to text inside text. There
+ * the tall box is the fix rather than a cost — it makes a mixed row's height depend on the
+ * size of the Tibetan rather than on which glyphs happen to be in it, which is what stops
+ * two rows in one card disagreeing.
+ */
+function leadingTrim(glyphSize: number): TextStyle {
+  const trim = (lineBox(glyphSize) - glyphSize * leading.tibetan) / 2;
+  return {marginTop: -trim, marginBottom: -trim};
 }
 
 export type TibetanTextProps = {
@@ -184,8 +227,8 @@ export function TibetanText({
     // not publish Noto Sans Tibetan, so both Tibetan tokens are the serif face.
     fontFamily: serif ? fontFamily.tibetanMedium : fontFamily.tibetanRegular,
     fontSize: glyphSize,
-    // Absolute, because React Native takes points where CSS takes a ratio.
-    lineHeight: glyphSize * leading.tibetan,
+    // The font's own box, never a compression of it. See `lineBox` for the arithmetic.
+    lineHeight: lineBox(glyphSize),
     // Never letter-space Tibetan: it pulls stacks apart.
     letterSpacing: 0,
   };
@@ -210,7 +253,13 @@ export function TibetanText({
       <Text
         {...TIBETAN_LANGUAGE}
         accessibilityLabel={highlightLabel ?? roman}
-        style={[glyphStyle, styles.ink, align === 'center' && styles.centerText, textStyle]}
+        style={[
+          glyphStyle,
+          leadingTrim(glyphSize),
+          styles.ink,
+          align === 'center' && styles.centerText,
+          textStyle,
+        ]}
       >
         {body}
       </Text>

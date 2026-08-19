@@ -15,7 +15,13 @@
  * wobble, which is what a single cubic bezier can express and a spring cannot.
  */
 
-import {Easing, type EasingFunctionFactory} from 'react-native-reanimated';
+import {
+  Easing,
+  FadeIn,
+  FadeOut,
+  ReduceMotion,
+  type EasingFunctionFactory,
+} from 'react-native-reanimated';
 
 import {motion} from '../../theme/tokens.generated';
 
@@ -69,3 +75,35 @@ export const duration = {
   /** The rail's draw-on. Far longer than the rest, and used by exactly one component. */
   rail: motion.durRail,
 };
+
+/**
+ * How something arrives and leaves, as layout animations.
+ *
+ * The reason these are here rather than written at each use: Reanimated's builders are
+ * chainable, so `FadeIn.duration(220).easing(...).reduceMotion(...)` is three decisions
+ * restated every time one is wanted, and they would drift the way four hand-typed control
+ * points drift. A preset is the same argument as the rest of this file, applied one level
+ * up.
+ *
+ * `.easing()` takes the token factory directly — `EasingFunction | EasingFunctionFactory`
+ * — so these curves are the same objects every component's `withTiming` already uses.
+ *
+ * `ReduceMotion.System` is Reanimated's default and is written out anyway. The point of a
+ * preset is that the accessibility decision travels with it; leaving it implicit would
+ * make the next preset, written by copying this one, a coin toss.
+ *
+ * **A fade, not a slide.** Travel is available — `FadeInDown`, `SlideInRight` — and is a
+ * per-surface decision about where a thing came from, which is exactly the kind of thing
+ * a default should not answer. `leave` is quicker than `arrive` and does not move: a
+ * thing on its way out has nowhere to be, and moving it draws the eye to the exit rather
+ * than to what replaced it.
+ *
+ * @example <Animated.View entering={arrive} exiting={leave} />
+ */
+export const arrive = FadeIn.duration(duration.base)
+  .easing(easing.out)
+  .reduceMotion(ReduceMotion.System);
+
+export const leave = FadeOut.duration(duration.fast)
+  .easing(easing.out)
+  .reduceMotion(ReduceMotion.System);

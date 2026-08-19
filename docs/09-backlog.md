@@ -194,6 +194,37 @@ gaps are named so they read as decisions, not oversights.*
     `docs/01`'s never-do gate is a tripwire and weakening one needs a dated
     reason of its own.
 
+16. **The four interface sounds have no established licence.** They arrived 2026-08-18,
+    are dated 2020, and their Vorbis comment blocks carry only an encoder version. They
+    are transcoded and shipping (`docs/07`, 2026-08-18, Thosam's call), and
+    `sounds/PROVENANCE.md` is the record waiting to be filled in. **`P8 · About &
+    licences` needs the answer before the beta.** Replacing them is cheap and already
+    isolated: four files into `sounds/`, `npm run sync:sounds`, re-tune the gains in
+    `src/infra/cues/clips.ts`. Nothing else in the app names a clip.
+17. **The `run` cue is signed and silent.** Four cues are in the vocabulary and three have
+    a sound. `notification.ogg` is not it — 1.60 s against a pill that says `4 in a row` —
+    and it is reserved for the local notification, which does not go through `CuePlayer`.
+    The run wants a short clip of its own, or a decision that it never had one.
+
+18. **The `_ds` specimen gallery ships to production.** It is described in its own header
+    as dev-only and it is not: nothing in the project mentions `__DEV__`, `app/_layout.tsx`
+    registers nothing, and expo-router discovers every route from the filesystem. Verified
+    2026-08-18 by exporting the web bundle and finding the gallery's copy in the entry
+    chunk. The cost today is bundle size and a route a curious learner can reach —
+    `specimens.tsx` alone is 2,178 lines — and it grew on 2026-08-18 with `/_ds/feel`.
+    The fix is a decision about *how* to exclude the group (a `__DEV__` guard in the
+    routes, a build-time filter, or moving it out of `app/`), which is why it is here
+    rather than done.
+
+19. **`Confetti` is a component the board has never drawn.** Built 2026-08-18 as
+    `src/components/feedback/confetti.tsx` and deliberately outside `_ds_manifest.json`,
+    because confetti is motion and the board draws states — the same reason the cue layer
+    lives outside it. The DS contract says a component exists only when the source, the
+    `.card.html` and the manifest entry all do, and this has one of the three. Either the
+    board gains a way to specify a moment like S12, or the manifest gains an entry whose
+    specimen is understood to be a still of something that moves. Not urgent: it has one
+    caller and one signed surface.
+
 ## Parked ideas
 
 - **A traveller character, to introduce animals that are not on the plateau.**
