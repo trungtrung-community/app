@@ -1,5 +1,5 @@
 {
-  "content_version": "8adfbb2c2826e5e5",
+  "content_version": "18624fe48675998b",
   "schema_version": 3,
   "districts": [
     {
@@ -891,24 +891,6 @@
       "status": "draft",
       "audio_natural": null,
       "word_id": "word.1129"
-    },
-    {
-      "id": "vocab.how-much-degree",
-      "slug": "how-much-degree",
-      "district": "core",
-      "district_number": 1,
-      "bo": "ལོད",
-      "roman": "lö",
-      "en": "how much (of degree)",
-      "en_definition": null,
-      "wylie": "lod",
-      "thl": "lö",
-      "thl_note": null,
-      "pos": "noun",
-      "register": "colloquial",
-      "status": "draft",
-      "audio_natural": null,
-      "word_id": "word.1592"
     },
     {
       "id": "vocab.i-am-doing-well",
@@ -2797,11 +2779,6 @@
     },
     {
       "vocab_id": "vocab.how-many",
-      "district_id": "district.core",
-      "role": "home"
-    },
-    {
-      "vocab_id": "vocab.how-much-degree",
       "district_id": "district.core",
       "role": "home"
     },
