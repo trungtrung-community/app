@@ -16,11 +16,20 @@ import {JsonContentSource} from '../../src/infra/content/json-content-source';
 import type {ContentFixture} from '../../src/infra/content/rows.generated';
 import type {District} from '../../src/ports/content-model';
 import type {DistrictId, SectionId} from '../../src/ports/content-ids';
+import type {Progress} from '../../src/ports/progress-store';
+import {useProgress} from '../../src/store/progress';
 
 const {push} = vi.hoisted(() => ({push: vi.fn()}));
 vi.mock('expo-router', () => ({
   useRouter: () => ({push}),
 }));
+
+const EMPTY: Progress = {walkedOn: [], items: {}, completedStops: [], version: 2};
+
+/** Every stop of district `core`, straight from the fixture. */
+const CORE_STOPS = (fixture as unknown as {stop: {id: string; district_id: string | null}[]}).stop
+  .filter(stop => stop.district_id === 'district.core')
+  .map(stop => stop.id);
 
 /** A hand-made district, for the pairing unit tests below. */
 function makeDistrict(partial: Pick<District, 'slug' | 'number' | 'name'>): District {
@@ -36,6 +45,21 @@ describe('the journey map', () => {
     resetContainer();
     override('content', new JsonContentSource(fixture as unknown as ContentFixture));
     push.mockClear();
+    useProgress.setState({progress: null});
+  });
+
+  it('opens the next district once the one before is finished', async () => {
+    // Given — every stop of district 1 done
+    useProgress.setState({progress: {...EMPTY, completedStops: CORE_STOPS}});
+    renderScreen(<Journey />);
+    const next = await screen.findByRole('button', {name: 'Meeting People'});
+
+    // When
+    fireEvent.click(next);
+
+    // Then
+    expect(push).toHaveBeenCalledWith('/journey/district/meeting');
+    expect(next.getAttribute('aria-disabled')).not.toBe('true');
   });
 
   it('renders Speak sections and districts from the fixture', async () => {

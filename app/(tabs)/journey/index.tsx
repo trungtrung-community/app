@@ -20,10 +20,10 @@ import {HeadRail, type RailStop} from '../../../src/components/learning/head-rai
 import type {RailNodeState} from '../../../src/components/learning/rail-node';
 import {SectionHeader} from '../../../src/components/learning/section-header';
 import type {Track} from '../../../src/ports/content-ids';
-import type {District, Section} from '../../../src/ports/content-model';
+import type {District, Section, Stop} from '../../../src/ports/content-model';
 import type {Progress} from '../../../src/ports/progress-store';
 
-import {useProgress} from '../../../src/store/progress';
+import {selectStopDone, useProgress} from '../../../src/store/progress';
 import {useContent} from '../../../src/store/use-content';
 
 const TRACK_SEGMENTS: readonly Segment[] = [{label: 'Speak'}, {label: 'Read'}];
@@ -43,7 +43,17 @@ export default function Journey() {
   const progress = useProgress(state => state.progress);
 
   const load = useContent(
-    source => Promise.all([source.listSections(track), source.listDistricts()]),
+    async source => {
+      const [sections, districts] = await Promise.all([
+        source.listSections(track),
+        source.listDistricts(),
+      ]);
+      const stops = await Promise.all(
+        districts.map(district => source.listStopsByDistrict(district.slug)),
+      );
+      const stopsBySlug = new Map(districts.map((district, i) => [district.slug, stops[i] ?? []]));
+      return {sections, districts, stopsBySlug};
+    },
     [track],
   );
 
@@ -59,8 +69,9 @@ export default function Journey() {
           {load.status === 'ready' ? (
             <JourneyMap
               track={track}
-              sections={load.data[0]}
-              districts={load.data[1]}
+              sections={load.data.sections}
+              districts={load.data.districts}
+              stopsBySlug={load.data.stopsBySlug}
               progress={progress}
               onOpenDistrict={slug => router.push(`/journey/district/${slug}`)}
             />
@@ -75,11 +86,20 @@ type JourneyMapProps = {
   track: Track;
   sections: readonly Section[];
   districts: readonly District[];
+  stopsBySlug: ReadonlyMap<string, readonly Stop[]>;
   progress: Progress | null;
   onOpenDistrict: (slug: string) => void;
 };
 
-function JourneyMap({track, sections, districts, progress, onOpenDistrict}: JourneyMapProps) {
+function JourneyMap({
+  track,
+  sections,
+  districts,
+  stopsBySlug,
+  progress,
+  onOpenDistrict,
+}: JourneyMapProps) {
+  const unlock: Unlock = {districts, stopsBySlug};
   const ordered = [...sections].sort((a, b) => a.number - b.number);
 
   if (ordered.length === 0) {
@@ -113,6 +133,7 @@ function JourneyMap({track, sections, districts, progress, onOpenDistrict}: Jour
             .filter(district => district.sectionId === section.id)
             .slice()
             .sort((a, b) => a.number - b.number)}
+          unlock={unlock}
           progress={progress}
           onOpenDistrict={onOpenDistrict}
         />
@@ -124,13 +145,14 @@ function JourneyMap({track, sections, districts, progress, onOpenDistrict}: Jour
 type SpeakSectionProps = {
   section: Section;
   districts: readonly District[];
+  unlock: Unlock;
   progress: Progress | null;
   onOpenDistrict: (slug: string) => void;
 };
 
-function SpeakSection({section, districts, progress, onOpenDistrict}: SpeakSectionProps) {
+function SpeakSection({section, districts, unlock, progress, onOpenDistrict}: SpeakSectionProps) {
   const entries = pairTwoDoors(districts);
-  const nodes: RailStop[] = entries.map(entry => toRailStop(entry, progress));
+  const nodes: RailStop[] = entries.map(entry => toRailStop(entry, progress, unlock));
 
   return (
     <View className="items-center">
@@ -143,7 +165,7 @@ function SpeakSection({section, districts, progress, onOpenDistrict}: SpeakSecti
             return;
           }
           if (entry.kind === 'district') {
-            if (districtState(progress, entry.district) === 'open') {
+            if (districtState(progress, entry.district, unlock) === 'open') {
               onOpenDistrict(entry.district.slug);
             }
             return;
@@ -151,7 +173,7 @@ function SpeakSection({section, districts, progress, onOpenDistrict}: SpeakSecti
           // RailNode's `twoDoor` variant exposes one press target for the whole
           // node (rail-node.tsx: "one location holding two districts... under
           // one label"), so the merged node opens its first door.
-          if (twoDoorState(progress, entry.first, entry.second) === 'open') {
+          if (twoDoorState(progress, entry.first, entry.second, unlock) === 'open') {
             onOpenDistrict(entry.first.slug);
           }
         }}
@@ -217,31 +239,52 @@ export function pairTwoDoors(districts: readonly District[]): readonly RailEntry
 
 type Openness = 'open' | 'locked';
 
-/**
- * Whether a district's node opens or stays locked.
- *
- * The full rule wants every stop of the previous district done, which needs a
- * `listStopsByDistrict` read per district — too many reads for one screen. Until
- * the district hub route lands, the honest first-launch state carries: the very
- * first district on the map opens, and everything else waits. `progress` is
- * threaded through now so the real rule has one place to land.
- */
-function districtState(progress: Progress | null, district: District): Openness {
-  return district.number === 1 ? 'open' : 'locked';
-}
+/** What the unlock rule reads: every district, and every district's stops. */
+type Unlock = {
+  readonly districts: readonly District[];
+  readonly stopsBySlug: ReadonlyMap<string, readonly Stop[]>;
+};
 
-/** The merged node opens once either of its two districts would. */
-function twoDoorState(progress: Progress | null, first: District, second: District): Openness {
-  return districtState(progress, first) === 'open' || districtState(progress, second) === 'open'
+/**
+ * Whether a district's node opens or stays locked — the same rule the district
+ * hub applies: the first district opens, a district with its own progress opens
+ * (a restored backup must never lock a learner out), and otherwise every stop
+ * of the district one number down must be done.
+ */
+function districtState(progress: Progress | null, district: District, unlock: Unlock): Openness {
+  const own = unlock.stopsBySlug.get(district.slug) ?? [];
+  if (own.some(stop => selectStopDone(progress, stop.id))) {
+    return 'open';
+  }
+  if (district.number === 1) {
+    return 'open';
+  }
+  const previous = unlock.districts.find(candidate => candidate.number === district.number - 1);
+  const previousStops = previous ? (unlock.stopsBySlug.get(previous.slug) ?? []) : [];
+  return previousStops.length > 0 &&
+    previousStops.every(stop => selectStopDone(progress, stop.id))
     ? 'open'
     : 'locked';
 }
 
-function toRailStop(entry: RailEntry, progress: Progress | null): RailStop {
+/** The merged node opens once either of its two districts would. */
+function twoDoorState(
+  progress: Progress | null,
+  first: District,
+  second: District,
+  unlock: Unlock,
+): Openness {
+  return districtState(progress, first, unlock) === 'open' ||
+    districtState(progress, second, unlock) === 'open'
+    ? 'open'
+    : 'locked';
+}
+
+function toRailStop(entry: RailEntry, progress: Progress | null, unlock: Unlock): RailStop {
   if (entry.kind === 'twoDoor') {
     return {
       id: `${entry.first.id}+${entry.second.id}`,
-      state: toNodeState(twoDoorState(progress, entry.first, entry.second)),
+      state: toNodeState(twoDoorState(progress, entry.first, entry.second, unlock), false),
       variant: 'twoDoor',
       // The design system's own specimen label for this node — the content set
       // names the two rooms separately, and this is the one place they are
@@ -249,13 +292,18 @@ function toRailStop(entry: RailEntry, progress: Progress | null): RailStop {
       label: 'Men-Tsee-Khang',
     };
   }
+  const own = unlock.stopsBySlug.get(entry.district.slug) ?? [];
+  const done = own.length > 0 && own.every(stop => selectStopDone(progress, stop.id));
   return {
     id: entry.district.id,
-    state: toNodeState(districtState(progress, entry.district)),
+    state: toNodeState(districtState(progress, entry.district, unlock), done),
     label: entry.district.name,
   };
 }
 
-function toNodeState(openness: Openness): RailNodeState {
-  return openness === 'open' ? 'current' : 'locked';
+function toNodeState(openness: Openness, done: boolean): RailNodeState {
+  if (openness !== 'open') {
+    return 'locked';
+  }
+  return done ? 'done' : 'current';
 }
