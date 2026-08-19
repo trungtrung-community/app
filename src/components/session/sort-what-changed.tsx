@@ -82,7 +82,6 @@ export function SortWhatChanged({entry, answered, filled, onCommit}: SortWhatCha
             <Pressable
               key={pair.itemId}
               accessibilityRole="checkbox"
-              accessibilityState={{checked: selected}}
               aria-checked={selected}
               accessibilityLabel={`${pair.bareRoman} to ${pair.roman}`}
               disabled={answered !== null}
