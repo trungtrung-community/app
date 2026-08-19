@@ -86,7 +86,13 @@ async function walk(
 ): Promise<Walked> {
   const source = new JsonContentSource(fixture as unknown as ContentFixture);
   const session = await startStop(
-    {walk: source, exercises: source, dictionary: source, audio: {isAvailable: async () => false}},
+    {
+      walk: source,
+      exercises: source,
+      dictionary: source,
+      script: source,
+      audio: {isAvailable: async () => false},
+    },
     STOP_ID,
     seededRng(42),
     {audioFree: false},

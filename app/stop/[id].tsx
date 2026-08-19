@@ -12,6 +12,8 @@ import {useEffect} from 'react';
 import {ScrollView, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
+import {cue} from '../../src/composition/cue';
+import {Badge} from '../../src/components/core/badge';
 import {IconButton} from '../../src/components/core/icon-button';
 import {EmptyState} from '../../src/components/feedback/empty-state';
 import {Skeleton} from '../../src/components/feedback/skeleton';
@@ -46,6 +48,33 @@ export default function Stop() {
   const state = slice.state;
   const entry = state?.queue[state.index];
 
+  // One cue per band: the effect keys on the answered entry's identity plus its
+  // verdict, so a re-render of the same band cannot fire twice and the next
+  // band fires again. `partial` shows no band and marks no moment.
+  const answered = state?.answered ?? null;
+  const bandCue =
+    answered === null || answered.verdict === 'partial'
+      ? null
+      : `${answered.key}:${answered.verdict}`;
+  useEffect(() => {
+    if (bandCue === null) {
+      return;
+    }
+    cue(bandCue.endsWith(':correct') ? 'correct' : 'wrong');
+  }, [bandCue]);
+
+  // The run cue marks the moment the run REACHES three — the clip ships silent
+  // by decision (docs/09 #17), and the call stands so the moment is marked.
+  const run = state?.run ?? 0;
+  useEffect(() => {
+    if (run === 3) {
+      cue('run');
+    }
+  }, [run]);
+
+  // S11: the chip beside the bar is the warm-up's only new chrome.
+  const warmUp = entry?.position.kind === 'exercise' && entry.position.exercise.warmUp === true;
+
   return (
     <View className="flex-1 bg-surface-app" style={{paddingTop: insets.top}}>
       <View className="flex-row items-center gap-3 px-5 py-2">
@@ -57,6 +86,7 @@ export default function Stop() {
             max={state?.queue.length ?? 1}
           />
         </View>
+        {warmUp ? <Badge tone="soft">Warm-up</Badge> : null}
       </View>
       {slice.status === 'error' ? (
         <View className="px-5 pt-6">
@@ -179,12 +209,17 @@ function Band({state, itemsById, onNext}: BandProps) {
     answered.answerItemId === null
       ? undefined
       : itemsById.get(answered.answerItemId as ContentItemId);
+  // S7·✓: the count rides above the correct band, from three in a row only,
+  // and never leaves the session — the engine already resets it on a wrong.
+  const mark =
+    answered.verdict === 'correct' && state.run >= 3 ? `${state.run} in a row` : undefined;
   return (
     <AnswerBand
       tone={answered.verdict === 'correct' ? 'correct' : 'wrong'}
       roman={item?.roman}
       audio={false}
       pinned
+      mark={mark}
       onAction={onNext}
     >
       {item?.bo ?? ''}

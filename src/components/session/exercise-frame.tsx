@@ -17,6 +17,7 @@ import {PairBoard, type PairSide} from '../learning/pair-board';
 import {TibetanText} from '../learning/tibetan-text';
 import type {ContentItemId} from '../../ports/content-ids';
 import type {CommitInput} from '../../usecases/submit-answer';
+import {SeeItSayIt} from './see-it-say-it';
 import type {Items, SessionAnswered, SessionEntry} from './types';
 
 export type ExerciseFrameProps = {
@@ -56,6 +57,14 @@ export function ExerciseFrame({entry, answered, matched, itemsById, onCommit}: E
 
   if (exercise.commitMode === 'pairs') {
     return <Pairs entry={entry} matched={matched} itemsById={itemsById} onCommit={onCommit} />;
+  }
+
+  // The glyph drill asks a different question and answers in romanisation, so
+  // it has its own renderer rather than a headline case in the generic list.
+  if (exercise.presentation === 'see-it-say-it') {
+    return (
+      <SeeItSayIt entry={entry} answered={answered} itemsById={itemsById} onCommit={onCommit} />
+    );
   }
 
   const options = entry.options ?? exercise.options;

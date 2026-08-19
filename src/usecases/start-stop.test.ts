@@ -11,12 +11,13 @@ import type {Exercise, ExerciseFamily} from '../ports/content-exercise';
 import type {
   ContentItemId,
   ExerciseId,
+  LetterId,
   PhraseId,
   StopId,
   Track,
   VocabId,
 } from '../ports/content-ids';
-import type {PhraseItem, Stop, StopPosition, VocabularyItem} from '../ports/content-model';
+import type {Letter, PhraseItem, Stop, StopPosition, VocabularyItem} from '../ports/content-model';
 
 import {startStop, type StartStopDeps} from './start-stop';
 
@@ -66,6 +67,34 @@ function phrase(id: string): PhraseItem {
     template: false,
     audio: {path: `audio/${id}.m4a`, available: false},
     chunks: [],
+  };
+}
+
+function letter(id: string): Letter {
+  return {
+    id: id as LetterId,
+    subtype: 'vowel',
+    bo: 'ཨི',
+    wylie: 'i',
+    name: 'gi gu',
+    nameBo: null,
+    romanization: null,
+    section: 1,
+    row: null,
+    column: null,
+    columnName: null,
+    series: null,
+    mark: 'ི',
+    markCodePoint: 'U+0F72',
+    carrier: 'ཨ',
+    position: 'above',
+    exampleSyllable: null,
+    value: null,
+    speakRef: null,
+    recognitionOnly: false,
+    mirrors: null,
+    audio: null,
+    confusables: [],
   };
 }
 
@@ -159,6 +188,9 @@ function deps(audio: StartStopDeps['audio'] = countingAudio().audio): StartStopD
       listPhrasesByDistrict: async () => [],
       searchPhrases: async () => [],
     },
+    script: {
+      getLetter: async id => letter(id),
+    },
   };
 }
 
@@ -190,6 +222,62 @@ describe('startStop', () => {
     expect(session.itemsById.get('vocab.distractor' as ContentItemId)?.roman).toBe(
       'vocab.distractor',
     );
+  });
+
+  it('resolves a letter target and its letter options through the script reference', async () => {
+    // Given — a see-it-say-it drill whose target and options are letters
+    const seeIt: Exercise = {
+      ...EXERCISE,
+      id: 'ex.2' as ExerciseId,
+      type: 'see-it-say-it',
+      glyph: 'ཨི',
+      target: {id: 'letter.gi-gu' as ContentItemId, kind: 'letter'},
+      answerId: 'letter.gi-gu' as ContentItemId,
+      options: [
+        {ordinal: 1, itemId: 'letter.gi-gu' as ContentItemId, label: 'gi gu', isAnswer: true},
+        {ordinal: 2, itemId: 'letter.na-ro' as ContentItemId, label: 'na ro', isAnswer: false},
+      ],
+    };
+    const base = deps();
+    const withLetters: StartStopDeps = {
+      ...base,
+      walk: {
+        ...base.walk,
+        getStopScript: async () => [{...POSITION, kind: 'exercise', exerciseId: seeIt.id}],
+      },
+      exercises: {getExercise: async () => seeIt, listExercisesByStop: async () => [seeIt]},
+    };
+
+    // When
+    const session = await startStop(withLetters, STOP_ID, seededRng(1), {audioFree: false});
+
+    // Then — both letters resolve to display items with the glyph and the name
+    const target = session.itemsById.get('letter.gi-gu' as ContentItemId);
+    expect(target?.bo).toBe('ཨི');
+    expect(target?.roman).toBe('gi gu');
+    expect(session.itemsById.get('letter.na-ro' as ContentItemId)?.roman).toBe('gi gu');
+  });
+
+  it('lifts the seed artifacts onto the session', async () => {
+    // Given — an artifact card the script places after the end
+    const base = deps();
+    const withArtifact: StartStopDeps = {
+      ...base,
+      walk: {
+        ...base.walk,
+        getStopScript: async () => [
+          ...SCRIPT,
+          {...POSITION, kind: 'card', itemId: 'vocab.cha' as ContentItemId},
+        ],
+      },
+    };
+
+    // When
+    const session = await startStop(withArtifact, STOP_ID, seededRng(1), {audioFree: false});
+
+    // Then
+    expect(session.artifacts).toEqual(['vocab.cha']);
+    expect(session.state.queue.some(entry => entry.position.kind === 'card')).toBe(true);
   });
 
   it('asks the build for audio availability exactly once per start', async () => {

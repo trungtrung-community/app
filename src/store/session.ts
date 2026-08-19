@@ -14,11 +14,17 @@ import {create} from 'zustand';
 
 import {toIsoDate} from '../domain/date';
 import type {ContentItemId, StopId} from '../ports/content-ids';
-import type {PhraseItem, Stop, VocabularyItem} from '../ports/content-model';
+import type {Stop} from '../ports/content-model';
 import type {Progress, ProgressStore} from '../ports/progress-store';
 
 import {audio, content, progress as progressStore} from '../composition/container';
-import {seededRng, startStop, type Rng, type SessionState} from '../usecases/start-stop';
+import {
+  seededRng,
+  startStop,
+  type Rng,
+  type SessionItem,
+  type SessionState,
+} from '../usecases/start-stop';
 import {submitAnswer, type CommitInput} from '../usecases/submit-answer';
 import {useProgress} from './progress';
 import {useSettings} from './settings';
@@ -34,7 +40,7 @@ type StopSessionSlice = {
   status: 'idle' | 'loading' | 'ready' | 'error';
   stop: Stop | null;
   state: SessionState | null;
-  itemsById: ReadonlyMap<ContentItemId, VocabularyItem | PhraseItem>;
+  itemsById: ReadonlyMap<ContentItemId, SessionItem>;
   start(id: StopId): Promise<void>;
   commit(input: CommitInput): Promise<void>;
   reset(): void;
@@ -72,7 +78,7 @@ export const useStopSession = create<StopSessionSlice>()((set, get) => ({
       // Settings pre-hydration reads null; the default keeps today's behaviour.
       const audioFree = useSettings.getState().settings?.audioFree ?? false;
       const session = await startStop(
-        {walk: source, exercises: source, dictionary: source, audio: audioPort},
+        {walk: source, exercises: source, dictionary: source, script: source, audio: audioPort},
         id,
         sessionRng,
         {audioFree},

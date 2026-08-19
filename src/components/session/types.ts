@@ -9,11 +9,10 @@
  */
 
 import type {ContentItemId} from '../../ports/content-ids';
-import type {PhraseItem, VocabularyItem} from '../../ports/content-model';
-import type {SessionState} from '../../usecases/start-stop';
+import type {SessionItem, SessionState} from '../../usecases/start-stop';
 
-/** One taught thing, word or phrase. */
-export type Item = VocabularyItem | PhraseItem;
+/** One taught thing — word, phrase, or a letter reduced for display. */
+export type Item = SessionItem;
 
 /** The session's lookup from item id to the item itself. */
 export type Items = ReadonlyMap<ContentItemId, Item>;

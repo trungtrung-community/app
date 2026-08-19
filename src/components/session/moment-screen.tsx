@@ -7,8 +7,10 @@
  * clause; this screen is its one home.
  */
 
+import {useEffect} from 'react';
 import {Text, View} from 'react-native';
 
+import {cue} from '../../composition/cue';
 import {Button} from '../core/button';
 import {Confetti} from '../feedback/confetti';
 
@@ -21,6 +23,12 @@ export type MomentScreenProps = {
 
 /** The moment entry of a stop session. */
 export function MomentScreen({stopName, outcome, onContinue}: MomentScreenProps) {
+  // Once on mount, beside the one confetti: the parent mounts this entry
+  // exactly once per session, so the cue fires exactly once per stop.
+  useEffect(() => {
+    cue('stop-complete');
+  }, []);
+
   return (
     <View className="items-center gap-6 py-10">
       <Confetti />
