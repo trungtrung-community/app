@@ -37,11 +37,11 @@ export type {ProgressStore} from './progress-store';
 export type {SettingsStore} from './settings-store';
 
 /**
- * `ContentSource` is one wired port and six capabilities.
+ * `ContentSource` is one wired port and ten capabilities.
  *
  * The container constructs one content adapter, because content lives in one medium
  * with one lifecycle. A caller should still take only the capability it uses — a use
- * case that walks a stop needs `WalkSource`, not the other fifteen methods — so the
+ * case that walks a stop needs `WalkSource`, not the other thirty methods — so the
  * narrower types are exported beside the whole.
  */
 export type {
@@ -50,6 +50,10 @@ export type {
   ContentSource,
   DictionarySource,
   ExerciseSource,
+  ReadReferenceSource,
+  ReadWordSource,
   ScriptReferenceSource,
+  StackSource,
+  SyllableSource,
   WalkSource,
 } from './content-source';

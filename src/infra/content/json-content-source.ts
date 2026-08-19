@@ -7,10 +7,12 @@
  * deterministic one for the same reason.
  *
  * It reads `content.fixture.json`, a subset emitted by the same `build_db.py` run
- * that writes the database — two whole Speak districts, one whole Read section, and
- * every artifact a collection card names. The rows are read back out of the finished
- * database rather than assembled a second time from the source, so this adapter and
- * the SQLite one map identical shapes with identical code.
+ * that writes the database — two whole Speak districts, one whole Read section,
+ * every artifact a collection card names, and the Read inventory: stacks, words,
+ * affixes, combiners, marks and cues as whole tables, syllables scoped to sections
+ * 6 and 7. The rows are read back out of the finished database rather than
+ * assembled a second time from the source, so this adapter and the SQLite one map
+ * identical shapes with identical code.
  *
  * **Where SQLite sorts, this sorts the same way.** SQLite compares text byte by
  * byte, so the comparisons below use `<` rather than `localeCompare`, which collates
@@ -23,23 +25,34 @@
  */
 
 import type {
+  Affix,
   Collection,
   CollectionId,
+  Combiner,
+  CombinerId,
   ContentSource,
   District,
   Exercise,
   ExerciseId,
   Letter,
   LetterId,
+  Mark,
   PhraseId,
   PhraseItem,
+  ReadCue,
   ReadRule,
   ReadRuleId,
+  ReadWord,
+  ReadWordId,
   Section,
   SectionId,
+  Stack,
+  StackId,
   Stop,
   StopId,
   StopPosition,
+  Syllable,
+  SyllableId,
   Track,
   VocabId,
   VocabularyItem,
@@ -47,25 +60,40 @@ import type {
 import {groupBy, indexBy} from './collect';
 import {splitSearchTokens} from './fts-query';
 import {
+  toAffix,
   toCollection,
+  toCombiner,
   toDistrict,
   toExercise,
   toExerciseChunkRef,
   toLetter,
+  toMark,
   toPhraseItem,
+  toReadCue,
   toReadRule,
+  toReadWord,
   toSection,
+  toStack,
   toStop,
   toStopPosition,
+  toSyllable,
   toVocabularyItem,
 } from './mappers';
 import type {
   ChunkRow,
+  CombinerStackRow,
   ContentFixture,
   DistrictRow,
   ExerciseRow,
   PhraseRow,
+  ReadWordRow,
+  ReadWordRuleRow,
+  StackRow,
+  StackRuleRow,
   StopRow,
+  SyllableFormRow,
+  SyllableRow,
+  SyllableRuleRow,
   VocabularyRow,
 } from './rows.generated';
 
@@ -106,6 +134,14 @@ export class JsonContentSource implements ContentSource {
   private readonly districtIdBySlug: Map<string, string>;
   private readonly stops: Map<string, StopRow>;
   private readonly exercises: Map<string, ExerciseRow>;
+  private readonly stacks: Map<string, StackRow>;
+  private readonly stackRulesByStack: Map<string, StackRuleRow[]>;
+  private readonly syllables: Map<string, SyllableRow>;
+  private readonly syllableRulesBySyllable: Map<string, SyllableRuleRow[]>;
+  private readonly syllableFormsBySyllable: Map<string, SyllableFormRow[]>;
+  private readonly readWords: Map<string, ReadWordRow>;
+  private readonly readWordRulesByWord: Map<string, ReadWordRuleRow[]>;
+  private readonly combinerStacksByCombiner: Map<string, CombinerStackRow[]>;
 
   constructor(private readonly fixture: ContentFixture) {
     this.vocabulary = indexBy(fixture.vocabulary, row => row.id);
@@ -115,6 +151,14 @@ export class JsonContentSource implements ContentSource {
     this.districtIdBySlug = new Map(fixture.district.map(row => [row.slug, row.id]));
     this.stops = indexBy(fixture.stop, row => row.id);
     this.exercises = indexBy(fixture.exercise, row => row.id);
+    this.stacks = indexBy(fixture.stack, row => row.id);
+    this.stackRulesByStack = groupBy(fixture.stack_rule, row => row.stack_id);
+    this.syllables = indexBy(fixture.syllable, row => row.id);
+    this.syllableRulesBySyllable = groupBy(fixture.syllable_rule, row => row.syllable_id);
+    this.syllableFormsBySyllable = groupBy(fixture.syllable_form, row => row.syllable_id);
+    this.readWords = indexBy(fixture.read_word, row => row.id);
+    this.readWordRulesByWord = groupBy(fixture.read_word_rule, row => row.word_id);
+    this.combinerStacksByCombiner = groupBy(fixture.combiner_stack, row => row.combiner_id);
   }
 
   // ── Words and phrases ────────────────────────────────────────────────────────
@@ -273,6 +317,114 @@ export class JsonContentSource implements ContentSource {
     return this.toReadRule(row);
   }
 
+  // ── The stacks ───────────────────────────────────────────────────────────────
+
+  async listStacks(): Promise<readonly Stack[]> {
+    return [...this.fixture.stack]
+      .sort(
+        by(
+          row => row.section,
+          row => row.id,
+        ),
+      )
+      .map(row => this.toStack(row));
+  }
+
+  async getStack(id: StackId): Promise<Stack> {
+    return this.toStack(this.require(this.stacks, id, 'stack'));
+  }
+
+  // ── The syllable piles ───────────────────────────────────────────────────────
+  //
+  // Scoped queries over what the fixture carries — the section 6 and 7 pile — the
+  // same way the district queries answer for the districts it holds. Honest within
+  // that scope, and the contract test asserts the scope rather than papering over it.
+
+  async listSyllables(family: string, maxSection: number): Promise<readonly Syllable[]> {
+    return this.fixture.syllable
+      .filter(row => row.family === family && row.section <= maxSection)
+      .sort(
+        by(
+          row => row.section,
+          row => row.id,
+        ),
+      )
+      .map(row => this.toSyllable(row));
+  }
+
+  async countSyllables(family: string, maxSection: number): Promise<number> {
+    return this.fixture.syllable.filter(row => row.family === family && row.section <= maxSection)
+      .length;
+  }
+
+  async getSyllable(id: SyllableId): Promise<Syllable> {
+    return this.toSyllable(this.require(this.syllables, id, 'syllable'));
+  }
+
+  // ── The Read words ───────────────────────────────────────────────────────────
+
+  async listReadWords(): Promise<readonly ReadWord[]> {
+    return [...this.fixture.read_word]
+      .sort(
+        by(
+          row => row.section,
+          row => row.id,
+        ),
+      )
+      .map(row => this.toReadWord(row));
+  }
+
+  async getReadWord(id: ReadWordId): Promise<ReadWord> {
+    return this.toReadWord(this.require(this.readWords, id, 'read_word'));
+  }
+
+  // ── The attachment system and the page furniture ─────────────────────────────
+
+  async listAffixes(): Promise<readonly Affix[]> {
+    return [...this.fixture.affix]
+      .sort(
+        by(
+          row => row.section,
+          row => row.id,
+        ),
+      )
+      .map(toAffix);
+  }
+
+  async listCombiners(): Promise<readonly Combiner[]> {
+    return [...this.fixture.combiner]
+      .sort(
+        by(
+          row => row.section,
+          row => row.id,
+        ),
+      )
+      .map(row => this.toCombiner(row));
+  }
+
+  async getCombiner(id: CombinerId): Promise<Combiner> {
+    const row = this.fixture.combiner.find(candidate => candidate.id === id);
+    if (!row) {
+      throw new Error(`no combiner record ${id}`);
+    }
+    return this.toCombiner(row);
+  }
+
+  async listMarks(): Promise<readonly Mark[]> {
+    return [...this.fixture.mark]
+      .sort(
+        by(
+          row => row.section,
+          row => row.id,
+        ),
+      )
+      .map(toMark);
+  }
+
+  async listReadCues(): Promise<readonly ReadCue[]> {
+    return [...this.fixture.read_cue].sort(by(row => row.n)).map(toReadCue);
+  }
+
   async contentVersion(): Promise<string> {
     return this.fixture.content_version;
   }
@@ -336,6 +488,33 @@ export class JsonContentSource implements ContentSource {
       .filter(entry => entry.rule_id === row.id)
       .sort(by(entry => entry.requires_id));
     return toReadRule(row, requires);
+  }
+
+  private toStack(row: StackRow): Stack {
+    const rules = [...(this.stackRulesByStack.get(row.id) ?? [])].sort(by(rule => rule.rule_id));
+    return toStack(row, rules);
+  }
+
+  private toSyllable(row: SyllableRow): Syllable {
+    const rules = [...(this.syllableRulesBySyllable.get(row.id) ?? [])].sort(
+      by(rule => rule.rule_id),
+    );
+    const forms = [...(this.syllableFormsBySyllable.get(row.id) ?? [])].sort(
+      by(form => form.ordinal),
+    );
+    return toSyllable(row, rules, forms);
+  }
+
+  private toReadWord(row: ReadWordRow): ReadWord {
+    const rules = [...(this.readWordRulesByWord.get(row.id) ?? [])].sort(by(rule => rule.rule_id));
+    return toReadWord(row, rules);
+  }
+
+  private toCombiner(row: ContentFixture['combiner'][number]): Combiner {
+    const stacks = [...(this.combinerStacksByCombiner.get(row.id) ?? [])].sort(
+      by(stack => stack.stack_id),
+    );
+    return toCombiner(row, stacks);
   }
 
   // ── Lookup plumbing ──────────────────────────────────────────────────────────

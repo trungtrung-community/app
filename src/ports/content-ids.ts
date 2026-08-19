@@ -21,9 +21,8 @@ import type {ItemId} from '../domain/item';
  *
  * Deliberately open across the seven kinds, because the content is: a stop teaches
  * words, phrases, letters, stacks, syllables, read-words and marks, and one
- * `stop_item` list holds all of them. Three of those kinds have their own branded
- * type below, because the port serves them as records. The rest travel as an id and
- * a `kind` until something needs to draw them.
+ * `stop_item` list holds all of them. Each of the seven has its own branded type
+ * below, because the port serves every one of them as a record.
  *
  * This is the same string that `ItemProgress.itemId` in `src/domain/item.ts` is keyed
  * on, and the types are joined in that direction: every `ContentItemId` is an
@@ -35,6 +34,10 @@ export type ContentItemId = ItemId & {readonly __item: true};
 export type VocabId = ContentItemId & {readonly __brand: 'VocabId'};
 export type PhraseId = ContentItemId & {readonly __brand: 'PhraseId'};
 export type LetterId = ContentItemId & {readonly __brand: 'LetterId'};
+export type StackId = ContentItemId & {readonly __brand: 'StackId'};
+export type SyllableId = ContentItemId & {readonly __brand: 'SyllableId'};
+export type ReadWordId = ContentItemId & {readonly __brand: 'ReadWordId'};
+export type MarkId = ContentItemId & {readonly __brand: 'MarkId'};
 
 export type SectionId = string & {readonly __brand: 'SectionId'};
 export type DistrictId = string & {readonly __brand: 'DistrictId'};
@@ -43,6 +46,9 @@ export type ExerciseId = string & {readonly __brand: 'ExerciseId'};
 export type ChunkId = string & {readonly __brand: 'ChunkId'};
 export type CollectionId = string & {readonly __brand: 'CollectionId'};
 export type ReadRuleId = string & {readonly __brand: 'ReadRuleId'};
+export type AffixId = string & {readonly __brand: 'AffixId'};
+export type CombinerId = string & {readonly __brand: 'CombinerId'};
+export type ReadCueId = string & {readonly __brand: 'ReadCueId'};
 
 /**
  * The two halves of the product: speaking Tibetan, and reading it.

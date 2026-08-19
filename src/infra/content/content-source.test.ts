@@ -11,10 +11,12 @@
  * `node:sqlite` opens the database here, which is why the SQLite adapter takes a
  * two-method query interface rather than expo-sqlite.
  *
- * The fixture is two whole Speak districts, one whole Read section, and every
- * artifact a collection card names. So a case that asks about District 3 belongs in
- * the SQLite-only block at the bottom, and a case in the shared block has to stay
- * inside that subset.
+ * The fixture is two whole Speak districts, one whole Read section, every artifact
+ * a collection card names, and the Read inventory — stacks, words, affixes,
+ * combiners, marks and cues whole, syllables scoped to sections 6 and 7. So a case
+ * that asks about District 3 or the other syllable piles belongs in the SQLite-only
+ * block at the bottom, and a case in the shared block has to stay inside that
+ * subset.
  *
  * Phases are marked per `docs/11-testing-conventions.md`. Where a query is asserted
  * with `expect(...).resolves` or inside a loop, act and assert are one statement and
@@ -34,8 +36,11 @@ import type {
   LetterId,
   PhraseId,
   ReadRuleId,
+  ReadWordId,
   SectionId,
+  StackId,
   StopId,
+  SyllableId,
   VocabId,
 } from '../../ports/content-source';
 import {toFtsPrefixQuery} from './fts-query';
@@ -88,6 +93,16 @@ const PHRASE_CLOZE = 'ex.core.c1.1.21' as ExerciseId;
 
 /** The collection whose membership silently emptied when vocabulary ids lost their district. */
 const AUSPICIOUS = 'collection.auspicious' as CollectionId;
+
+/**
+ * An ambiguous stack from the prefix table: འབ is a prefix འ on root བ reading
+ * `ba`, and just as legally a root འ with suffix བ reading `aap`. The glyph alone
+ * cannot say, which is exactly what `readsAlsoAs` exists to carry.
+ */
+const AMBIGUOUS_STACK = 'stack.aba' as StackId;
+
+/** The one syllable family the fixture carries: the section 6 and 7 stack grids. */
+const FIXTURE_FAMILY = 'stack-grid';
 
 const makeSqlite = () => new SqliteContentSource(openDatabase());
 const makeJson = () => new JsonContentSource(fixture);
@@ -721,6 +736,171 @@ describe.each(adapters)('%s', (_name, make) => {
     expect(district).toMatchObject({slug: 'core', number: 1});
     expect(district.id).toBe(`district.${SHARED_DISTRICT}`);
   });
+
+  it('lists all 199 stacks in teaching order, anatomy parsed', async () => {
+    // Given
+    const source = make();
+
+    // When
+    const stacks = await source.listStacks();
+
+    // Then
+    expect(stacks).toHaveLength(199);
+    expect(stacks.every(s => s.slots.root.length > 0)).toBe(true);
+    const keys = stacks.map(s => [s.section, s.id] as const);
+    expect(keys).toEqual(
+      [...keys].sort((a, b) => a[0] - b[0] || (a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0)),
+    );
+  });
+
+  it('shows both readings of an ambiguous stack', async () => {
+    // Given
+    const source = make();
+
+    // When
+    const stack = await source.getStack(AMBIGUOUS_STACK);
+
+    // Then
+    expect(stack).toMatchObject({bo: 'འབ', group: 'prefix', reading: 'ba', ambiguous: true});
+    expect(stack.slots).toMatchObject({prefix: 'འ', root: 'བ'});
+    expect(stack.readsAlsoAs).toEqual([
+      {as: 'root + suffix', reading: 'aap', root: 'འ', rootIndex: 0, wylie: "'ab"},
+    ]);
+  });
+
+  it('resolves every rule a stack demonstrates', async () => {
+    // Given
+    const source = make();
+
+    // When
+    const stacks = await source.listStacks();
+    const links = stacks.flatMap(s => s.ruleIds);
+    const rules = new Set((await source.listReadRules()).map(r => r.id));
+
+    // Then
+    expect(links).toHaveLength(618);
+    expect(links.every(id => rules.has(id))).toBe(true);
+  });
+
+  it('lists the twelve affixes with their attachment facts', async () => {
+    // Given
+    const source = make();
+
+    // When
+    const affixes = await source.listAffixes();
+
+    // Then
+    expect(affixes).toHaveLength(12);
+    expect(affixes.filter(a => a.type === 'suffix')).toHaveLength(10);
+    expect(affixes.filter(a => a.type === 'suffix2')).toHaveLength(2);
+    const secondSa = affixes.find(a => a.id === 'affix.suffix2-sa');
+    expect(secondSa?.followsSuffix).toEqual(['ག', 'ང', 'བ', 'མ']);
+    expect(secondSa?.silent).toBe(true);
+  });
+
+  it('lists the seven combiners with the stacks behind their tables', async () => {
+    // Given
+    const source = make();
+
+    // When
+    const combiners = await source.listCombiners();
+    const stackIds = new Set((await source.listStacks()).map(s => s.id));
+
+    // Then
+    expect(combiners).toHaveLength(7);
+    expect(combiners.filter(c => c.kind === 'superscript')).toHaveLength(3);
+    expect(combiners.filter(c => c.kind === 'subscript')).toHaveLength(4);
+    for (const combiner of combiners) {
+      expect(combiner.stackIds, combiner.id).toHaveLength(combiner.stackCount);
+      expect(combiner.readings, combiner.id).toHaveLength(combiner.stackCount);
+      expect(
+        combiner.stackIds.every(id => stackIds.has(id)),
+        combiner.id,
+      ).toBe(true);
+    }
+  });
+
+  it('lists the seven marks, three of them taught', async () => {
+    // Given
+    const source = make();
+
+    // When
+    const marks = await source.listMarks();
+
+    // Then
+    expect(marks).toHaveLength(7);
+    expect(marks.filter(m => m.taught).map(m => m.id)).toEqual([
+      'mark.nyis-shad',
+      'mark.shad',
+      'mark.tsheg',
+    ]);
+    expect(marks.every(m => /^U\+0F[0-9A-F]{2}$/.test(m.codePoint))).toBe(true);
+  });
+
+  it('lists 452 read words whose rules and speak refs resolve', async () => {
+    // Given
+    const source = make();
+    const vocabulary = new Set(fixture.vocabulary.map(r => r.id));
+
+    // When
+    const words = await source.listReadWords();
+    const links = words.flatMap(w => w.ruleIds);
+    const rules = new Set((await source.listReadRules()).map(r => r.id));
+
+    // Then
+    expect(words).toHaveLength(452);
+    expect(links).toHaveLength(2047);
+    expect(links.every(id => rules.has(id))).toBe(true);
+    const referring = words.filter(w => w.speakRef !== null);
+    expect(referring.length).toBeGreaterThan(400);
+    expect(referring.every(w => vocabulary.has(w.speakRef ?? ''))).toBe(true);
+  });
+
+  it('reads one word with its glosses and written syllables', async () => {
+    // Given
+    const source = make();
+
+    // When
+    const word = await source.getReadWord('word.a-khu' as ReadWordId);
+
+    // Then
+    expect(word).toMatchObject({bo: 'ཨ་ཁུ', reading: 'a khu', decodable: true});
+    expect(word.glosses).toEqual(['uncle']);
+    expect(word.syllables).toEqual(['ཨ', 'ཁུ']);
+  });
+
+  it('lists the six find-the-root cues in rung order', async () => {
+    // Given
+    const source = make();
+
+    // When
+    const cues = await source.listReadCues();
+
+    // Then
+    expect(cues.map(c => c.n)).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(cues[0]?.id).toBe('one-letter');
+    expect(cues.every(c => c.headline.length > 0 && c.sentence.length > 0)).toBe(true);
+  });
+
+  it('scopes every syllable query by family and section ceiling', async () => {
+    // The section 6 and 7 stack grids are whole in both adapters, so the counts
+    // below are the contract rather than a fixture accident.
+
+    // Given
+    const source = make();
+
+    // When
+    const pile = await source.listSyllables(FIXTURE_FAMILY, 7);
+
+    // Then
+    expect(pile).toHaveLength(296);
+    expect(pile.every(s => s.family === FIXTURE_FAMILY && s.section <= 7)).toBe(true);
+    expect(pile.every(s => s.slots.root.length > 0)).toBe(true);
+    expect(await source.countSyllables(FIXTURE_FAMILY, 7)).toBe(296);
+    expect(await source.countSyllables(FIXTURE_FAMILY, 6)).toBe(132);
+    const first = pile[0];
+    expect(first && (await source.getSyllable(first.id))).toEqual(first);
+  });
 });
 
 describe.skipIf(!DB_PRESENT)('the two adapters agree', () => {
@@ -798,6 +978,37 @@ describe.skipIf(!DB_PRESENT)('the two adapters agree', () => {
       (await sqlite.listDistricts()).filter(d => fixture.district.some(row => row.id === d.id)),
     );
   });
+
+  it('return identical Read inventories', async () => {
+    // The fixture carries these tables whole, so the comparison is unfiltered:
+    // every stack, word, affix, combiner, mark and cue, byte for byte.
+
+    // Given
+    const sqlite = makeSqlite();
+    const json = makeJson();
+
+    // Then
+    expect(await json.listStacks()).toEqual(await sqlite.listStacks());
+    expect(await json.listReadWords()).toEqual(await sqlite.listReadWords());
+    expect(await json.listAffixes()).toEqual(await sqlite.listAffixes());
+    expect(await json.listCombiners()).toEqual(await sqlite.listCombiners());
+    expect(await json.listMarks()).toEqual(await sqlite.listMarks());
+    expect(await json.listReadCues()).toEqual(await sqlite.listReadCues());
+  });
+
+  it('agree about the syllables both can see', async () => {
+    // Given
+    const sqlite = makeSqlite();
+    const json = makeJson();
+
+    // Then
+    expect(await json.listSyllables(FIXTURE_FAMILY, 7)).toEqual(
+      await sqlite.listSyllables(FIXTURE_FAMILY, 7),
+    );
+    expect(await json.countSyllables(FIXTURE_FAMILY, 6)).toBe(
+      await sqlite.countSyllables(FIXTURE_FAMILY, 6),
+    );
+  });
 });
 
 describe.skipIf(!DB_PRESENT)('the whole artifact, through the native adapter', () => {
@@ -870,6 +1081,76 @@ describe.skipIf(!DB_PRESENT)('the whole artifact, through the native adapter', (
     expect(words.length).toBeGreaterThan(0);
     expect(phrases.length).toBeGreaterThan(0);
     expect([...words, ...phrases].every(item => item.audio.path.endsWith('.m4a'))).toBe(true);
+  });
+
+  it('serves the whole syllable inventory, pile by pile', async () => {
+    // The seven Q6 pile shapes, each at its measured size, and never through an
+    // unscoped query — the port has none. The three totals are the artifact's own:
+    // 3,116 syllables, 11,850 rule links, 192 vowel forms.
+
+    // Given
+    const source = new SqliteContentSource(openDatabase());
+    const piles: [string, number][] = [
+      ['corpus', 222],
+      ['demo', 34],
+      ['ending-grid', 2064],
+      ['grid', 120],
+      ['prefix-demo', 48],
+      ['stack-grid', 604],
+      ['worked', 24],
+    ];
+
+    // When
+    let syllables = 0;
+    let ruleLinks = 0;
+    let forms = 0;
+    for (const [family, expected] of piles) {
+      const pile = await source.listSyllables(family, 11);
+      expect(pile, family).toHaveLength(expected);
+      expect(await source.countSyllables(family, 11), family).toBe(expected);
+      syllables += pile.length;
+      ruleLinks += pile.reduce((n, s) => n + s.ruleIds.length, 0);
+      forms += pile.reduce((n, s) => n + s.forms.length, 0);
+    }
+
+    // Then
+    expect(syllables).toBe(3116);
+    expect(ruleLinks).toBe(11850);
+    expect(forms).toBe(192);
+  });
+
+  it('reads the vowel row of a prefix-demo syllable', async () => {
+    // All 192 forms belong to the 48 prefix-demo syllables of section 3, which is
+    // outside the fixture's scope — so the assembled shape is proven here.
+
+    // Given
+    const source = new SqliteContentSource(openDatabase());
+
+    // When
+    const syllable = await source.getSyllable('syllable.abu' as SyllableId);
+
+    // Then
+    expect(syllable.family).toBe('prefix-demo');
+    expect(syllable.forms).toHaveLength(4);
+    expect(syllable.forms.map(f => f.ordinal)).toEqual([0, 1, 2, 3]);
+    expect(syllable.forms.filter(f => f.drilled)).toHaveLength(1);
+  });
+});
+
+describe('the fixture scope', () => {
+  it('answers syllable queries honestly within what the fixture carries', async () => {
+    // The districts precedent: the fixture is a subset by design, and the JSON
+    // adapter answers for exactly that subset rather than pretending to more. Its
+    // syllables are the section 6 and 7 stack grids, so another family is empty
+    // here and 2,064 rows on a device — which is why syllable queries are always
+    // scoped, and why whole-artifact counts live in the SQLite-only block above.
+
+    // Given
+    const source = makeJson();
+
+    // Then
+    expect(await source.countSyllables('ending-grid', 11)).toBe(0);
+    expect(await source.listSyllables('ending-grid', 11)).toEqual([]);
   });
 });
 

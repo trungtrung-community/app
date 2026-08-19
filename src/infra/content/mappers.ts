@@ -31,32 +31,54 @@
  */
 
 import type {
+  Affix,
+  AffixId,
   AudioRef,
   Chunk,
   Collection,
   CollectionCard,
   ChangePair,
+  Combiner,
+  CombinerException,
+  CombinerId,
+  CombinerReading,
   District,
   Exercise,
   ExerciseChunkRef,
   ExerciseOption,
   Letter,
   LetterId,
+  Mark,
+  MarkId,
   PhraseId,
   PhraseItem,
+  ReadCue,
+  ReadCueId,
   ReadRule,
   ReadRuleId,
+  ReadWord,
+  ReadWordId,
   Section,
+  Stack,
+  StackAttestation,
+  StackId,
+  StackSlots,
   Stop,
   StopItem,
   StopPosition,
+  Syllable,
+  SyllableForm,
+  SyllableId,
   VocabId,
   VocabularyItem,
 } from '../../ports/content-source';
 import type {
+  AffixRow,
   ChunkRow,
   CollectionCardRow,
   CollectionRow,
+  CombinerRow,
+  CombinerStackRow,
   DistrictRow,
   ExerciseChunkRefRow,
   ExerciseOptionRow,
@@ -64,14 +86,23 @@ import type {
   ExerciseRow,
   LetterConfusableRow,
   LetterRow,
+  MarkRow,
   PhraseRow,
+  ReadCueRow,
   ReadRuleRequiresRow,
   ReadRuleRow,
+  ReadWordRow,
+  ReadWordRuleRow,
   SectionRow,
+  StackRow,
+  StackRuleRow,
   StopItemRow,
   StopPositionPayload,
   StopPositionRow,
   StopRow,
+  SyllableFormRow,
+  SyllableRow,
+  SyllableRuleRow,
   VocabularyRow,
 } from './rows.generated';
 
@@ -533,6 +564,218 @@ export function toReadRule(row: ReadRuleRow, requires: readonly ReadRuleRequires
     section: row.section,
     card: row.card,
     requires: requires.map(r => r.requires_id as ReadRuleId),
+  };
+}
+
+/** A flag column that is itself nullable, where null means the question does not apply. */
+function nullableFlag(value: number | null): boolean | null {
+  return value === null ? null : value === 1;
+}
+
+/** The parsed `slots_json`, which stacks and syllables store in the domain's own key order. */
+function toStackSlots(text: string): StackSlots {
+  const slots = parseJson<{
+    prefix: string | null;
+    root: string;
+    subscript: readonly string[] | null;
+    suffix: string | null;
+    suffix2: string | null;
+    superscript: string | null;
+    vowel: string | null;
+  }>(text);
+  return {
+    prefix: slots.prefix,
+    superscript: slots.superscript,
+    root: slots.root,
+    subscript: slots.subscript,
+    vowel: slots.vowel,
+    suffix: slots.suffix,
+    suffix2: slots.suffix2,
+  };
+}
+
+/**
+ * The parsed `attested_json`, which stores "no evidence" as an empty array rather
+ * than as null — the one column in the artifact whose JSON type varies by row.
+ */
+function toStackAttestation(text: string): StackAttestation | null {
+  const parsed = parseJson<
+    never[] | {example: string; in_declared_tables: boolean; occurrences: number}
+  >(text);
+  if (Array.isArray(parsed)) {
+    return null;
+  }
+  return {
+    example: parsed.example,
+    inDeclaredTables: parsed.in_declared_tables,
+    occurrences: parsed.occurrences,
+  };
+}
+
+/**
+ * `combiner.position`, narrowed to the two values the domain draws.
+ *
+ * The column is an open string in the generated row type rather than a measured
+ * union, so the subset check the closed columns get for free has to be a runtime
+ * one here. A third position is a build regression and fails by name.
+ */
+function toCombinerKind(position: string, id: string): Combiner['kind'] {
+  if (position === 'superscript' || position === 'subscript') {
+    return position;
+  }
+  throw new Error(`content: combiner ${id} has unknown position ${position}`);
+}
+
+/** A stack and the rules it demonstrates, which the drills resolve by id. */
+export function toStack(row: StackRow, rules: readonly StackRuleRow[]): Stack {
+  return {
+    id: row.id as StackId,
+    bo: row.bo,
+    wylie: row.wylie,
+    root: row.root,
+    rootIndex: row.root_index,
+    affix: row.affix,
+    group: row.grp,
+    reading: row.reading,
+    romanization: row.romanization,
+    ambiguous: flag(row.ambiguous),
+    readsAlsoAs: parseJson<
+      readonly {as: string; reading: string; root: string; root_index: number; wylie: string}[]
+    >(row.reads_also_as_json).map(reading => ({
+      as: reading.as,
+      reading: reading.reading,
+      root: reading.root,
+      rootIndex: reading.root_index,
+      wylie: reading.wylie,
+    })),
+    attested: toStackAttestation(row.attested_json),
+    section: row.section,
+    slots: toStackSlots(row.slots_json),
+    audio: row.audio_path === null ? null : toAudioRef(row.audio_path, row.audio_available),
+    ruleIds: rules.map(rule => rule.rule_id as ReadRuleId),
+  };
+}
+
+export function toSyllableForm(row: SyllableFormRow): SyllableForm {
+  return {
+    ordinal: row.ordinal,
+    bo: row.bo,
+    wylie: row.wylie,
+    reading: row.reading,
+    vowel: row.vowel,
+    drilled: flag(row.drilled),
+    audio: toAudioRef(row.audio_path, row.audio_available),
+  };
+}
+
+/** A syllable with its rules and, on the few that carry one, its vowel row. */
+export function toSyllable(
+  row: SyllableRow,
+  rules: readonly SyllableRuleRow[],
+  forms: readonly SyllableFormRow[],
+): Syllable {
+  return {
+    id: row.id as SyllableId,
+    bo: row.bo,
+    wylie: row.wylie,
+    root: row.root,
+    rootIndex: row.root_index,
+    vowel: row.vowel,
+    family: row.family,
+    reading: row.reading,
+    romanization: row.romanization,
+    ambiguous: flag(row.ambiguous),
+    demonstrates: row.demonstrates,
+    sourceNote: row.source_note,
+    section: row.section,
+    slots: toStackSlots(row.slots_json),
+    audio: row.audio_path === null ? null : toAudioRef(row.audio_path, row.audio_available),
+    ruleIds: rules.map(rule => rule.rule_id as ReadRuleId),
+    forms: forms.map(toSyllableForm),
+  };
+}
+
+export function toAffix(row: AffixRow): Affix {
+  return {
+    id: row.id as AffixId,
+    type: row.type,
+    letterId: row.letter_id as LetterId | null,
+    bo: row.bo,
+    wylie: row.wylie,
+    finalSound: row.final_sound,
+    silent: flag(row.silent),
+    frontsVowel: nullableFlag(row.fronts_vowel),
+    mayFollowAnyRoot: nullableFlag(row.may_follow_any_root),
+    archaic: nullableFlag(row.archaic),
+    followsSuffix:
+      row.follows_suffix_json === null ? [] : parseJson<readonly string[]>(row.follows_suffix_json),
+    exampleSyllable: row.example_syllable as SyllableId | null,
+    exampleReading: row.example_reading,
+    section: row.section,
+    audio: row.audio_path === null ? null : toAudioRef(row.audio_path, row.audio_available),
+  };
+}
+
+/** A combiner and the stacks behind its reading table, which travel together. */
+export function toCombiner(row: CombinerRow, stacks: readonly CombinerStackRow[]): Combiner {
+  return {
+    id: row.id as CombinerId,
+    name: row.name,
+    nameBo: row.name_bo,
+    bo: row.bo,
+    kind: toCombinerKind(row.position, row.id),
+    effect: row.effect,
+    specimen: row.specimen,
+    stackCount: row.stack_count,
+    readings: parseJson<readonly CombinerReading[]>(row.readings_json),
+    exceptions: parseJson<readonly CombinerException[]>(row.exceptions_json),
+    ruleIds: parseJson<readonly ReadRuleId[]>(row.rules_json),
+    section: row.section,
+    audio: row.audio_path === null ? null : toAudioRef(row.audio_path, row.audio_available),
+    stackIds: stacks.map(stack => stack.stack_id as StackId),
+  };
+}
+
+export function toMark(row: MarkRow): Mark {
+  return {
+    id: row.id as MarkId,
+    name: row.name,
+    nameBo: row.name_bo,
+    bo: row.bo,
+    codePoint: row.cp,
+    role: row.role,
+    taught: flag(row.taught),
+    section: row.section,
+  };
+}
+
+/** A word of the Read track and the rules it exercises. */
+export function toReadWord(row: ReadWordRow, rules: readonly ReadWordRuleRow[]): ReadWord {
+  return {
+    id: row.id as ReadWordId,
+    bo: row.bo,
+    wylie: row.wylie,
+    reading: row.reading,
+    romanization: row.romanization,
+    glosses: parseJson<readonly string[]>(row.gloss_json),
+    syllables: parseJson<readonly string[]>(row.syllables_json),
+    decodable: flag(row.decodable),
+    readableFromSection: row.readable_from_section,
+    section: row.section,
+    speakRef: row.speak_ref as VocabId | null,
+    illustration: row.illustration,
+    audio: row.audio_path === null ? null : toAudioRef(row.audio_path, row.audio_available),
+    ruleIds: rules.map(rule => rule.rule_id as ReadRuleId),
+  };
+}
+
+export function toReadCue(row: ReadCueRow): ReadCue {
+  return {
+    id: row.id as ReadCueId,
+    n: row.n,
+    headline: row.headline,
+    emphasis: row.emphasis,
+    sentence: row.sentence,
   };
 }
 

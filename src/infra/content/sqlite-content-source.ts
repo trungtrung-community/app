@@ -13,8 +13,11 @@
  */
 
 import type {
+  Affix,
   Collection,
   CollectionId,
+  Combiner,
+  CombinerId,
   ContentSource,
   District,
   Exercise,
@@ -22,15 +25,23 @@ import type {
   ExerciseId,
   Letter,
   LetterId,
+  Mark,
   PhraseId,
   PhraseItem,
+  ReadCue,
   ReadRule,
   ReadRuleId,
+  ReadWord,
+  ReadWordId,
   Section,
   SectionId,
+  Stack,
+  StackId,
   Stop,
   StopId,
   StopPosition,
+  Syllable,
+  SyllableId,
   Track,
   VocabId,
   VocabularyItem,
@@ -38,36 +49,55 @@ import type {
 import {groupBy, indexBy} from './collect';
 import {toFtsPrefixQuery} from './fts-query';
 import {
+  toAffix,
   toCollection,
+  toCombiner,
   toDistrict,
   toExercise,
   toExerciseChunkRef,
   toLetter,
+  toMark,
   toPhraseItem,
+  toReadCue,
   toReadRule,
+  toReadWord,
   toSection,
+  toStack,
   toStop,
   toStopPosition,
+  toSyllable,
   toVocabularyItem,
 } from './mappers';
 import {
   CONTENT_SCHEMA_VERSION,
+  type AffixRow,
   type ChunkRow,
   type CollectionCardRow,
   type CollectionRow,
+  type CombinerRow,
+  type CombinerStackRow,
   type DistrictRow,
   type ExerciseChunkRefRow,
   type ExerciseOptionRow,
   type ExerciseRow,
   type LetterConfusableRow,
   type LetterRow,
+  type MarkRow,
   type PhraseRow,
+  type ReadCueRow,
   type ReadRuleRequiresRow,
   type ReadRuleRow,
+  type ReadWordRow,
+  type ReadWordRuleRow,
   type SectionRow,
+  type StackRow,
+  type StackRuleRow,
   type StopItemRow,
   type StopPositionRow,
   type StopRow,
+  type SyllableFormRow,
+  type SyllableRow,
+  type SyllableRuleRow,
   type VocabularyRow,
 } from './rows.generated';
 
@@ -351,6 +381,91 @@ export class SqliteContentSource implements ContentSource {
     return (await this.withPrerequisites([row]))[0] as ReadRule;
   }
 
+  // ── The stacks ───────────────────────────────────────────────────────────────
+
+  async listStacks(): Promise<readonly Stack[]> {
+    const rows = await this.db.getAllAsync<StackRow>(
+      'SELECT * FROM stack ORDER BY section, id',
+      [],
+    );
+    return this.withStackRules(rows);
+  }
+
+  async getStack(id: StackId): Promise<Stack> {
+    return (await this.withStackRules([await this.one<StackRow>('stack', id)]))[0] as Stack;
+  }
+
+  // ── The syllable piles ───────────────────────────────────────────────────────
+
+  async listSyllables(family: string, maxSection: number): Promise<readonly Syllable[]> {
+    const rows = await this.db.getAllAsync<SyllableRow>(
+      'SELECT * FROM syllable WHERE family = ? AND section <= ? ORDER BY section, id',
+      [family, maxSection],
+    );
+    return this.withRulesAndForms(rows);
+  }
+
+  async countSyllables(family: string, maxSection: number): Promise<number> {
+    const row = await this.db.getFirstAsync<{n: number}>(
+      'SELECT COUNT(*) AS n FROM syllable WHERE family = ? AND section <= ?',
+      [family, maxSection],
+    );
+    return row?.n ?? 0;
+  }
+
+  async getSyllable(id: SyllableId): Promise<Syllable> {
+    const row = await this.one<SyllableRow>('syllable', id);
+    return (await this.withRulesAndForms([row]))[0] as Syllable;
+  }
+
+  // ── The Read words ───────────────────────────────────────────────────────────
+
+  async listReadWords(): Promise<readonly ReadWord[]> {
+    const rows = await this.db.getAllAsync<ReadWordRow>(
+      'SELECT * FROM read_word ORDER BY section, id',
+      [],
+    );
+    return this.withWordRules(rows);
+  }
+
+  async getReadWord(id: ReadWordId): Promise<ReadWord> {
+    const row = await this.one<ReadWordRow>('read_word', id);
+    return (await this.withWordRules([row]))[0] as ReadWord;
+  }
+
+  // ── The attachment system and the page furniture ─────────────────────────────
+
+  async listAffixes(): Promise<readonly Affix[]> {
+    const rows = await this.db.getAllAsync<AffixRow>(
+      'SELECT * FROM affix ORDER BY section, id',
+      [],
+    );
+    return rows.map(toAffix);
+  }
+
+  async listCombiners(): Promise<readonly Combiner[]> {
+    const rows = await this.db.getAllAsync<CombinerRow>(
+      'SELECT * FROM combiner ORDER BY section, id',
+      [],
+    );
+    return this.withCombinerStacks(rows);
+  }
+
+  async getCombiner(id: CombinerId): Promise<Combiner> {
+    const row = await this.one<CombinerRow>('combiner', id);
+    return (await this.withCombinerStacks([row]))[0] as Combiner;
+  }
+
+  async listMarks(): Promise<readonly Mark[]> {
+    const rows = await this.db.getAllAsync<MarkRow>('SELECT * FROM mark ORDER BY section, id', []);
+    return rows.map(toMark);
+  }
+
+  async listReadCues(): Promise<readonly ReadCue[]> {
+    const rows = await this.db.getAllAsync<ReadCueRow>('SELECT * FROM read_cue ORDER BY n', []);
+    return rows.map(toReadCue);
+  }
+
   async contentVersion(): Promise<string> {
     const row = await this.db.getFirstAsync<{value: string}>(
       "SELECT value FROM meta WHERE key = 'content_version'",
@@ -470,6 +585,68 @@ export class SqliteContentSource implements ContentSource {
     );
     const byRule = groupBy(requires, r => r.rule_id);
     return rows.map(row => toReadRule(row, byRule.get(row.id) ?? []));
+  }
+
+  private async withStackRules(rows: readonly StackRow[]): Promise<readonly Stack[]> {
+    if (rows.length === 0) {
+      return [];
+    }
+    const rules = await this.db.getAllAsync<StackRuleRow>(
+      `SELECT * FROM stack_rule WHERE stack_id IN (${placeholders(rows.length)})
+        ORDER BY stack_id, rule_id`,
+      rows.map(r => r.id),
+    );
+    const byStack = groupBy(rules, r => r.stack_id);
+    return rows.map(row => toStack(row, byStack.get(row.id) ?? []));
+  }
+
+  private async withRulesAndForms(rows: readonly SyllableRow[]): Promise<readonly Syllable[]> {
+    if (rows.length === 0) {
+      return [];
+    }
+    const ids = rows.map(r => r.id);
+    const marks = placeholders(rows.length);
+    const rules = await this.db.getAllAsync<SyllableRuleRow>(
+      `SELECT * FROM syllable_rule WHERE syllable_id IN (${marks})
+        ORDER BY syllable_id, rule_id`,
+      ids,
+    );
+    const forms = await this.db.getAllAsync<SyllableFormRow>(
+      `SELECT * FROM syllable_form WHERE syllable_id IN (${marks})
+        ORDER BY syllable_id, ordinal`,
+      ids,
+    );
+    const rulesBySyllable = groupBy(rules, r => r.syllable_id);
+    const formsBySyllable = groupBy(forms, f => f.syllable_id);
+    return rows.map(row =>
+      toSyllable(row, rulesBySyllable.get(row.id) ?? [], formsBySyllable.get(row.id) ?? []),
+    );
+  }
+
+  private async withWordRules(rows: readonly ReadWordRow[]): Promise<readonly ReadWord[]> {
+    if (rows.length === 0) {
+      return [];
+    }
+    const rules = await this.db.getAllAsync<ReadWordRuleRow>(
+      `SELECT * FROM read_word_rule WHERE word_id IN (${placeholders(rows.length)})
+        ORDER BY word_id, rule_id`,
+      rows.map(r => r.id),
+    );
+    const byWord = groupBy(rules, r => r.word_id);
+    return rows.map(row => toReadWord(row, byWord.get(row.id) ?? []));
+  }
+
+  private async withCombinerStacks(rows: readonly CombinerRow[]): Promise<readonly Combiner[]> {
+    if (rows.length === 0) {
+      return [];
+    }
+    const stacks = await this.db.getAllAsync<CombinerStackRow>(
+      `SELECT * FROM combiner_stack WHERE combiner_id IN (${placeholders(rows.length)})
+        ORDER BY combiner_id, stack_id`,
+      rows.map(r => r.id),
+    );
+    const byCombiner = groupBy(stacks, s => s.combiner_id);
+    return rows.map(row => toCombiner(row, byCombiner.get(row.id) ?? []));
   }
 
   // ── Query plumbing ───────────────────────────────────────────────────────────

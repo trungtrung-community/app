@@ -20,7 +20,7 @@
  */
 
 import type {ContentItemId, ExerciseId, ItemRef, StopId, Track} from './content-ids';
-import type {ChangePair, Chunk} from './content-model';
+import type {ChangePair, Chunk, StackSlots} from './content-model';
 
 /**
  * How a drill is operated, from `docs/03` §1.
@@ -218,16 +218,11 @@ export type FindTheRootExercise = ExerciseCore & {
   readonly optionKind: string;
 };
 
-/** The slots a stack is assembled into, in written order. */
-export type StackSlots = {
-  readonly prefix: string | null;
-  readonly superscript: string | null;
-  readonly root: string;
-  readonly subscript: readonly string[] | null;
-  readonly vowel: string | null;
-  readonly suffix: string | null;
-  readonly suffix2: string | null;
-};
+/**
+ * Re-exported from `content-model.ts`, which owns the shape now that the stack
+ * record carries its own slots. Existing imports from this file keep working.
+ */
+export type {StackSlots};
 
 /**
  * Build a stack from chips.

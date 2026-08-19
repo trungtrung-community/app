@@ -21,18 +21,25 @@
  */
 
 import type {
+  AffixId,
   AudioRef,
   ChunkId,
   CollectionId,
+  CombinerId,
   ContentItemId,
   DistrictId,
   ExerciseId,
   ItemKind,
   LetterId,
+  MarkId,
   PhraseId,
+  ReadCueId,
   ReadRuleId,
+  ReadWordId,
   SectionId,
+  StackId,
   StopId,
+  SyllableId,
   Track,
   VocabId,
 } from './content-ids';
@@ -482,4 +489,267 @@ export type ReadRule = {
   /** The keepsake card that carries this rule, where one does. */
   readonly card: string | null;
   readonly requires: readonly ReadRuleId[];
+};
+
+/**
+ * The slots a stack is assembled into, in written order.
+ *
+ * One shape for three uses: the stack record's own anatomy, the syllable's, and the
+ * answer a `build-the-stack` drill is checked against. `root` is the only slot every
+ * stack fills.
+ */
+export type StackSlots = {
+  readonly prefix: string | null;
+  readonly superscript: string | null;
+  readonly root: string;
+  readonly subscript: readonly string[] | null;
+  readonly vowel: string | null;
+  readonly suffix: string | null;
+  readonly suffix2: string | null;
+};
+
+/**
+ * One further way an ambiguous stack can be read.
+ *
+ * འབ is a prefix plus a root reading `ba`, and a root plus a suffix reading `aap`.
+ * The record's own `reading` is the reading its group implies; each entry here is an
+ * alternative parse, said as `as` — "root + suffix" — with the root that parse picks.
+ */
+export type StackReading = {
+  readonly as: string;
+  readonly reading: string;
+  readonly root: string;
+  /** The root's position within the glyph, 0-based. */
+  readonly rootIndex: number;
+  readonly wylie: string;
+};
+
+/**
+ * Whether the corpus actually contains the stack, and how often.
+ *
+ * Null on a stack the tables declare without corpus evidence. The teaching does not
+ * key on this; it is the content set carrying its own receipts.
+ */
+export type StackAttestation = {
+  readonly example: string;
+  readonly inDeclaredTables: boolean;
+  readonly occurrences: number;
+};
+
+/**
+ * One stack: letters combined into a single written unit.
+ *
+ * `group` is which table of the spec the stack belongs to — prefix, superscript,
+ * subscript or compound. `slots` is its anatomy, already parsed, which is what the
+ * stack card diagrams and what the assembly drill checks against.
+ */
+export type Stack = {
+  readonly id: StackId;
+  readonly bo: string;
+  readonly wylie: string;
+  readonly root: string | null;
+  /** The root's position within the glyph, 0-based. */
+  readonly rootIndex: number | null;
+  /** The attaching letter, on a stack whose group is a single attachment. */
+  readonly affix: string | null;
+  readonly group: string;
+  readonly reading: string | null;
+  readonly romanization: string | null;
+  /** Whether the glyph alone underdetermines the reading. `readsAlsoAs` holds the rest. */
+  readonly ambiguous: boolean;
+  readonly readsAlsoAs: readonly StackReading[];
+  readonly attested: StackAttestation | null;
+  readonly section: number;
+  readonly slots: StackSlots;
+  readonly audio: AudioRef | null;
+  /** The reading rules this stack demonstrates. */
+  readonly ruleIds: readonly ReadRuleId[];
+};
+
+/**
+ * One vowel variant of a syllable, where the content drills the vowel row whole.
+ *
+ * Only the prefix-demo syllables carry forms. `drilled` marks the one variant the
+ * stop actually asks about; the rest are shown as the row it belongs to.
+ */
+export type SyllableForm = {
+  readonly ordinal: number;
+  readonly bo: string;
+  readonly wylie: string | null;
+  readonly reading: string | null;
+  /** The combining vowel mark this form adds, or null on the bare form. */
+  readonly vowel: string | null;
+  readonly drilled: boolean;
+  readonly audio: AudioRef;
+};
+
+/**
+ * One syllable from the drill piles.
+ *
+ * `family` and `section` are the two axes every syllable query is scoped by: a
+ * family is one pile shape — a grid, an ending grid, the corpus — and the section is
+ * where the pile becomes available. There is no unscoped list of these on purpose;
+ * 3,116 rows is a pile, not a list a screen draws whole.
+ */
+export type Syllable = {
+  readonly id: SyllableId;
+  readonly bo: string;
+  readonly wylie: string;
+  readonly root: string | null;
+  /** The root's position within the glyph, 0-based. */
+  readonly rootIndex: number | null;
+  /** The combining vowel mark, where one is written. */
+  readonly vowel: string | null;
+  readonly family: string;
+  readonly reading: string | null;
+  readonly romanization: string | null;
+  readonly ambiguous: boolean;
+  /** What this syllable exists to show, where the content says. */
+  readonly demonstrates: string | null;
+  readonly sourceNote: string | null;
+  readonly section: number;
+  readonly slots: StackSlots;
+  readonly audio: AudioRef | null;
+  /** The reading rules this syllable demonstrates. */
+  readonly ruleIds: readonly ReadRuleId[];
+  /** The vowel row, on a syllable drilled as one. Empty on the rest. */
+  readonly forms: readonly SyllableForm[];
+};
+
+/**
+ * One letter in its attaching role: a suffix, or a second suffix.
+ *
+ * The same letter can be an `Affix` twice — ད is a suffix and an archaic second
+ * suffix — so this is a role record that points at its letter, not a letter subtype.
+ */
+export type Affix = {
+  readonly id: AffixId;
+  /** The role: `suffix` or `suffix2` in this build. */
+  readonly type: string;
+  readonly letterId: LetterId | null;
+  readonly bo: string;
+  readonly wylie: string | null;
+  /** The sound the affix leaves at the end of the syllable. Empty when silent. */
+  readonly finalSound: string | null;
+  readonly silent: boolean;
+  /** Whether the affix fronts the root's vowel. Null where the question does not apply. */
+  readonly frontsVowel: boolean | null;
+  readonly mayFollowAnyRoot: boolean | null;
+  readonly archaic: boolean | null;
+  /** For a second suffix: the suffix letters it may follow. */
+  readonly followsSuffix: readonly string[];
+  readonly exampleSyllable: SyllableId | null;
+  readonly exampleReading: string | null;
+  readonly section: number;
+  readonly audio: AudioRef | null;
+};
+
+/** One row of a combiner's table: the stack it forms and how that stack reads. */
+export type CombinerReading = {
+  readonly bo: string;
+  /** The root the combiner attaches to. */
+  readonly from: string;
+  readonly reading: string;
+};
+
+/** A reading in the combiner's table that does not follow its rule, and why. */
+export type CombinerException = {
+  readonly bo: string;
+  readonly note: string;
+};
+
+/**
+ * One combining letter: a superscript or a subscript, taught as a system.
+ *
+ * A combiner is the row of the stacks it forms — `readings` is that row, and
+ * `stackIds` are the stack records behind it. The same letter above and below is two
+ * combiners, because the two attachments behave differently: ར silences as ra-go and
+ * retracts as ra-tak.
+ */
+export type Combiner = {
+  readonly id: CombinerId;
+  readonly name: string;
+  readonly nameBo: string | null;
+  /** The combining form of the letter itself. */
+  readonly bo: string;
+  readonly kind: 'superscript' | 'subscript';
+  /** What attaching it does to the reading, as the learner is told. */
+  readonly effect: string | null;
+  /** The stack shown as the specimen of the whole row. */
+  readonly specimen: string | null;
+  readonly stackCount: number;
+  readonly readings: readonly CombinerReading[];
+  readonly exceptions: readonly CombinerException[];
+  /** The reading rules the combiner's behaviour is stated as. */
+  readonly ruleIds: readonly ReadRuleId[];
+  readonly section: number;
+  readonly audio: AudioRef | null;
+  /** The stack records behind `readings`, resolvable through `StackSource`. */
+  readonly stackIds: readonly StackId[];
+};
+
+/**
+ * One punctuation or head mark.
+ *
+ * Three of the seven are `taught` — the tsheg and the two shad — and drilled like
+ * any item. The rest are recognition-only furniture a learner meets on a page.
+ */
+export type Mark = {
+  readonly id: MarkId;
+  readonly name: string | null;
+  readonly nameBo: string;
+  readonly bo: string;
+  /** The Unicode code point, as `U+0F0B`. */
+  readonly codePoint: string;
+  /** What the mark does on the page, as a sentence. */
+  readonly role: string;
+  readonly taught: boolean;
+  readonly section: number;
+};
+
+/**
+ * One word of the Read track: a real word, read off the page.
+ *
+ * `readableFromSection` is the build's own decoding measure — the first section by
+ * which every rule the word uses has been taught. It is legitimate ONLY for
+ * assembling B2 distractor pools, where the question is what the content could ask.
+ * Whether this learner can read the word is the domain's `readable()`, asked of
+ * progress, and this field must never stand in for it.
+ */
+export type ReadWord = {
+  readonly id: ReadWordId;
+  readonly bo: string;
+  readonly wylie: string | null;
+  readonly reading: string | null;
+  readonly romanization: string | null;
+  /** The English glosses, in the content's order. Usually one. */
+  readonly glosses: readonly string[];
+  /** The written syllables, in written order. */
+  readonly syllables: readonly string[];
+  /** Whether the word reads by rule alone, with nothing to memorise. */
+  readonly decodable: boolean;
+  readonly readableFromSection: number | null;
+  readonly section: number;
+  /** The Speak word this is the written form of, where the learner has met one. */
+  readonly speakRef: VocabId | null;
+  readonly illustration: string | null;
+  readonly audio: AudioRef | null;
+  /** The reading rules the word exercises. */
+  readonly ruleIds: readonly ReadRuleId[];
+};
+
+/**
+ * One rung of the find-the-root ladder: how to find the root of a syllable shape.
+ *
+ * Six cues, tried in rung order `n`, and the first that fits decides. The last rung
+ * is the one shape the picture alone cannot settle, which is why it is a sentence
+ * about words rather than about letters.
+ */
+export type ReadCue = {
+  readonly id: ReadCueId;
+  readonly n: number;
+  readonly headline: string;
+  /** The clause the card sets large, stored in its display casing. */
+  readonly emphasis: string;
+  readonly sentence: string;
 };
