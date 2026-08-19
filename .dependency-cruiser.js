@@ -28,6 +28,9 @@ const NOT_REALLY_ORPHANS = [
   '\\.d\\.ts$',
   // scripts/ are invoked by npm, and the gallery is reached through a route.
   '^scripts/',
+  // Port declared ahead of its adapter: the expo-file-system/-sharing/-document-picker
+  // adapter and the U2/U3 screens land in a follow-up task. Remove when they do.
+  '^src/ports/backup-files\\.ts$',
 ];
 
 /** @type {import('dependency-cruiser').IConfiguration} */

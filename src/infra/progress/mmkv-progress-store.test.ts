@@ -95,8 +95,19 @@ describe('load', () => {
     expect(storage.getString('progress')).toBe('{not json');
   });
 
-  it('gives an older record an empty completed-stops list', async () => {
-    // Given — a version-1 record, from before stops were recorded
+  it('reports empty when the stored value parses but was never a progress record', async () => {
+    // Given
+    storage.plant('progress', JSON.stringify({foo: 'bar'}));
+
+    // When
+    const loaded = await store.load();
+
+    // Then
+    expect(loaded).toEqual(EMPTY);
+  });
+
+  it('migrates an older record through the domain migration', async () => {
+    // Given
     storage.plant('progress', JSON.stringify({walkedOn: ['2026-08-01'], items: {}, version: 1}));
 
     // When
@@ -105,18 +116,6 @@ describe('load', () => {
     // Then
     expect(loaded.completedStops).toEqual([]);
     expect(loaded.version).toBe(PROGRESS_VERSION);
-  });
-
-  it('carries an unversioned record forward', async () => {
-    // Given
-    storage.plant('progress', JSON.stringify({walkedOn: ['2026-08-01'], items: {}}));
-
-    // When
-    const loaded = await store.load();
-
-    // Then
-    expect(loaded.version).toBe(PROGRESS_VERSION);
-    expect(loaded.walkedOn).toEqual(['2026-08-01']);
   });
 });
 

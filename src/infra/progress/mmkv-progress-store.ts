@@ -12,7 +12,11 @@
  * anything.
  */
 
+import {migrateProgress, PROGRESS_VERSION} from '../../domain/progress-migration';
 import type {Progress, ProgressStore} from '../../ports/progress-store';
+
+/** Re-exported for convenience; `src/domain/progress-migration.ts` is its home. */
+export {PROGRESS_VERSION};
 
 /** The slice of MMKV this adapter needs. Small enough to fake in a test. */
 export type KeyValueStore = {
@@ -24,9 +28,6 @@ export type KeyValueStore = {
 
 const KEY = 'progress';
 
-/** Bumped when the stored shape changes, so a restore migrates rather than guesses. */
-export const PROGRESS_VERSION = 2;
-
 const EMPTY: Progress = {walkedOn: [], items: {}, completedStops: [], version: PROGRESS_VERSION};
 
 export class MmkvProgressStore implements ProgressStore {
@@ -37,10 +38,12 @@ export class MmkvProgressStore implements ProgressStore {
     if (raw === undefined) {
       return EMPTY;
     }
-    // A learner's whole history lives here, so a parse failure must not wipe it:
-    // report empty and leave the bytes alone for a later migration to inspect.
+    // A learner's whole history lives here, so an unreadable value must not wipe
+    // it: report empty and leave the bytes alone for a later migration to
+    // inspect. That covers text that does not parse and JSON that was never a
+    // progress record — `migrateProgress` answers null for the latter.
     try {
-      return migrate(JSON.parse(raw) as Progress);
+      return migrateProgress(JSON.parse(raw)) ?? EMPTY;
     } catch {
       return EMPTY;
     }
@@ -59,22 +62,6 @@ export class MmkvProgressStore implements ProgressStore {
   async clear(): Promise<void> {
     this.storage.remove(KEY);
   }
-}
-
-/**
- * Bring a stored record up to the current shape.
- *
- * Unversioned records predate the field and are treated as version 0.
- */
-function migrate(stored: Progress): Progress {
-  const version = stored.version ?? 0;
-  if (version === PROGRESS_VERSION) {
-    return stored;
-  }
-  // Records below version 2 predate completed stops. Later migrations stack here,
-  // stepwise, so a learner two versions behind is carried through each step rather
-  // than reset.
-  return {...stored, completedStops: stored.completedStops ?? [], version: PROGRESS_VERSION};
 }
 
 /**
