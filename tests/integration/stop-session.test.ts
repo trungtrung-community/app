@@ -366,8 +366,11 @@ describe('planning the whole fixture', () => {
       unblock,
     );
 
-    // Then — nothing vanished, and the audio types run their silent siblings
-    expect(decisions.length).toBe(367);
+    // Then — nothing vanished, and the audio types run their silent siblings.
+    // 386 = the 367 planned today plus the 19 audio-gated drills the shell
+    // renderers unhid (4 hear-it-find-it, 13 phrase-produce, 2 read-it-aloud):
+    // unblocked with audio, they run as themselves.
+    expect(decisions.length).toBe(386);
     for (const {exerciseId, presentation} of decisions) {
       const type = byExercise.get(exerciseId)?.type;
       if (type === 'listen-pick') {

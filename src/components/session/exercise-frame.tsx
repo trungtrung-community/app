@@ -17,6 +17,8 @@ import {PairBoard, type PairSide} from '../learning/pair-board';
 import {TibetanText} from '../learning/tibetan-text';
 import type {ContentItemId} from '../../ports/content-ids';
 import type {CommitInput} from '../../usecases/submit-answer';
+import {HearItFindIt} from './hear-it-find-it';
+import {RecordCompare} from './record-compare';
 import {SeeItSayIt} from './see-it-say-it';
 import type {Items, SessionAnswered, SessionEntry} from './types';
 
@@ -65,6 +67,19 @@ export function ExerciseFrame({entry, answered, matched, itemsById, onCommit}: E
     return (
       <SeeItSayIt entry={entry} answered={answered} itemsById={itemsById} onCommit={onCommit} />
     );
+  }
+
+  // The sound-to-glyph drill answers in tiles, not a text list.
+  if (exercise.presentation === 'hear-it-find-it') {
+    return (
+      <HearItFindIt entry={entry} answered={answered} itemsById={itemsById} onCommit={onCommit} />
+    );
+  }
+
+  // The record-compare family has no verdict and no answer list — Again and
+  // Got it are its whole grammar, so `answered` never reaches it.
+  if (exercise.presentation === 'phrase-produce' || exercise.presentation === 'read-it-aloud') {
+    return <RecordCompare entry={entry} itemsById={itemsById} onCommit={onCommit} />;
   }
 
   const options = entry.options ?? exercise.options;

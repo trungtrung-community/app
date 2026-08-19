@@ -453,4 +453,70 @@ describe('the stop screen', () => {
     });
     expect(back).not.toHaveBeenCalled();
   });
+
+  it('plans no audio-gated drill while the build ships no recordings', async () => {
+    // Given
+    // The default audio source: the deliberate stub, isAvailable false
+    renderScreen(<Stop />);
+
+    // When
+    const state = await ready();
+
+    // Then
+    // Growing the allow-list changed nothing about today's queue
+    const gated = ['hear-it-find-it', 'phrase-produce', 'read-it-aloud'];
+    const planned = state.queue.filter(
+      entry =>
+        entry.position.kind === 'exercise' && gated.includes(entry.position.exercise.presentation),
+    );
+    expect(planned).toHaveLength(0);
+  });
+
+  it('renders a phrase-produce entry as E5: English prompt, record, skip', async () => {
+    // Given
+    // The fixture plans none today, so one is hand-marked, as the warm-up
+    // test does; the day takes land this arrives from the planner
+    renderScreen(<Stop />);
+    const state = await ready();
+    const exerciseAt = state.queue.findIndex(entry => entry.position.kind === 'exercise');
+    expect(exerciseAt).toBeGreaterThan(-1);
+    const entry = state.queue[exerciseAt];
+    if (entry === undefined || entry.position.kind !== 'exercise') {
+      throw new Error('no exercise in the fixture stop');
+    }
+    const produce = {
+      ...entry,
+      position: {
+        kind: 'exercise' as const,
+        exercise: {
+          ...entry.position.exercise,
+          exerciseType: 'phrase-produce',
+          presentation: 'phrase-produce',
+          commitMode: 'none' as const,
+          options: [],
+        },
+      },
+      options: undefined,
+    };
+    const queue = state.queue.map((candidate, i) => (i === exerciseAt ? produce : candidate));
+
+    // When
+    jumpTo({...state, queue}, exerciseAt);
+
+    // Then
+    // The before state: English only, one record button, a free skip
+    expect(screen.getByText('Say')).toBeTruthy();
+    expect(screen.getByLabelText('Record yourself')).toBeTruthy();
+    expect(screen.getByText('Say it, then hear how she says it.')).toBeTruthy();
+
+    // When
+    fireEvent.click(screen.getByText('Skip this one'));
+
+    // Then
+    // A plain continue: the queue advances with no verdict recorded
+    await waitFor(() => {
+      expect(useStopSession.getState().state?.index).toBe(exerciseAt + 1);
+    });
+    expect(useStopSession.getState().state?.answered).toBeNull();
+  });
 });

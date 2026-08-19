@@ -77,6 +77,13 @@ export const RENDERABLE_PRESENTATIONS: ReadonlySet<string> = new Set([
   'phrase-recognise-script',
   'pair-match',
   'see-it-say-it',
+  // The audio-gated shells: renderers exist, and the ladder still hides each
+  // drill while its take is missing (blockedOn) or the build ships none
+  // (audioAvailable). They surface the day recordings land, with no code
+  // change beyond the manifest.
+  'hear-it-find-it',
+  'phrase-produce',
+  'read-it-aloud',
 ]);
 
 /**
