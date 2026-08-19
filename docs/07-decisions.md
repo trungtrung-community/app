@@ -30,6 +30,20 @@ Every session that decides something appends here.*
 | O21 | ~~Check 53 gates a **handed, historical** board order~~ | — | **Closed** 2026-08-16: **retire the check.** The file it guards became a record of what was actually asked, and a gate that can only be silenced by damaging the record is not a gate. `validate_read` drops to 58 checks and goes fully green, so the next red result means something. `board_prompt.py` was never run to green it. |
 | O22 | ~~Where does the **card of the day** keep its daily entrance?~~ | — | **Closed** 2026-08-16 by removing the thing it asked about: **`T1` retires.** `Q1` and `G1` were both rejected as pollution, and Thosam declined a Journey row. A surface with no entrance cannot be "a reason to open it on a quiet day", so it is parked rather than left orphaned. Takes O8's widget with it. |
 
+## 2026-08-20 — B1 fires on a derived transition, never a stored flag
+
+**The first-readable-word moment triggers when `readableWords()` crosses zero
+to positive across one stop's completion** (9f2708c): the stop screen captures
+the pre-session progress when the session goes ready, reads the post-ending
+state after the finishing commit, and shows B1 only on the 0 → >0 transition.
+No persisted seen-flag exists — the transition itself happens once per
+learner, which is §10.1's "always a function, never stored" applied to a
+moment. The beat runs after G4's artifact sheet and before the ceremony
+routing. A discarded alternative — an `AppState` flag — was rejected because
+it duplicates what progress already proves and would need a version bump.
+B1·n (the word was never taught to say) ships alongside, since the board
+draws it.
+
 ## 2026-08-20 — B2 needs no surface of its own
 
 **Read-a-word drills are ordinary stop exercises at stop 10.2** (5a76711):
@@ -82,7 +96,9 @@ the whole rebuilt artifact finds no sibling. **The app's copy is still the
 defective one** — the four rows are verifiably present in
 `src/infra/content/content.fixture.json` today — and arrives with the next
 coordinated content sync, not before: syncs are coordinated, and this defect
-does not force one.
+does not force one. **Synced later the same day** — the WS3 closing sync
+carried the four corrected rows into the app; the glyph renders, the brackets
+are gone.
 
 ## 2026-08-19 — Exams are configuration over the drill machine, and their answers count
 

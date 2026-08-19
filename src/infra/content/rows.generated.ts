@@ -10,7 +10,7 @@
  * the engine must never see a database row.
  *
  * schema_version  4
- * content_version ab663531dfe680c8
+ * content_version a3c8b3fbded2488c
  */
 
 /**
@@ -30,7 +30,7 @@ export const CONTENT_SCHEMA_VERSION = 4;
  * against what the copied file reports and re-imports when they differ, which
  * is safe because progress lives in MMKV and never in the content database.
  */
-export const CONTENT_VERSION = "ab663531dfe680c8";
+export const CONTENT_VERSION = "a3c8b3fbded2488c";
 
 /** Every value `collection.complete_when` holds in this build. */
 export type CollectionCompleteWhen = "all";
