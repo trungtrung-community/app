@@ -11,6 +11,7 @@ import Stop from '../../app/stop/[id]';
 import {renderScreen} from './render';
 import {override, resetContainer} from '../../src/composition/container';
 import type {Cue} from '../../src/domain/cue';
+import {markTaught, newItem, type ItemId} from '../../src/domain/item';
 import fixture from '../../src/infra/content/content.fixture.json';
 import {JsonContentSource} from '../../src/infra/content/json-content-source';
 import type {ContentFixture} from '../../src/infra/content/rows.generated';
@@ -98,6 +99,47 @@ function jumpTo(state: SessionState, index: number, patch: Partial<SessionState>
   act(() => {
     useStopSession.setState({state: {...state, index, ...patch}});
   });
+}
+
+/**
+ * The committed fixture with stop.1.1 additionally stating R-ROW. The build
+ * teaches R-ROW outside the fixture's stops, so no completing stop can cross
+ * the readable threshold as committed; one added rule card makes stop.1.1 the
+ * stop whose end makes ཨ་ཁུ (word.a-khu) the first readable word.
+ */
+function crossingFixture(): ContentFixture {
+  const rows = fixture as unknown as ContentFixture;
+  return {
+    ...rows,
+    stop_position: [
+      ...rows.stop_position,
+      {
+        stop_id: 'stop.1.1',
+        n: 99,
+        kind: 'rule-card',
+        screen: 'C1',
+        item_id: null,
+        exercise_id: null,
+        rule_id: 'R-ROW',
+        text: 'Letters in the same row share a sound family.',
+        payload_json: '{}',
+      },
+    ],
+  };
+}
+
+/** ཨ and ཁ met, and the word said: everything B1 needs except the finished stop. */
+function crossedLetters(): Progress {
+  return {
+    walkedOn: [],
+    items: {
+      'letter.a': markTaught(newItem('letter.a' as ItemId)),
+      'letter.kha': markTaught(newItem('letter.kha' as ItemId)),
+      'vocab.uncle': markTaught(newItem('vocab.uncle' as ItemId)),
+    },
+    completedStops: [],
+    version: 2,
+  };
 }
 
 describe('the stop screen', () => {
@@ -560,6 +602,63 @@ describe('the stop screen', () => {
     // dimmed redraw carries its text caption
     expect(await screen.findByText(/single letter on the line/)).toBeTruthy();
     expect(screen.getAllByText(/root/).length).toBeGreaterThan(0);
+  });
+
+  it('shows the first readable word once, when the stop end crosses zero readable', async () => {
+    // Given
+    params.id = 'stop.1.1';
+    override('content', new JsonContentSource(crossingFixture()));
+    renderScreen(<Stop />);
+    const state = await ready();
+    act(() => {
+      useProgress.getState().apply(crossedLetters());
+    });
+    const endAt = state.queue.findIndex(entry => entry.position.kind === 'end');
+    expect(endAt).toBeGreaterThan(-1);
+    jumpTo(state, endAt);
+
+    // When
+    fireEvent.click(screen.getByText('Done'));
+
+    // Then
+    expect(await screen.findByText('You already say this one.')).toBeTruthy();
+    expect(screen.getByText('Now you can read it.')).toBeTruthy();
+    expect(await screen.findByText('uncle', undefined, {timeout: 3000})).toBeTruthy();
+    expect(screen.getByText('Read it again')).toBeTruthy();
+    expect(back).not.toHaveBeenCalled();
+
+    // When
+    fireEvent.click(screen.getByText('Keep going'));
+
+    // Then
+    await waitFor(() => {
+      expect(back).toHaveBeenCalledTimes(1);
+    });
+    expect(replace).not.toHaveBeenCalled();
+  });
+
+  it('keeps the moment off a later stop, once a word is already readable', async () => {
+    // Given
+    params.id = 'stop.6.1';
+    override('content', new JsonContentSource(crossingFixture()));
+    const seeded = memoryStore();
+    await seeded.save({...crossedLetters(), completedStops: ['stop.1.1']});
+    override('progress', seeded);
+    renderScreen(<Stop />);
+    const state = await ready();
+    const endAt = state.queue.findIndex(entry => entry.position.kind === 'end');
+    expect(endAt).toBeGreaterThan(-1);
+    jumpTo(state, endAt);
+
+    // When
+    fireEvent.click(screen.getByText('Done'));
+
+    // Then
+    await waitFor(() => {
+      expect(back).toHaveBeenCalledTimes(1);
+    });
+    expect(screen.queryByText('You already say this one.')).toBeNull();
+    expect(screen.queryByText('You can read this one.')).toBeNull();
   });
 
   it('renders a phrase-produce entry as E5: English prompt, record, skip', async () => {

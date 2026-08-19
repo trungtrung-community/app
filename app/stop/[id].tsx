@@ -8,10 +8,11 @@
  */
 
 import {useLocalSearchParams, useRouter} from 'expo-router';
-import {useEffect, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {ScrollView, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
+import {content} from '../../src/composition/container';
 import {cue} from '../../src/composition/cue';
 import {Badge} from '../../src/components/core/badge';
 import {IconButton} from '../../src/components/core/icon-button';
@@ -22,6 +23,7 @@ import {ProgressBar} from '../../src/components/learning/progress-bar';
 import {ArtifactSheet, type ArtifactPage} from '../../src/components/session/artifact-sheet';
 import {EndScreen} from '../../src/components/session/end-screen';
 import {ExerciseFrame} from '../../src/components/session/exercise-frame';
+import {FirstWordMoment} from '../../src/components/session/first-word-moment';
 import {IntroScreen} from '../../src/components/session/intro-screen';
 import {ItemCard} from '../../src/components/session/item-card';
 import {MomentScreen} from '../../src/components/session/moment-screen';
@@ -30,12 +32,73 @@ import {QuitDialog} from '../../src/components/session/quit-dialog';
 import {ResumeIntro} from '../../src/components/session/resume-intro';
 import {SecondLookIntro} from '../../src/components/session/second-look-intro';
 import type {Items} from '../../src/components/session/types';
-import type {ContentItemId, StopId} from '../../src/ports/content-ids';
+import type {ContentItemId, StopId, VocabId} from '../../src/ports/content-ids';
+import type {ContentSource} from '../../src/ports/content-source';
+import type {Progress} from '../../src/ports/progress-store';
 
+import {useProgress} from '../../src/store/progress';
 import {useStopSession} from '../../src/store/session';
+import {readableWords} from '../../src/usecases/read-progress';
 import type {SessionState} from '../../src/usecases/start-stop';
 import type {Ceremony} from '../../src/usecases/stop-ceremony';
 import type {CommitInput} from '../../src/usecases/submit-answer';
+
+/** What B1 draws: the crossed word, and which of the two sentences it earned. */
+type FirstWord = {
+  readonly bo: string;
+  readonly reading?: string;
+  readonly gloss: string;
+  readonly said: boolean;
+  readonly waitsAt?: string;
+};
+
+/**
+ * B1's once, derived rather than stored: the moment fires only when the words
+ * readable before this stop numbered zero and more than zero after its ending
+ * commit. That transition happens once per learner, so no flag is persisted —
+ * the crossing stays a function of progress (spec §10.1).
+ */
+async function firstWordCrossing(
+  before: Progress | null,
+  after: Progress | null,
+): Promise<FirstWord | null> {
+  const source = await content();
+  const deps = {walk: source, script: source, words: source};
+  const beforeWords = await readableWords(deps, before);
+  if (beforeWords.length > 0) {
+    return null;
+  }
+  const [word] = await readableWords(deps, after);
+  if (word === undefined) {
+    return null;
+  }
+  // B1·n's split: the sentence switches on the Speak roster AND on having met
+  // the word there — a rostered word never met still gets the honest line.
+  const said = word.speakRef !== null && (after?.items[word.speakRef]?.state ?? 'new') !== 'new';
+  return {
+    bo: word.bo,
+    reading: word.reading ?? undefined,
+    gloss: word.glosses[0] ?? '',
+    said,
+    waitsAt: said ? undefined : await waitingPlace(source, word.speakRef),
+  };
+}
+
+/** The district where an unsaid word's Speak entry waits, for B1·n's honest line. */
+async function waitingPlace(
+  source: ContentSource,
+  speakRef: VocabId | null,
+): Promise<string | undefined> {
+  if (speakRef === null) {
+    return undefined;
+  }
+  try {
+    const vocab = await source.getVocabulary(speakRef);
+    return (await source.getDistrict(vocab.district)).name;
+  } catch {
+    return undefined;
+  }
+}
 
 export default function Stop() {
   const {id} = useLocalSearchParams<{id: string}>();
@@ -47,6 +110,13 @@ export default function Stop() {
   const [carriedOn, setCarriedOn] = useState(false);
   /** Set once the ending commit lands and the G4 sheet still has to run. */
   const [pendingCeremony, setPendingCeremony] = useState<Ceremony | null>(null);
+  /** The crossed word, computed at the ending commit; null when B1 has nothing to say. */
+  const [firstWord, setFirstWord] = useState<FirstWord | null>(null);
+  /** Set while B1 stands between the G4 beat and the leave; holds where Keep going lands. */
+  const [momentCeremony, setMomentCeremony] = useState<Ceremony | null>(null);
+  /** Progress as it stood when this stop went ready — the crossing's "before". */
+  const beforeStop = useRef<Progress | null>(null);
+  const capturedFor = useRef<string | null>(null);
 
   // Adjusting state during render is React's documented pattern for reacting
   // to a changed prop — the same navigation that restarts the session below
@@ -57,6 +127,8 @@ export default function Stop() {
     setQuitOpen(false);
     setCarriedOn(false);
     setPendingCeremony(null);
+    setFirstWord(null);
+    setMomentCeremony(null);
   }
 
   useEffect(() => {
@@ -64,6 +136,15 @@ export default function Stop() {
     void useStopSession.getState().start(id as StopId);
     return () => useStopSession.getState().reset();
   }, [id]);
+
+  // The "before" is cut when the session goes ready, ahead of any commit, so a
+  // word crossed mid-stop still counts as crossed BY this stop at its end.
+  useEffect(() => {
+    if (slice.status === 'ready' && capturedFor.current !== id) {
+      capturedFor.current = id;
+      beforeStop.current = useProgress.getState().progress;
+    }
+  }, [slice.status, id]);
 
   const state = slice.state;
   const entry = state?.queue[state.index];
@@ -92,10 +173,20 @@ export default function Stop() {
     void useStopSession
       .getState()
       .finish()
-      .then(ceremony => {
-        // G4 first where the stop holds a card; S8·nc goes straight through.
+      .then(async ceremony => {
+        // A crossing that cannot be computed does not run — the stop still
+        // closes normally, the same stance `finish` takes on the ceremony.
+        const crossing = await firstWordCrossing(
+          beforeStop.current,
+          useProgress.getState().progress,
+        ).catch((): FirstWord | null => null);
+        setFirstWord(crossing);
+        // G4 first where the stop holds a card, then B1, then the leave;
+        // S8·nc with no crossing goes straight through.
         if (useStopSession.getState().artifactCards.length > 0) {
           setPendingCeremony(ceremony);
+        } else if (crossing !== null) {
+          setMomentCeremony(ceremony);
         } else {
           leaveTo(ceremony);
         }
@@ -144,6 +235,25 @@ export default function Stop() {
 
   // S11: the chip beside the bar is the warm-up's only new chrome.
   const warmUp = entry?.position.kind === 'exercise' && entry.position.exercise.warmUp === true;
+
+  // B1 is its own frame: the crossing replaces the stop chrome until Keep going.
+  if (momentCeremony !== null && firstWord !== null) {
+    return (
+      <View
+        className="flex-1 bg-surface-app"
+        style={{paddingTop: insets.top, paddingBottom: insets.bottom}}
+      >
+        <FirstWordMoment
+          bo={firstWord.bo}
+          reading={firstWord.reading}
+          gloss={firstWord.gloss}
+          said={firstWord.said}
+          waitsAt={firstWord.waitsAt}
+          onKeepGoing={() => leaveTo(momentCeremony)}
+        />
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-surface-app" style={{paddingTop: insets.top}}>
@@ -216,7 +326,12 @@ export default function Stop() {
         onKeepGoing={() => {
           const ceremony = pendingCeremony;
           setPendingCeremony(null);
-          leaveTo(ceremony ?? {kind: 'none'});
+          // B1 stands after the G4 beat and before the ceremony routing.
+          if (firstWord !== null) {
+            setMomentCeremony(ceremony ?? {kind: 'none'});
+          } else {
+            leaveTo(ceremony ?? {kind: 'none'});
+          }
         }}
       />
     </View>
