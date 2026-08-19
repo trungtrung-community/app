@@ -45,7 +45,8 @@
         }
       ],
       "expo-asset",
-      "./plugins/without-push-entitlement"
+      "./plugins/without-push-entitlement",
+      "expo-sharing"
     ],
     "extra": {
       "router": {},
