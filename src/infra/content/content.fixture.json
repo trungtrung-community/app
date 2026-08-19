@@ -1,5 +1,5 @@
 {
-  "content_version": "a0a1ad0c6e0eddc0",
+  "content_version": "8adfbb2c2826e5e5",
   "schema_version": 3,
   "districts": [
     {
@@ -881,7 +881,7 @@
       "district_number": 1,
       "bo": "ག་ཚོད",
       "roman": "khaatshö",
-      "en": "how many",
+      "en": "how many / how much",
       "en_definition": null,
       "wylie": "ga tshod",
       "thl": "ga tsö",

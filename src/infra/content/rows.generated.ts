@@ -10,7 +10,7 @@
  * engine must never see a database row.
  *
  * schema_version  3
- * content_version a0a1ad0c6e0eddc0
+ * content_version 8adfbb2c2826e5e5
  */
 
 /**
@@ -30,7 +30,7 @@ export const CONTENT_SCHEMA_VERSION = 3;
  * against what the copied file reports and re-imports when they differ, which
  * is safe because progress lives in MMKV and never in the content database.
  */
-export const CONTENT_VERSION = "a0a1ad0c6e0eddc0";
+export const CONTENT_VERSION = "8adfbb2c2826e5e5";
 
 /** collection — 0 rows in this build. */
 export type CollectionRow = {
