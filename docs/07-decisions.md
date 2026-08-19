@@ -30,6 +30,130 @@ Every session that decides something appends here.*
 | O21 | ~~Check 53 gates a **handed, historical** board order~~ | — | **Closed** 2026-08-16: **retire the check.** The file it guards became a record of what was actually asked, and a gate that can only be silenced by damaging the record is not a gate. `validate_read` drops to 58 checks and goes fully green, so the next red result means something. `board_prompt.py` was never run to green it. |
 | O22 | ~~Where does the **card of the day** keep its daily entrance?~~ | — | **Closed** 2026-08-16 by removing the thing it asked about: **`T1` retires.** `Q1` and `G1` were both rejected as pollution, and Thosam declined a Journey row. A surface with no entrance cannot be "a reason to open it on a quiet day", so it is parked rather than left orphaned. Takes O8's widget with it. |
 
+## 2026-08-19 — V5's two buttons map onto §6's notches; the pile is the deck's job
+
+**Got it → `recordCorrect`. Again → `recordMiss` at most once per item per
+session** (`src/usecases/submit-drill-answer.ts`, carried by the deck's
+`firstTime` flag): a learner cycling one card three times in a sitting has
+slipped once, and three notches down for one gap would triple-punish it.
+**Again also re-inserts the card at the back of the pile and grows the
+`n of m` total by one** (`src/engine/flashcards.ts` — the queue only grows,
+the index only increments, so the counter never moves backwards). The division
+is the decision: the in-session pile is the deck's job, the notch is the
+scheduler's, and neither reaches into the other.
+
+## 2026-08-19 — Q2's "scheduler's order" is defined
+
+§4.6's table has said "interleaved, scheduler's order" since 2026-08-15 and
+nothing defined it. Now (`dueOrder`, `src/usecases/drill-plan.ts`): **most
+overdue first — `dueOn` ascending, never-due last — then weakest,
+`intervalIndex` ascending, ties broken by a seeded shuffle; words and phrases
+then interleave by alternating draw** while both lists have items, the longer
+tail following in order. Deterministic given progress + seed: the shuffle runs
+first and the sort is stable, so a test asserts the exact order and two opens
+of the same review on the same day draw the same session.
+
+## 2026-08-19 — Drills feed the scheduler exactly like stops — minus the stop
+
+**A drill's `ended` stamps `walkedOn` and never `completedStops`**
+(`src/usecases/submit-drill-answer.ts`): a drill completes no stop, and the day
+still counts because §6 reads "days walking: any day with ≥1 completed
+stop/drill/review". **Synthesized pair boards carry no per-item identity and
+record nothing** — every board is dealt with `itemId: null`
+(`src/usecases/drill-plan.ts`), the engine emits no item event for a null-item
+exercise, and that is §3's rule kept: a wrong pair shakes, no miss, ever.
+Everything else is parity by design — correct and missed fold exactly as the
+stop path folds them, so the scheduler cannot tell where an answer was earned.
+
+## 2026-08-19 — The presentation ladder supersedes the bare allow-list
+
+*This amends the same-day `RENDERABLE_PRESENTATIONS` entry below, which
+recorded the pre-ladder behaviour so the ladder had something exact to
+replace.*
+
+**Each audio-gated type resolves down a two-rung ladder
+`[audioForm, silentSibling]`** (`AUDIO_LADDER`,
+`src/usecases/exercise-seed.ts` — shared by the stop and drill planners, so
+the two cannot drift): unblocked, the audio form is preferred, and **a
+legal-but-unrenderable audio form falls through to its silent sibling** rather
+than hiding. That closes the trap the entry below names: under the
+blockedOn-only rule, the day recordings landed every listen-pick and
+phrase-recognise would have resolved to its own unrenderable name and vanished
+— 184 of the fixture's 430 drills. An oracle test now pins it
+(`tests/integration/stop-session.test.ts`): the whole fixture planned with
+audio available loses nothing. **see-it-say-it is corrected to tap-select**
+per docs/03 §1 / RB7 — the name says "say" and the answer is a tap; the mic is
+RB13's job — so its four fixture drills render, and the fixture's planned
+count moves 363 → 367.
+
+## 2026-08-19 — phrase-arrange is double-gated; two families are deferred, not forgotten
+
+**phrase-arrange takes the audio gate AND the board's REVIEW-2 flag.** 178
+phrase chunk boundaries are unconfirmed, so a chip tray built from them could
+drill a wrong segmentation. The named constant `EXCLUDED_UNTIL_REVIEWED`
+(`src/usecases/exercise-seed.ts`) excludes it even where the ladder would run
+it — audio landing must not lift the gate silently; the entry is deleted when
+REVIEW-2 closes, and nowhere else. **phrase-cloze hides**: its ladder rung has
+no silent sibling because §7 offers none, and no renderer exists yet, so
+today it hides in every context rather than substituting into something the
+spec never sanctioned. **E7 just-listen is deferred by absence** — the 16-type
+exercise union carries no just-listen at all; a passive playback family with
+no takes to play generates no records, and there is nothing to gate.
+
+## 2026-08-19 — The artifact-card beat leaves the position stream
+
+**The fixture places G4's card after `end`, where no queue position could ever
+render it** — so `planSession` lifts artifact item ids into
+`SessionSeed.artifacts` (`src/usecases/session-plan.ts`,
+`src/engine/session.ts`) and they never enter the queue: the progress bar
+never counts them, and nothing shortens when a card is absent. **The G4→G3
+beat rides over S8 as UI**: the ending flow pushes the same card route the
+shelves open — `src/usecases/find-artifact-card.ts` resolves an item id to
+`/card/{collection}/{ordinal}` — rather than the engine growing a position
+kind for a beat that is not an exercise. Null is an answer there, not an
+error: 112 of 185 stops hold no artifact.
+
+## 2026-08-19 — Mid-stop resume: a strict snapshot, and a fourth store
+
+**The engine state is snapshotted to the new `AppState` port after every
+commit and restored on entry only when the stop and the content version both
+match** (`src/usecases/resume-stop.ts`). Any mismatch — a different stop,
+moved content, structure the engine no longer recognises, an envelope whose
+inner `stopId` disagrees with it — discards the snapshot and the stop
+re-enters from the start under the S4·r framing: better to walk a stop again
+than to run the engine on a state it never produced. Validation is structural
+and tolerant of extra fields, so a newer build's snapshot is not discarded
+for having grown. **`AppStateStore` is a fourth store, split from settings on
+stakes** (`src/ports/app-state-store.ts`): settings are choices a learner made
+and can change on a screen; app state is the device's bookkeeping — losing it
+loses continuity, never preferences. The codec and port landed unwired
+(385fbd5, and the file says so); the snapshot-after-commit wiring joins
+`useStopSession` with the concurrent engine work.
+
+## 2026-08-19 — Reminders: a rolling window that runs out
+
+**At most 60 one-off local notifications, regenerated on every foreground**
+(`src/usecases/reminder-plan.ts`, `src/ports/reminder-scheduler.ts`). N1's
+60-idle-day silence promise holds *by construction*: the window only rolls
+forward when the app runs, so an untouched phone goes quiet on day 60 with no
+code running at all — a repeating trigger could never keep that promise.
+iOS's 64-pending cap is the independent sizing bound; 60 fits under it with
+room to spare and happens to be exactly the promise. **The `at` is an
+offset-less local ISO string** — `19:00` means the learner's wall clock
+whichever city they wake up in, and a string over a `Date` keeps the port
+JSON-pure, so a plan can be logged and diffed without instants collapsing to
+epoch numbers.
+
+## 2026-08-19 — Y4's docked "Practise these" is out of scope for v1
+
+**The board's Y4 word list docks a "Practise these" action, and it names a
+pool the §4.6 table does not carry** — the table's pools are everything · one
+district · one material type within a district · one stop, and an arbitrary
+word list is none of them. §4.6's own rule is that "a new pool costs a scope,
+not a screen" — but a scope is still a cost, and nothing else in v1 needs one.
+Logged here so the pool table's next revision decides it, rather than a screen
+deciding it by shipping. Cross-referenced in `docs/09`'s deferred list.
+
 ## 2026-08-19 — The option-shuffle contract, recorded as implemented
 
 **Stored order is answer-first; presented order never is.** Every answer-bearing
@@ -63,7 +187,8 @@ The day a take lands, the substitution stops, `listen-pick` is its own
 presentation, and the drill vanishes from the plan — adding audio would remove
 exercises. **A redesign is planned — a presentation ladder** — to close that
 audio-landing trap; this entry records the standing behaviour so the ladder has
-something exact to replace.
+something exact to replace. **Amended 2026-08-19, the same day: the ladder
+landed (42ffb71) — see the entry above.**
 
 ## 2026-08-19 — CI runs a reduced gate; the full gate stays on pre-push
 

@@ -315,4 +315,6 @@ gaps are named so they read as decisions, not oversights.*
 Monetisation surface (free + support option stands) · localisation ·
 tablet & landscape · reset/relearn per district (Y6 wipes everything; V5
 undo covers the flashcard mis-tap) · B1 tier / grammar (different content
-model, different document).
+model, different document) · Y4's docked "Practise these" (names a word-list
+pool the §4.6 table does not carry; the pool table's next revision decides it
+— `docs/07`, 2026-08-19).
