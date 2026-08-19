@@ -31,6 +31,16 @@ import {DRILL_MODES, type DrillModeId} from './drill-modes';
 import type {DrillPool, DrillSet} from './drill-pool';
 import {toSeedExercise, type PlanContext} from './exercise-seed';
 
+// The store reaches the engine only through this layer — as start-stop.ts does
+// for the stop, the drill session's moving parts travel with the planner that
+// seeds them.
+export {seededRng} from '../engine/rng';
+export type {Rng} from '../engine/rng';
+export {createSession} from '../engine/session';
+export type {SessionState} from '../engine/session';
+export {createDeck} from '../engine/flashcards';
+export type {FlashDeckState, FlashRating} from '../engine/flashcards';
+
 /** Which of the pool — §4.6's second parameter. */
 export type DrillSelection = 'all' | 'due-today' | 'still-getting';
 
