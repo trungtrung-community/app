@@ -79,7 +79,13 @@ gaps are named so they read as decisions, not oversights.*
    native reviewer alongside content.
 5. **Shared-card artwork pipeline** — H2/H3 compositions are drawn; the
    actual 1:1 and 9:16 export rendering (and whether a share links back)
-   is unbuilt.
+   is unbuilt. 2026-08-19: the export pipeline is built — H1's sheet on the
+   card screen captures the `ShareCard` at 1080×1080 and 1080×1920 and hands
+   it to the system share sheet, with no link back (the composition's
+   no-URL, no-call-to-action rule held). What remains is the artwork itself:
+   until gap 8 produces illustrations, the export renders the placeholder
+   box deliberately — a shared card says "Card illustration" where the art
+   will be.
 6. **Mascot/logo assets** — no drawn logo; wordmark stands in. Crane pose
    set is small (rest, flight for J4). 2026-08-19: the J4 route ships with a
    fixed-size neutral placeholder block where the crane-in-flight belongs,
