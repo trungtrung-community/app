@@ -237,6 +237,13 @@ describe('the metronome — the five signed conditions of docs/07 (2026-08-07)',
     vi.useRealTimers();
   });
 
+  // Fake only the metronome's own timers. Faking requestAnimationFrame would
+  // replace the guarded frame scheduler vitest.setup.ts installs, and a
+  // torn-down Reanimated mapper firing inside advanceTimersByTime would then
+  // escape the guard and fail the run after every assertion has passed.
+  const metronomeTimers = () =>
+    vi.useFakeTimers({toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval']});
+
   it('1 — is off by default, and nothing advances while it is off', async () => {
     // Given
     renderScreen(<TrainingGround />);
@@ -244,7 +251,7 @@ describe('the metronome — the five signed conditions of docs/07 (2026-08-07)',
     const first = cardFace();
 
     // When
-    vi.useFakeTimers();
+    metronomeTimers();
     act(() => {
       vi.advanceTimersByTime(10_000);
     });
@@ -261,7 +268,7 @@ describe('the metronome — the five signed conditions of docs/07 (2026-08-07)',
     renderScreen(<TrainingGround />);
     await frontPrompt();
     // Fake timers first, so the beat's interval registers against the fake clock.
-    vi.useFakeTimers();
+    metronomeTimers();
     fireEvent.click(screen.getByRole('switch', {name: 'Metronome'}));
     const first = cardFace();
 
@@ -278,7 +285,7 @@ describe('the metronome — the five signed conditions of docs/07 (2026-08-07)',
     // Given
     renderScreen(<TrainingGround />);
     await frontPrompt();
-    vi.useFakeTimers();
+    metronomeTimers();
     fireEvent.click(screen.getByRole('switch', {name: 'Metronome'}));
     expect(screen.getByText('72 to the minute — change it any time')).toBeTruthy();
 
@@ -298,7 +305,7 @@ describe('the metronome — the five signed conditions of docs/07 (2026-08-07)',
     // Given
     renderScreen(<TrainingGround />);
     await frontPrompt();
-    vi.useFakeTimers();
+    metronomeTimers();
     fireEvent.click(screen.getByRole('switch', {name: 'Metronome'}));
     act(() => {
       vi.advanceTimersByTime(BEAT_MS);
@@ -322,7 +329,7 @@ describe('the metronome — the five signed conditions of docs/07 (2026-08-07)',
     // Given
     renderScreen(<TrainingGround />);
     await frontPrompt();
-    vi.useFakeTimers();
+    metronomeTimers();
     fireEvent.click(screen.getByRole('switch', {name: 'Metronome'}));
     const first = cardFace();
 
