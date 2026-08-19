@@ -24,6 +24,7 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {Card} from '../../../src/components/core/card';
 import {IconButton} from '../../../src/components/core/icon-button';
 import {ListRow} from '../../../src/components/core/list-row';
+import {ModeCard} from '../../../src/components/learning/mode-card';
 import {EmptyState} from '../../../src/components/feedback/empty-state';
 import {Skeleton} from '../../../src/components/feedback/skeleton';
 import {appState} from '../../../src/composition/container';
@@ -132,6 +133,19 @@ export default function Practice() {
                   `/practice/picker?pool=${poolParam({kind: 'district', slug})}&entry=practice`,
                 )
               }
+            />
+          ) : null}
+          {/* Q6's entry — the fifth mode card (docs/03 §4.3: "a fifth mode
+              card on Q1 … plus a door from the Read section hub"). Absent
+              before any stop is done, so the first-launch empty state stays
+              the whole screen. */}
+          {load.status === 'ready' && (progress?.completedStops.length ?? 0) > 0 ? (
+            <ModeCard
+              title="Training ground"
+              body="As much as you want. Nothing here is counted."
+              icon="shuffle"
+              onPress={() => router.push('/training-ground')}
+              testID="training-ground-card"
             />
           ) : null}
         </View>

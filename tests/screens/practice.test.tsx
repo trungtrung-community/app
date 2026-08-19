@@ -136,6 +136,30 @@ describe('the practice home', () => {
     expect(push).toHaveBeenCalledWith('/practice/picker?pool=district:core&entry=practice');
   });
 
+  it('offers the training ground as the fifth mode card, and it navigates', async () => {
+    // Given
+    useProgress.setState({
+      progress: {...EMPTY, completedStops: ['stop.core.c1.1']},
+    });
+    renderScreen(<Practice />);
+    const card = await screen.findByText('Training ground');
+
+    // When
+    fireEvent.click(card);
+
+    // Then
+    expect(push).toHaveBeenCalledWith('/training-ground');
+  });
+
+  it('keeps the first launch whole — no training ground card before a stop', async () => {
+    // When — beforeEach already leaves progress null
+    renderScreen(<Practice />);
+
+    // Then
+    await screen.findByText('Practice grows as you walk');
+    expect(screen.queryByText('Training ground')).toBeNull();
+  });
+
   it('hands the still-getting row to the worth-another-look list', async () => {
     // Given
     const today = toIsoDate(new Date());
