@@ -14,6 +14,11 @@ import type {Cue} from '../../src/domain/cue';
 import fixture from '../../src/infra/content/content.fixture.json';
 import {JsonContentSource} from '../../src/infra/content/json-content-source';
 import type {ContentFixture} from '../../src/infra/content/rows.generated';
+import {
+  DEFAULT_APP_STATE,
+  type AppState,
+  type AppStateStore,
+} from '../../src/ports/app-state-store';
 import type {CuePlayer} from '../../src/ports/cue-player';
 import type {Progress, ProgressStore} from '../../src/ports/progress-store';
 import {useProgress} from '../../src/store/progress';
@@ -51,6 +56,19 @@ function memoryStore(): ProgressStore {
   };
 }
 
+function memoryAppState(): AppStateStore & {current: () => AppState} {
+  let last = DEFAULT_APP_STATE;
+  return {
+    async load() {
+      return last;
+    },
+    async save(state) {
+      last = state;
+    },
+    current: () => last,
+  };
+}
+
 /** A cue player that only counts. */
 function countingCues(): CuePlayer & {played: () => readonly Cue[]} {
   const plays: Cue[] = [];
@@ -84,6 +102,7 @@ function jumpTo(state: SessionState, index: number, patch: Partial<SessionState>
 
 describe('the stop screen', () => {
   let cues: ReturnType<typeof countingCues>;
+  let appStates: ReturnType<typeof memoryAppState>;
 
   beforeEach(() => {
     resetContainer();
@@ -91,6 +110,8 @@ describe('the stop screen', () => {
     override('progress', memoryStore());
     cues = countingCues();
     override('cues', cues);
+    appStates = memoryAppState();
+    override('appState', appStates);
     useProgress.setState({progress: null});
     useStopSession.getState().reset();
     params.id = 'stop.core.c1.1';
@@ -305,5 +326,131 @@ describe('the stop screen', () => {
     // Then — the name appears as both reading and gloss, per `letterDisplayItem`
     expect(screen.getByText('New letter')).toBeTruthy();
     expect(screen.getAllByText('gi gu').length).toBeGreaterThan(0);
+  });
+
+  it('keeps the place on x: the P4 dialog, never a straight exit', async () => {
+    // Given
+    renderScreen(<Stop />);
+    await ready();
+
+    // When — the x is pressed
+    fireEvent.click(screen.getByLabelText('Leave the stop'));
+
+    // Then — place-kept wording from the board, never loss-framed
+    expect(screen.getByText('Leave this stop?')).toBeTruthy();
+    expect(
+      screen.getByText('Your place is kept — the stop carries on where you left off.'),
+    ).toBeTruthy();
+    expect(back).not.toHaveBeenCalled();
+
+    // When — the learner keeps going
+    fireEvent.click(screen.getByText('Keep going'));
+
+    // Then — the dialog closes and nothing left
+    expect(screen.queryByText('Leave this stop?')).toBeNull();
+    expect(back).not.toHaveBeenCalled();
+
+    // When — the x again, and Leave this time
+    fireEvent.click(screen.getByLabelText('Leave the stop'));
+    fireEvent.click(screen.getByText('Leave'));
+
+    // Then
+    expect(back).toHaveBeenCalledTimes(1);
+  });
+
+  it('carries on from a parked place through the S4·r interstitial', async () => {
+    // Given — a first visit steps inside, which parks the place
+    const first = renderScreen(<Stop />);
+    fireEvent.click(await screen.findByText('Step inside'));
+    await screen.findByText('trashi delek');
+    await waitFor(() => {
+      expect(appStates.current().session).not.toBeNull();
+    });
+
+    // When — the screen dies and the stop is entered again
+    first.unmount();
+    act(() => {
+      useStopSession.getState().reset();
+    });
+    renderScreen(<Stop />);
+
+    // Then — S4·r before the queue, in the board's words
+    expect(await screen.findByText('Carrying on where you left off.')).toBeTruthy();
+    expect(screen.getByText('Carry on')).toBeTruthy();
+
+    // When — Carry on
+    fireEvent.click(screen.getByText('Carry on'));
+
+    // Then — the restored entry, not the intro
+    expect(await screen.findByText('trashi delek')).toBeTruthy();
+    expect(screen.queryByText('Step inside')).toBeNull();
+  });
+
+  it('raises the G4 sheet over the end when the stop holds an artifact', async () => {
+    // Given — stop.meeting.c1.5 carries the vocab.tibet card
+    params.id = 'stop.meeting.c1.5';
+    renderScreen(<Stop />);
+    const state = await ready();
+    const endAt = state.queue.findIndex(entry => entry.position.kind === 'end');
+    expect(endAt).toBeGreaterThan(-1);
+    jumpTo(state, endAt);
+
+    // When — Done on the recap
+    fireEvent.click(screen.getByText('Done'));
+
+    // Then — the sheet, quiet, with the crane naming the find
+    expect(await screen.findByText('You found Tibet.')).toBeTruthy();
+    expect(back).not.toHaveBeenCalled();
+
+    // When — See the card
+    fireEvent.click(screen.getByText('See the card'));
+
+    // Then — the shelf card's own route, addressed by collection and ordinal
+    expect(push).toHaveBeenCalledWith('/card/collection.land/8');
+
+    // When — Keep going
+    fireEvent.click(screen.getByText('Keep going'));
+
+    // Then — one stop does not close a circuit: back, not a ceremony
+    await waitFor(() => {
+      expect(back).toHaveBeenCalledTimes(1);
+    });
+    expect(replace).not.toHaveBeenCalled();
+  });
+
+  it('routes to the district ceremony when its last stop completes', async () => {
+    // Given — every other first-circuit stop of the district already walked
+    params.id = 'stop.core.c1.6';
+    renderScreen(<Stop />);
+    const state = await ready();
+    act(() => {
+      useProgress.getState().apply({
+        walkedOn: [],
+        items: {},
+        completedStops: [
+          'stop.core.c1.1',
+          'stop.core.c1.2',
+          'stop.core.c1.3',
+          'stop.core.c1.4',
+          'stop.core.c1.5',
+        ],
+        version: 2,
+      });
+    });
+    const endAt = state.queue.findIndex(entry => entry.position.kind === 'end');
+    expect(endAt).toBeGreaterThan(-1);
+    jumpTo(state, endAt);
+
+    // When — Done on the recap
+    fireEvent.click(screen.getByText('Done'));
+
+    // Then — the circuit closed: replace to S9, never just back
+    await waitFor(() => {
+      expect(replace).toHaveBeenCalledWith({
+        pathname: '/ceremony/district',
+        params: {slug: 'core', circuit: '1'},
+      });
+    });
+    expect(back).not.toHaveBeenCalled();
   });
 });

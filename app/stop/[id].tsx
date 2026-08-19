@@ -8,7 +8,7 @@
  */
 
 import {useLocalSearchParams, useRouter} from 'expo-router';
-import {useEffect} from 'react';
+import {useEffect, useState} from 'react';
 import {ScrollView, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
@@ -19,18 +19,22 @@ import {EmptyState} from '../../src/components/feedback/empty-state';
 import {Skeleton} from '../../src/components/feedback/skeleton';
 import {AnswerBand} from '../../src/components/learning/answer-band';
 import {ProgressBar} from '../../src/components/learning/progress-bar';
+import {ArtifactSheet, type ArtifactPage} from '../../src/components/session/artifact-sheet';
 import {EndScreen} from '../../src/components/session/end-screen';
 import {ExerciseFrame} from '../../src/components/session/exercise-frame';
 import {IntroScreen} from '../../src/components/session/intro-screen';
 import {ItemCard} from '../../src/components/session/item-card';
 import {MomentScreen} from '../../src/components/session/moment-screen';
 import {NoteCard} from '../../src/components/session/note-card';
+import {QuitDialog} from '../../src/components/session/quit-dialog';
+import {ResumeIntro} from '../../src/components/session/resume-intro';
 import {SecondLookIntro} from '../../src/components/session/second-look-intro';
 import type {Items} from '../../src/components/session/types';
 import type {ContentItemId, StopId} from '../../src/ports/content-ids';
 
 import {useStopSession} from '../../src/store/session';
 import type {SessionState} from '../../src/usecases/start-stop';
+import type {Ceremony} from '../../src/usecases/stop-ceremony';
 import type {CommitInput} from '../../src/usecases/submit-answer';
 
 export default function Stop() {
@@ -38,6 +42,22 @@ export default function Stop() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const slice = useStopSession();
+
+  const [quitOpen, setQuitOpen] = useState(false);
+  const [carriedOn, setCarriedOn] = useState(false);
+  /** Set once the ending commit lands and the G4 sheet still has to run. */
+  const [pendingCeremony, setPendingCeremony] = useState<Ceremony | null>(null);
+
+  // Adjusting state during render is React's documented pattern for reacting
+  // to a changed prop — the same navigation that restarts the session below
+  // must also re-arm the interstitials.
+  const [seenId, setSeenId] = useState(id);
+  if (seenId !== id) {
+    setSeenId(id);
+    setQuitOpen(false);
+    setCarriedOn(false);
+    setPendingCeremony(null);
+  }
 
   useEffect(() => {
     // A route param is a raw string; the brand is restored at the boundary.
@@ -47,6 +67,56 @@ export default function Stop() {
 
   const state = slice.state;
   const entry = state?.queue[state.index];
+
+  /** Where a closed stop goes: docs/04's leave grammar, or the earned ceremony. */
+  const leaveTo = (ceremony: Ceremony) => {
+    switch (ceremony.kind) {
+      case 'district-finished':
+        router.replace({
+          pathname: '/ceremony/district',
+          params: {slug: ceremony.slug, circuit: String(ceremony.circuit)},
+        });
+        break;
+      case 'first-walk-complete':
+        router.replace('/ceremony/first-walk');
+        break;
+      case 'both-walks-complete':
+        router.replace('/ceremony/finale');
+        break;
+      default:
+        router.back();
+    }
+  };
+
+  const onDone = () => {
+    void useStopSession
+      .getState()
+      .finish()
+      .then(ceremony => {
+        // G4 first where the stop holds a card; S8·nc goes straight through.
+        if (useStopSession.getState().artifactCards.length > 0) {
+          setPendingCeremony(ceremony);
+        } else {
+          leaveTo(ceremony);
+        }
+      });
+  };
+
+  // G4's pages: the artifact drawn from the session's own resolution, and the
+  // shelf address the card route wants.
+  const artifactPages: readonly ArtifactPage[] = slice.artifactCards.map(found => {
+    const item =
+      found.card.itemId === null
+        ? undefined
+        : slice.itemsById.get(found.card.itemId as ContentItemId);
+    return {
+      bo: item?.bo ?? '',
+      roman: item?.roman,
+      gloss: item?.en ?? '',
+      collectionId: found.collection.id,
+      ordinal: found.ordinal,
+    };
+  });
 
   // One cue per band: the effect keys on the answered entry's identity plus its
   // verdict, so a re-render of the same band cannot fire twice and the next
@@ -78,7 +148,7 @@ export default function Stop() {
   return (
     <View className="flex-1 bg-surface-app" style={{paddingTop: insets.top}}>
       <View className="flex-row items-center gap-3 px-5 py-2">
-        <IconButton icon="x" label="Leave the stop" onPress={() => router.back()} />
+        <IconButton icon="x" label="Leave the stop" onPress={() => setQuitOpen(true)} />
         <View className="flex-1">
           <ProgressBar
             testID="stop-progress"
@@ -99,6 +169,16 @@ export default function Stop() {
         state === null ||
         entry === undefined ? (
         <StopSkeleton />
+      ) : slice.resumed && !carriedOn ? (
+        <ScrollView className="flex-1">
+          <View className="gap-4 px-5 pb-32 pt-4">
+            <ResumeIntro
+              stopName={slice.stop?.name ?? ''}
+              capabilities={slice.stop?.capabilities ?? []}
+              onCarryOn={() => setCarriedOn(true)}
+            />
+          </View>
+        </ScrollView>
       ) : (
         <ScrollView className="flex-1">
           <View className="gap-4 px-5 pb-32 pt-4">
@@ -109,9 +189,7 @@ export default function Stop() {
               stopName={slice.stop?.name ?? ''}
               outcome={slice.stop?.outcome ?? ''}
               onCommit={input => void slice.commit(input)}
-              onDone={() => {
-                void slice.commit({kind: 'finish'}).then(() => router.back());
-              }}
+              onDone={onDone}
             />
           </View>
         </ScrollView>
@@ -123,6 +201,24 @@ export default function Stop() {
           onNext={() => void slice.commit({kind: 'continue'})}
         />
       ) : null}
+      <QuitDialog
+        open={quitOpen}
+        onKeepGoing={() => setQuitOpen(false)}
+        onLeave={() => {
+          setQuitOpen(false);
+          router.back();
+        }}
+      />
+      <ArtifactSheet
+        open={pendingCeremony !== null}
+        pages={artifactPages}
+        onSeeCard={page => router.push(`/card/${page.collectionId}/${page.ordinal}`)}
+        onKeepGoing={() => {
+          const ceremony = pendingCeremony;
+          setPendingCeremony(null);
+          leaveTo(ceremony ?? {kind: 'none'});
+        }}
+      />
     </View>
   );
 }

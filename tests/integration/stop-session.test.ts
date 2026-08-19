@@ -10,11 +10,19 @@
  * dependency rules bar a use-case test from importing infra.
  */
 
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it, vi} from 'vitest';
 
 import fixture from '../../src/infra/content/content.fixture.json';
 import {JsonContentSource} from '../../src/infra/content/json-content-source';
 import type {ContentFixture} from '../../src/infra/content/rows.generated';
+import {override, resetContainer} from '../../src/composition/container';
+import {
+  DEFAULT_APP_STATE,
+  type AppState,
+  type AppStateStore,
+} from '../../src/ports/app-state-store';
+import {useProgress} from '../../src/store/progress';
+import {useStopSession} from '../../src/store/session';
 
 import {isoDate} from '../../src/domain/date';
 import {seededRng} from '../../src/engine/rng';
@@ -171,6 +179,103 @@ describe('walking stop.core.c1.1 end to end', () => {
     const missedId = state.stillMissed[0] ?? '';
     expect(progress.items[missedId]?.missedOn).toEqual([TODAY]);
     expect(progress.completedStops).toEqual([STOP_ID]);
+  });
+});
+
+function memoryAppState(): AppStateStore & {current: () => AppState} {
+  let last = DEFAULT_APP_STATE;
+  return {
+    async load() {
+      return last;
+    },
+    async save(state) {
+      last = state;
+    },
+    current: () => last,
+  };
+}
+
+describe('parking and resuming through the session store', () => {
+  it('resumes a parked commit after a kill, and finishing clears the park', async () => {
+    // Given — one device: the app-state store survives, the session slice does not
+    const appStates = memoryAppState();
+    resetContainer();
+    override('content', new JsonContentSource(fixture as unknown as ContentFixture));
+    override('progress', memoryStore());
+    override('appState', appStates);
+    useProgress.setState({progress: null});
+    useStopSession.getState().reset();
+
+    // When — the learner steps inside, which is the first commit
+    await useStopSession.getState().start(STOP_ID);
+    expect(useStopSession.getState().resumed).toBe(false);
+    await useStopSession.getState().commit({kind: 'continue'});
+
+    // Then — the place is parked behind the commit
+    await vi.waitFor(() => {
+      expect(appStates.current().session).not.toBeNull();
+    });
+
+    // When — the process dies and the stop is entered again
+    useStopSession.getState().reset();
+    await useStopSession.getState().start(STOP_ID);
+
+    // Then — the place was kept: same stop, same index, resumed for S4·r
+    expect(useStopSession.getState().resumed).toBe(true);
+    expect(useStopSession.getState().state?.index).toBe(1);
+
+    // When — the session runs to its end and finishes
+    const restored = useStopSession.getState().state;
+    if (restored === null) {
+      throw new Error('resumed without a session state');
+    }
+    const endAt = restored.queue.findIndex(entry => entry.position.kind === 'end');
+    expect(endAt).toBeGreaterThan(-1);
+    useStopSession.setState({state: {...restored, index: endAt}});
+    const ceremony = await useStopSession.getState().finish();
+
+    // Then — no ceremony off one stop, the park is cleared, re-entry is fresh
+    expect(ceremony).toEqual({kind: 'none'});
+    await vi.waitFor(() => {
+      expect(appStates.current().session).toBeNull();
+    });
+    useStopSession.getState().reset();
+    await useStopSession.getState().start(STOP_ID);
+    expect(useStopSession.getState().resumed).toBe(false);
+    expect(useStopSession.getState().state?.index).toBe(0);
+  });
+
+  it('refuses a snapshot cut against a different content version', async () => {
+    // Given — a parked session whose contentVersion has moved on
+    const appStates = memoryAppState();
+    resetContainer();
+    const source = new JsonContentSource(fixture as unknown as ContentFixture);
+    override('content', source);
+    override('progress', memoryStore());
+    override('appState', appStates);
+    useProgress.setState({progress: null});
+    useStopSession.getState().reset();
+    await useStopSession.getState().start(STOP_ID);
+    await useStopSession.getState().commit({kind: 'continue'});
+    await vi.waitFor(() => {
+      expect(appStates.current().session).not.toBeNull();
+    });
+    const parked = appStates.current().session;
+    if (parked === null) {
+      throw new Error('nothing parked');
+    }
+    await appStates.save({
+      ...appStates.current(),
+      session: {...parked, contentVersion: 'someone-elses-build'},
+    });
+
+    // When
+    useStopSession.getState().reset();
+    await useStopSession.getState().start(STOP_ID);
+
+    // Then — the honest fallback: the stop re-enters from the start
+    expect(useStopSession.getState().resumed).toBe(false);
+    expect(useStopSession.getState().state?.index).toBe(0);
   });
 });
 
