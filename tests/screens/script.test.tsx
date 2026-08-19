@@ -42,6 +42,8 @@ const VOWELS = LETTERS.filter(letter => letter.subtype === 'vowel').sort((a, b) 
   (a.mark_cp ?? '').localeCompare(b.mark_cp ?? ''),
 );
 
+const COMBINERS = (fixture as unknown as {combiner: {id: string; position: string}[]}).combiner;
+
 const {push} = vi.hoisted(() => ({push: vi.fn()}));
 vi.mock('expo-router', () => ({
   useRouter: () => ({push}),
@@ -118,5 +120,35 @@ describe('the script browser', () => {
     // Then
     expect(screen.getByRole('button', {name: met.letter_name ?? ''})).toBeTruthy();
     expect(screen.queryByRole('button', {name: THIRTY[1]!.letter_name ?? ''})).toBeNull();
+  });
+
+  it('collapses the combiner sets into chevrons, counts from the fixture', async () => {
+    // Given
+    const superscripts = COMBINERS.filter(combiner => combiner.position === 'superscript');
+    const subscripts = COMBINERS.filter(combiner => combiner.position === 'subscript');
+
+    // When
+    renderScreen(<Script />);
+
+    // Then
+    expect(
+      await screen.findByRole('button', {name: `Superscripts · ${superscripts.length}`}),
+    ).toBeTruthy();
+    expect(screen.getByRole('button', {name: `Subscripts · ${subscripts.length}`})).toBeTruthy();
+  });
+
+  it('opens the combiner index from a collapsed row', async () => {
+    // Given
+    renderScreen(<Script />);
+    const superscripts = COMBINERS.filter(combiner => combiner.position === 'superscript');
+    const row = await screen.findByRole('button', {
+      name: `Superscripts · ${superscripts.length}`,
+    });
+
+    // When
+    fireEvent.click(row);
+
+    // Then
+    expect(push).toHaveBeenCalledWith('/combiner');
   });
 });

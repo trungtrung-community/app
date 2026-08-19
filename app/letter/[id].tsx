@@ -6,12 +6,16 @@
  * numeral, recognition-only for the Sanskrit letters. Where the letter is also
  * a Speak word the learner knows, that word is a door.
  *
- * The board's fuller sheet — "what can attach" with its per-root counts,
- * "appears in" with decodable words, and the drill button — is the reverse
- * lookup over stacks, affixes and read-words, which needs port capabilities
- * the content source does not serve yet. Those blocks arrive with the ports
- * task; a consonant's vowel combinations are part of the same lookup and wait
- * with them.
+ * For one of the thirty, the reverse lookup: "what can attach" is counted from
+ * the stack records whose root this letter is (prefixes, superscripts,
+ * subscripts) and from the affix inventory (suffixes, which may follow any
+ * root); the vowel row is the letter's slice of the `grid` syllable family,
+ * shown where the adapter carries it; "appears in" is the Read words whose
+ * base letters include this one, through the domain's own decomposition.
+ *
+ * Still absent rather than disabled: the "see the whole table" link (L5 has no
+ * route) and the drill button (the drill machine has no letter mode scoped to
+ * one letter yet).
  */
 
 import {useLocalSearchParams, useRouter} from 'expo-router';
@@ -24,21 +28,72 @@ import {Skeleton} from '../../src/components/feedback/skeleton';
 import {AudioButton} from '../../src/components/learning/audio-button';
 import {TibetanText} from '../../src/components/learning/tibetan-text';
 import type {LetterId} from '../../src/ports/content-ids';
-import type {Letter, VocabularyItem} from '../../src/ports/content-model';
+import type {
+  Affix,
+  Letter,
+  ReadWord,
+  Stack,
+  Syllable,
+  VocabularyItem,
+} from '../../src/ports/content-model';
 
+import {lettersOf} from '../../src/domain/tibetan';
 import {useContent} from '../../src/store/use-content';
+
+/** Enough to show the pattern without shelving the whole word list on one sheet. */
+const APPEARS_IN_LIMIT = 6;
+
+/** One row of the reverse lookup: the role, and the letters that fill it. */
+type AttachRow = {
+  readonly label: string;
+  readonly glyphs: readonly string[];
+};
+
+type SheetData = {
+  letter: Letter;
+  speak: VocabularyItem | null;
+  /** What may attach to this root, counted from the records. Empty off the thirty. */
+  attach: readonly AttachRow[];
+  /** The letter's slice of the `grid` vowel family, where the adapter carries it. */
+  vowelForms: readonly Syllable[];
+  /** Read words whose base letters include this one. */
+  appearsIn: readonly ReadWord[];
+};
 
 export default function LetterSheet() {
   const {id} = useLocalSearchParams<{id: string}>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const load = useContent(
+  const load = useContent<SheetData>(
     async source => {
       // A route param is a raw string; the brand is restored here, at the boundary.
       const letter = await source.getLetter(id as LetterId);
-      const speak = letter.speakRef === null ? null : await source.getVocabulary(letter.speakRef);
-      return {letter, speak};
+      const inThirty = letter.subtype === 'consonant' && letter.row !== null;
+      const [speak, letters, stacks, affixes, sections, words] = await Promise.all([
+        letter.speakRef === null ? null : source.getVocabulary(letter.speakRef),
+        source.listLetters(),
+        inThirty ? source.listStacks() : [],
+        inThirty ? source.listAffixes() : [],
+        inThirty ? source.listSections('read') : [],
+        source.listReadWords(),
+      ]);
+      const lastSection = Math.max(0, ...sections.map(section => section.number));
+      const vowelForms = inThirty
+        ? (await source.listSyllables('grid', lastSection)).filter(
+            syllable => syllable.root === letter.bo,
+          )
+        : [];
+      const appearsIn = words
+        .filter(word => lettersOf(word.bo).includes(letter.bo))
+        .slice(0, APPEARS_IN_LIMIT);
+      return {
+        letter,
+        speak,
+        attach: inThirty ? attachRows(letter, stacks, affixes, letters) : [],
+        vowelForms,
+        appearsIn,
+      };
     },
     [id],
   );
@@ -69,6 +124,11 @@ export default function LetterSheet() {
             {load.data.speak !== null ? (
               <SpeakDoor word={load.data.speak} onOpen={wordId => router.push(`/word/${wordId}`)} />
             ) : null}
+            {load.data.attach.length > 0 ? <AttachBlock rows={load.data.attach} /> : null}
+            {load.data.vowelForms.length > 0 ? (
+              <VowelRow letter={load.data.letter} forms={load.data.vowelForms} />
+            ) : null}
+            {load.data.appearsIn.length > 0 ? <AppearsIn words={load.data.appearsIn} /> : null}
           </>
         ) : null}
       </View>
@@ -87,6 +147,123 @@ function SpeakDoor({word, onOpen}: SpeakDoorProps) {
     <View className="gap-2">
       <Text className="type-label text-fg-muted uppercase">Also a word you know</Text>
       <Tag onPress={() => onOpen(word.id)}>{`${word.roman} · ${word.en}`}</Tag>
+    </View>
+  );
+}
+
+/**
+ * The reverse lookup's rows, every count read off the records.
+ *
+ * Prefixes, superscripts and subscripts come from the stacks whose root this
+ * letter is; suffixes from the affix inventory, where `mayFollowAnyRoot` is the
+ * record's own answer to whether the row applies here. Letters are ordered as
+ * the thirty orders them.
+ */
+function attachRows(
+  letter: Letter,
+  stacks: readonly Stack[],
+  affixes: readonly Affix[],
+  letters: readonly Letter[],
+): readonly AttachRow[] {
+  const order = new Map(
+    letters
+      .filter(candidate => candidate.row !== null)
+      .map(candidate => [candidate.bo, (candidate.row ?? 0) * 100 + (candidate.column ?? 0)]),
+  );
+  const sorted = (glyphs: readonly string[]): readonly string[] =>
+    [...new Set(glyphs)].sort((a, b) => (order.get(a) ?? 0) - (order.get(b) ?? 0));
+
+  const onRoot = stacks.filter(stack => stack.slots.root === letter.bo);
+  const prefixes = sorted(onRoot.map(stack => stack.slots.prefix).filter(glyph => glyph !== null));
+  const superscripts = sorted(
+    onRoot.map(stack => stack.slots.superscript).filter(glyph => glyph !== null),
+  );
+  const subscripts = sorted(onRoot.flatMap(stack => stack.slots.subscript ?? []));
+  const suffixes = affixes.filter(
+    affix => affix.type === 'suffix' && affix.mayFollowAnyRoot === true,
+  );
+
+  const rows: AttachRow[] = [];
+  if (prefixes.length > 0) {
+    rows.push({label: `Prefixes · ${prefixes.length}`, glyphs: prefixes});
+  }
+  if (superscripts.length > 0) {
+    rows.push({label: `Superscripts · ${superscripts.length}`, glyphs: superscripts});
+  }
+  if (subscripts.length > 0) {
+    rows.push({label: `Subscripts · ${subscripts.length}`, glyphs: subscripts});
+  }
+  if (suffixes.length > 0) {
+    rows.push({
+      label: `Suffixes · all ${suffixes.length}`,
+      glyphs: sorted(suffixes.map(affix => affix.bo)),
+    });
+  }
+  return rows;
+}
+
+type AttachBlockProps = {
+  rows: readonly AttachRow[];
+};
+
+/** "What can attach": the role rows, counted rather than approximated. */
+function AttachBlock({rows}: AttachBlockProps) {
+  return (
+    <View className="gap-2">
+      <Text className="type-label text-fg-muted uppercase">What can attach</Text>
+      {rows.map(row => (
+        <View key={row.label} className="flex-row items-baseline gap-3">
+          <Text className="w-[112px] type-body-strong text-fg-heading">{row.label}</Text>
+          <TibetanText inline size="sm">
+            {row.glyphs.join(' ')}
+          </TibetanText>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+type VowelRowProps = {
+  letter: Letter;
+  forms: readonly Syllable[];
+};
+
+/** The letter with each vowel mark, from its slice of the grid family. */
+function VowelRow({letter, forms}: VowelRowProps) {
+  return (
+    <View className="gap-2">
+      <Text className="type-label text-fg-muted uppercase">{`With a vowel · ${forms.length}`}</Text>
+      <View className="flex-row flex-wrap items-baseline gap-3">
+        <TibetanText inline size="sm">
+          {[letter.bo, ...forms.map(form => form.bo)].join(' ')}
+        </TibetanText>
+      </View>
+    </View>
+  );
+}
+
+type AppearsInProps = {
+  words: readonly ReadWord[];
+};
+
+/** Read words this letter is written in, by the domain's own decomposition. */
+function AppearsIn({words}: AppearsInProps) {
+  return (
+    <View className="gap-2">
+      <Text className="type-label text-fg-muted uppercase">Appears in</Text>
+      {words.map(word => (
+        <View key={word.id} className="flex-row items-center gap-3">
+          <TibetanText inline size="sm">
+            {word.bo}
+          </TibetanText>
+          {word.reading !== null ? (
+            <Text className="type-caption text-fg-accent">{word.reading}</Text>
+          ) : null}
+          {word.glosses.length > 0 ? (
+            <Text className="type-caption text-fg-muted">{word.glosses.join(', ')}</Text>
+          ) : null}
+        </View>
+      ))}
     </View>
   );
 }

@@ -6,24 +6,26 @@
  * progress; the filter tags narrow the grid to either. Every tile opens the
  * letter sheet (L2).
  *
- * The board also draws collapsed "what combines with them" rows — prefixes,
- * suffixes, second suffixes, superscripts, subscripts, numerals — as chevrons
- * into the combiner index (L7). L7 needs port capabilities the content source
- * does not serve yet, and a chevron row that opens nothing would be a disabled
- * door, so those rows are absent until the ports task lands them.
+ * Below the grid, the two combiner rows — superscripts and subscripts — are
+ * chevrons into the combiner index (L7), their counts and letters read off
+ * `listCombiners`. The board's other collapsed rows (prefixes, suffixes,
+ * second suffixes, numerals) wait on the affix and numeral tables L3–L5,
+ * which have no routes yet, so they stay absent rather than disabled.
  */
 
 import {useRouter} from 'expo-router';
 import {useState} from 'react';
-import {ScrollView, Text, View} from 'react-native';
+import {Pressable, ScrollView, Text, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
+import {Icon} from '../../src/components/core/icon';
 import {IconButton} from '../../src/components/core/icon-button';
 import {Tag} from '../../src/components/core/tag';
 import {EmptyState} from '../../src/components/feedback/empty-state';
 import {Skeleton} from '../../src/components/feedback/skeleton';
 import {LetterTile} from '../../src/components/learning/letter-tile';
-import type {Letter} from '../../src/ports/content-model';
+import {TibetanText} from '../../src/components/learning/tibetan-text';
+import type {Combiner, Letter} from '../../src/ports/content-model';
 import type {Progress} from '../../src/ports/progress-store';
 
 import {selectItemState, useProgress} from '../../src/store/progress';
@@ -37,7 +39,10 @@ export default function Script() {
   const progress = useProgress(s => s.progress);
   const [filter, setFilter] = useState<MetFilter>('all');
 
-  const load = useContent(source => source.listLetters(), []);
+  const load = useContent(async source => {
+    const [letters, combiners] = await Promise.all([source.listLetters(), source.listCombiners()]);
+    return {letters, combiners};
+  }, []);
 
   return (
     <View className="flex-1 bg-surface-app" style={{paddingTop: insets.top}}>
@@ -59,11 +64,13 @@ export default function Script() {
       ) : null}
       {load.status === 'ready' ? (
         <Browser
-          letters={load.data}
+          letters={load.data.letters}
+          combiners={load.data.combiners}
           progress={progress}
           filter={filter}
           onFilter={setFilter}
           onLetter={id => router.push(`/letter/${id}`)}
+          onCombiners={() => router.push('/combiner')}
         />
       ) : null}
     </View>
@@ -72,13 +79,23 @@ export default function Script() {
 
 type BrowserProps = {
   letters: readonly Letter[];
+  combiners: readonly Combiner[];
   progress: Progress | null;
   filter: MetFilter;
   onFilter: (filter: MetFilter) => void;
   onLetter: (id: string) => void;
+  onCombiners: () => void;
 };
 
-function Browser({letters, progress, filter, onFilter, onLetter}: BrowserProps) {
+function Browser({
+  letters,
+  combiners,
+  progress,
+  filter,
+  onFilter,
+  onLetter,
+  onCombiners,
+}: BrowserProps) {
   const thirty = letters
     .filter(letter => letter.subtype === 'consonant' && letter.row !== null)
     .sort((a, b) => (a.row ?? 0) - (b.row ?? 0) || (a.column ?? 0) - (b.column ?? 0));
@@ -138,10 +155,66 @@ function Browser({letters, progress, filter, onFilter, onLetter}: BrowserProps) 
             </View>
           </>
         ) : null}
+        {combiners.length > 0 ? (
+          <>
+            <Text className="type-label text-fg-muted pt-4 uppercase">What combines with them</Text>
+            <CombinerRow
+              label="Superscripts"
+              combiners={combiners.filter(combiner => combiner.kind === 'superscript')}
+              onPress={onCombiners}
+            />
+            <CombinerRow
+              label="Subscripts"
+              combiners={combiners.filter(combiner => combiner.kind === 'subscript')}
+              onPress={onCombiners}
+            />
+          </>
+        ) : null}
       </View>
     </ScrollView>
   );
 }
+
+type CombinerRowProps = {
+  label: string;
+  combiners: readonly Combiner[];
+  onPress: () => void;
+};
+
+/**
+ * One collapsed set — "Superscripts · 3" with its letters — as a chevron into
+ * the combiner index (L7). The count and the letters are read off the records:
+ * each combiner's line letter is the first character of its traditional name.
+ */
+function CombinerRow({label, combiners, onPress}: CombinerRowProps) {
+  if (combiners.length === 0) {
+    return null;
+  }
+  const glyphs = combiners
+    .map(combiner => Array.from(combiner.nameBo ?? '')[0])
+    .filter(glyph => glyph !== undefined);
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${label} · ${combiners.length}`}
+      onPress={onPress}
+      className="flex-row items-center gap-3 rounded-lg bg-surface-card p-4"
+    >
+      <View className="flex-1 gap-1">
+        <Text className="type-body-strong text-fg-heading">{`${label} · ${combiners.length}`}</Text>
+        <TibetanText inline size="xs">
+          {glyphs.join(' ')}
+        </TibetanText>
+      </View>
+      <View style={CHEVRON_ROTATION}>
+        <Icon name="chevron-down" size={20} />
+      </View>
+    </Pressable>
+  );
+}
+
+/** The design system has no chevron-right; it rotates the down one, as ListRow does. */
+const CHEVRON_ROTATION = {transform: [{rotate: '-90deg'}]} as const;
 
 type Row = {readonly number: number; readonly letters: readonly Letter[]};
 
