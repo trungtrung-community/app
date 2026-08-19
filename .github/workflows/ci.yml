@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Sonar needs full history for blame and new-code detection.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      # Reduced gate: `validate` minus the three checks that read the private
+      # design-system repo (sync:design --check, check:content, sync:cards --check).
+      # The full gate runs in the local pre-push hook. See docs/07-decisions.md.
+      - run: npm run validate:ci
+
+      - run: npm run test:coverage
+
+      - name: SonarCloud scan
+        # SONAR_TOKEN is absent on fork PRs; skip instead of fail.
+        if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

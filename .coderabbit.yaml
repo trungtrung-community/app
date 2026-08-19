@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: en-US
+
+reviews:
+  path_filters:
+    - '!**/*.generated.ts'
+    - '!**/*.generated.css'
+    - '!src/infra/content/content.lock.json'
+    - '!assets/**'
+    - '!package-lock.json'
+  path_instructions:
+    - path: 'src/**'
+      instructions: >-
+        Follow docs/04-design-conventions.md and docs/05-architecture.md.
+        Layer boundaries are enforced by eslint-plugin-boundaries and
+        dependency-cruiser; flag imports that bypass the seams.
+    - path: '**/*.test.{ts,tsx}'
+      instructions: >-
+        Follow docs/11-testing-conventions.md. Given/When/Then markers are
+        bare comments; the test name carries the meaning. Component tests run
+        through react-native-web under jsdom and prove the web render path only.
