@@ -15,6 +15,9 @@ import type {Rng} from '../engine/rng';
 import type {SessionState} from '../engine/session';
 import type {Progress, ProgressStore} from '../ports/progress-store';
 
+// The store submits through this use case, so the input union travels with it.
+export type {CommitInput, SessionEvent} from '../engine/commit';
+
 export type SubmitAnswerDeps = {
   readonly store: ProgressStore;
 };

@@ -15,6 +15,12 @@ import type {DictionarySource, ExerciseSource, WalkSource} from '../ports/conten
 
 import {planSession} from './session-plan';
 
+// The store reaches the engine only through this layer, so the session's moving
+// parts travel with the use case that needs them handed in.
+export {seededRng} from '../engine/rng';
+export type {Rng} from '../engine/rng';
+export type {SessionState} from '../engine/session';
+
 export type StartStopDeps = {
   readonly walk: WalkSource;
   readonly exercises: ExerciseSource;
