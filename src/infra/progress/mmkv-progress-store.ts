@@ -25,9 +25,9 @@ export type KeyValueStore = {
 const KEY = 'progress';
 
 /** Bumped when the stored shape changes, so a restore migrates rather than guesses. */
-export const PROGRESS_VERSION = 1;
+export const PROGRESS_VERSION = 2;
 
-const EMPTY: Progress = {walkedOn: [], items: {}, version: PROGRESS_VERSION};
+const EMPTY: Progress = {walkedOn: [], items: {}, completedStops: [], version: PROGRESS_VERSION};
 
 export class MmkvProgressStore implements ProgressStore {
   constructor(private readonly storage: KeyValueStore) {}
@@ -71,9 +71,10 @@ function migrate(stored: Progress): Progress {
   if (version === PROGRESS_VERSION) {
     return stored;
   }
-  // No migrations exist yet. When the first one lands it goes here, stepwise, so
-  // a learner two versions behind is carried through each step rather than reset.
-  return {...stored, version: PROGRESS_VERSION};
+  // Records below version 2 predate completed stops. Later migrations stack here,
+  // stepwise, so a learner two versions behind is carried through each step rather
+  // than reset.
+  return {...stored, completedStops: stored.completedStops ?? [], version: PROGRESS_VERSION};
 }
 
 /**

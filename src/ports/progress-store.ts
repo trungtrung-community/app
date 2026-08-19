@@ -11,6 +11,15 @@ export type Progress = {
    */
   readonly walkedOn: readonly string[];
   readonly items: Readonly<Record<string, ItemProgress>>;
+  /**
+   * Stop ids the learner has walked to the end, in completion order.
+   *
+   * Plain strings like `items`' keys: the ids are `StopId`s from the content, but
+   * progress stores what it is given and stays ignorant of content's brands. The
+   * rail's done nodes, a district's unlock and the You tab's per-district counts
+   * all derive from this list.
+   */
+  readonly completedStops: readonly string[];
   /** Bumped when the stored shape changes, so a restore can migrate rather than guess. */
   readonly version: number;
 };

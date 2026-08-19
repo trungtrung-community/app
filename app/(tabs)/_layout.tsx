@@ -9,15 +9,26 @@
 
 import {useRouter, useSegments} from 'expo-router';
 import {TabList, TabSlot, Tabs, TabTrigger} from 'expo-router/ui';
+import {useEffect} from 'react';
 import {Text, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {TABS, TabBar} from '../../src/components/core/tab-bar';
+import {useProgress} from '../../src/store/progress';
 
 export default function TabsLayout() {
   const router = useRouter();
   const segments = useSegments();
   const insets = useSafeAreaInsets();
+
+  // Fire-and-forget: pre-hydration selectors answer as a first launch would, and a
+  // platform without the native store keeps that answer rather than crashing.
+  useEffect(() => {
+    useProgress
+      .getState()
+      .hydrate()
+      .catch(() => {});
+  }, []);
 
   // The active tab is whichever destination the current route sits under. The
   // group segment comes first, so the destination is the segment after it.

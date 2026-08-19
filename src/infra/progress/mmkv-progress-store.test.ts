@@ -37,7 +37,7 @@ class FakeKeyValueStore implements KeyValueStore {
   }
 }
 
-const EMPTY: Progress = {walkedOn: [], items: {}, version: PROGRESS_VERSION};
+const EMPTY: Progress = {walkedOn: [], items: {}, completedStops: [], version: PROGRESS_VERSION};
 
 let storage: FakeKeyValueStore;
 let store: MmkvProgressStore;
@@ -58,7 +58,12 @@ describe('load', () => {
 
   it('round-trips what was saved', async () => {
     // Given
-    const progress: Progress = {walkedOn: ['2026-08-17'], items: {}, version: PROGRESS_VERSION};
+    const progress: Progress = {
+      walkedOn: ['2026-08-17'],
+      items: {},
+      completedStops: [],
+      version: PROGRESS_VERSION,
+    };
 
     // When
     await store.save(progress);
@@ -90,6 +95,18 @@ describe('load', () => {
     expect(storage.getString('progress')).toBe('{not json');
   });
 
+  it('gives an older record an empty completed-stops list', async () => {
+    // Given — a version-1 record, from before stops were recorded
+    storage.plant('progress', JSON.stringify({walkedOn: ['2026-08-01'], items: {}, version: 1}));
+
+    // When
+    const loaded = await store.load();
+
+    // Then
+    expect(loaded.completedStops).toEqual([]);
+    expect(loaded.version).toBe(PROGRESS_VERSION);
+  });
+
   it('carries an unversioned record forward', async () => {
     // Given
     storage.plant('progress', JSON.stringify({walkedOn: ['2026-08-01'], items: {}}));
@@ -106,7 +123,12 @@ describe('load', () => {
 describe('export', () => {
   it('is indented, because a learner reads the backup file', async () => {
     // Given
-    await store.save({walkedOn: ['2026-08-17'], items: {}, version: PROGRESS_VERSION});
+    await store.save({
+      walkedOn: ['2026-08-17'],
+      items: {},
+      completedStops: [],
+      version: PROGRESS_VERSION,
+    });
 
     // When
     const exported = await store.export();
@@ -119,7 +141,12 @@ describe('export', () => {
 describe('clear', () => {
   it('leaves a first-launch record behind', async () => {
     // Given
-    await store.save({walkedOn: ['2026-08-17'], items: {}, version: PROGRESS_VERSION});
+    await store.save({
+      walkedOn: ['2026-08-17'],
+      items: {},
+      completedStops: [],
+      version: PROGRESS_VERSION,
+    });
 
     // When
     await store.clear();
