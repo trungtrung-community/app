@@ -1,14 +1,14 @@
 /**
- * @fileoverview The You tab (P1, Y1, Y2, Y6, P8) and settings (P2). Renders the
+ * @fileoverview The You tab (P1, Y1, Y2, P8) and settings (P2). Renders the
  * real route screens against the real fixture and store doubles through the
  * container, with expo-router mocked at the module seam. Phases per docs/11.
+ * The your-data screen's tests live in `data.test.tsx` since it became U1.
  */
 
 import {fireEvent, screen} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 
 import About from '../../app/(tabs)/you/about';
-import YourData from '../../app/(tabs)/you/data';
 import Districts from '../../app/(tabs)/you/districts';
 import You from '../../app/(tabs)/you/index';
 import SettingsScreen from '../../app/(tabs)/you/settings';
@@ -19,7 +19,7 @@ import fixture from '../../src/infra/content/content.fixture.json';
 import {JsonContentSource} from '../../src/infra/content/json-content-source';
 import {markTaught, newItem, type ItemId} from '../../src/domain/item';
 import type {ContentFixture} from '../../src/infra/content/rows.generated';
-import type {Progress, ProgressStore} from '../../src/ports/progress-store';
+import type {Progress} from '../../src/ports/progress-store';
 import {DEFAULT_SETTINGS, type Settings, type SettingsStore} from '../../src/ports/settings-store';
 
 import {useProgress} from '../../src/store/progress';
@@ -50,25 +50,6 @@ function fakeSettingsStore(initial: Settings): SettingsStore & {saved: () => Set
       saves.push(next);
     },
     saved: () => saves,
-  };
-}
-
-/** A progress store double with real export/clear behaviour over an in-memory record. */
-function fakeProgressStore(initial: Progress): ProgressStore {
-  let stored = initial;
-  return {
-    async load() {
-      return stored;
-    },
-    async save(next) {
-      stored = next;
-    },
-    async export() {
-      return JSON.stringify(stored, null, 2);
-    },
-    async clear() {
-      stored = EMPTY;
-    },
   };
 }
 
@@ -189,38 +170,6 @@ describe('the district progress screen', () => {
     // Then
     expect(await screen.findByText('First Words')).toBeTruthy();
     expect(screen.getByText(/^1 of \d+ words met$/)).toBeTruthy();
-  });
-});
-
-describe('the your data screen', () => {
-  beforeEach(() => {
-    override('progress', fakeProgressStore({...EMPTY, walkedOn: ['2026-08-17']}));
-  });
-
-  it('makes a backup on request', async () => {
-    // Given
-    renderScreen(<YourData />);
-
-    // When
-    fireEvent.click(screen.getByRole('button', {name: /^Make a backup/}));
-
-    // Then
-    expect(await screen.findByText(/ready/)).toBeTruthy();
-  });
-
-  it('clears progress after the dialog is confirmed', async () => {
-    // Given — the confirm footer sits inside Dialog's entering animation, whose
-    // CSS keyframes jsdom never runs, so its subtree stays computed-hidden and
-    // is found by text rather than by accessible role name.
-    renderScreen(<YourData />);
-    fireEvent.click(screen.getByRole('button', {name: /^Clear progress/}));
-
-    // When
-    fireEvent.click(await screen.findByText('Clear'));
-    await flushMicrotasks();
-
-    // Then
-    expect(useProgress.getState().progress).toEqual(EMPTY);
   });
 });
 

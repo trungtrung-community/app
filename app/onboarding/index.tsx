@@ -1,11 +1,12 @@
 /**
  * @fileoverview S1 Onboarding — one screen, no login, no carousel.
  *
- * The name in both scripts, one line of promise, one Start. The quiet
- * "Restore a backup" line the board draws under Start is omitted until U3 lands
- * backup restore; it arrives with that task, not this one. The crane is absent
- * for the same reason `MascotSpeech` documents: no mascot art exists in the
- * repo yet.
+ * The name in both scripts, one line of promise, one Start — and under Start,
+ * the quiet restore line for a learner moving from another phone. It pushes
+ * U3 with `?from=onboarding`, so a completed restore can stamp `onboardedOn`
+ * and land on the journey: a restored walk skips onboarding (`docs/02`). The
+ * crane is absent for the same reason `MascotSpeech` documents: no mascot art
+ * exists in the repo yet.
  *
  * Settings hydrate here, fire-and-forget, so the steps that follow merge into
  * what an earlier partial run may have saved rather than into the defaults.
@@ -50,6 +51,10 @@ export default function Onboarding() {
       <View className="flex-1" />
       <Button size="lg" fullWidth onPress={() => router.push('/onboarding/track')}>
         Start
+      </Button>
+      <Text className="type-caption text-fg-muted mt-4">Moving from another phone?</Text>
+      <Button variant="ghost" size="sm" onPress={() => router.push('/you/restore?from=onboarding')}>
+        Restore a backup
       </Button>
     </View>
   );

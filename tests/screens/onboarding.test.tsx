@@ -71,14 +71,6 @@ describe('S1, the first screen', () => {
     // Then
     expect(push).toHaveBeenCalledWith('/onboarding/track');
   });
-
-  it('holds the restore line back until U3 lands', () => {
-    // When
-    renderScreen(<Onboarding />);
-
-    // Then
-    expect(screen.queryByText(/Restore a backup/)).toBeNull();
-  });
 });
 
 describe('K1, the track choice', () => {

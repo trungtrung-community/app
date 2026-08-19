@@ -19,6 +19,7 @@ import {Platform} from 'react-native';
 
 import type {AudioSource, ContentSource, CuePlayer, ProgressStore, SettingsStore} from '../ports';
 import type {AppStateStore} from '../ports/app-state-store';
+import type {BackupFiles} from '../ports/backup-files';
 import type {ReminderScheduler} from '../ports/reminder-scheduler';
 
 import {BundledAudioSource} from '../infra/audio/bundled-audio-source';
@@ -37,6 +38,7 @@ type Registry = {
   settings: SettingsStore;
   appState: AppStateStore;
   reminders: ReminderScheduler;
+  backup: BackupFiles;
 };
 
 const memo = new Map<keyof Registry, Promise<Registry[keyof Registry]>>();
@@ -159,6 +161,25 @@ export function reminders(): Promise<ReminderScheduler> {
     }
     const {ExpoReminderScheduler} = await import('../infra/notifications/expo-reminder-scheduler');
     return new ExpoReminderScheduler();
+  });
+}
+
+/**
+ * Moving the U2 backup file out and the U3 restore file back in — the share
+ * sheet and document picker on a device, the browser's download manager and
+ * file chooser on web. The web adapter is a real door, not a fallback; its
+ * file says why the end-to-end suite needs it. Both are reached by dynamic
+ * import for the reason `cues` gives: importing the container must not drag
+ * the expo file modules in behind it.
+ */
+export function backup(): Promise<BackupFiles> {
+  return once('backup', async () => {
+    if (Platform.OS === 'web') {
+      const {WebBackupFiles} = await import('../infra/backup/web-backup-files');
+      return new WebBackupFiles();
+    }
+    const {ExpoBackupFiles} = await import('../infra/backup/expo-backup-files');
+    return new ExpoBackupFiles();
   });
 }
 
