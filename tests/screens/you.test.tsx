@@ -127,7 +127,7 @@ describe('the settings screen', () => {
     const store = fakeSettingsStore(DEFAULT_SETTINGS);
     override('settings', store);
     renderScreen(<SettingsScreen />);
-    const toggle = await screen.findByRole('switch');
+    const toggle = await screen.findByRole('switch', {name: 'Spelled out (Wylie)'});
     expect(toggle.getAttribute('aria-checked')).toBe('false');
 
     // When
