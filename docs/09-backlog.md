@@ -214,7 +214,10 @@ gaps are named so they read as decisions, not oversights.*
     `specimens.tsx` alone is 2,178 lines — and it grew on 2026-08-18 with `/_ds/feel`.
     The fix is a decision about *how* to exclude the group (a `__DEV__` guard in the
     routes, a build-time filter, or moving it out of `app/`), which is why it is here
-    rather than done.
+    rather than done. **Half-closed 2026-08-19:** `app/_ds/_layout.tsx` redirects the
+    whole group to the journey when `!__DEV__`, so a production build cannot reach it.
+    The bundle-size half stays open — a layout gates the screen, not the graph, and
+    `specimens.tsx` still ships.
 
 19. **`Confetti` is a component the board has never drawn.** Built 2026-08-18 as
     `src/components/feedback/confetti.tsx` and deliberately outside `_ds_manifest.json`,

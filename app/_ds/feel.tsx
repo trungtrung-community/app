@@ -19,12 +19,11 @@
  * It obeys the same adherence rules as shipping code, because a testbed that is allowed
  * raw values is a place where raw values get invented.
  *
- * **It is not dev-only, whatever the gallery index says.** That was checked rather than
- * assumed on 2026-08-18: a web export carries this screen's copy in the entry bundle, and
- * nothing in `app/_layout.tsx` or anywhere else gates `_ds` on `__DEV__`. expo-router
- * discovers routes from the filesystem, so every one of them ships. Recorded as a gap in
- * `docs/09`; the fix belongs with whoever decides how `_ds` should be excluded, and it is
- * the same fix for the whole group rather than for this file.
+ * **Unreachable in production since 2026-08-19, still bundled.** The 2026-08-18 check
+ * found this screen's copy in a web export's entry bundle, with nothing anywhere gating
+ * `_ds` on `__DEV__`. The group's `_layout.tsx` now redirects a production build to the
+ * journey — one fix for the whole group rather than per file, as the gap predicted — and
+ * the bundle-size half stays open as `docs/09` gap 18.
  */
 
 import {useCallback, useRef, useState} from 'react';

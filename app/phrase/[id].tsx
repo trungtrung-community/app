@@ -3,7 +3,8 @@
  *
  * The phrase whole: Tibetan, romanization, gloss, the literal reading where the
  * parts do not add up, the usage note, and — where the content has chunked it —
- * the syllable transcript. Practice entry arrives with a later package.
+ * the syllable transcript. A sheet for reading, nothing more: the V2→V3 practice
+ * entry was removed by design on 2026-08-15.
  */
 
 import {useLocalSearchParams} from 'expo-router';

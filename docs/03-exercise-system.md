@@ -81,6 +81,10 @@ unanswered ──tap (single-target) / Check (multi-part)──▶ committed
 - **Commit rule.** One right answer to tap → commits on tap, no Check button
   (this removed Check from RB6/RB7/RB9). Multi-part (RB10, RB12, E8) →
   commits on `Check`.
+- **Option order is drawn fresh per ask, never stored** (2026-08-19): records
+  keep the answer first, the engine shuffles each entry with its seeded rng,
+  and a re-queued miss is reshuffled — remembering where the answer sat buys
+  nothing.
 - **Correct band** — teal; reveals only what the prompt withheld (`docs/04`,
   *Voice*); audio replayable, on both tones;
   `Next`. Manual advance everywhere; no auto-advance, no timers.

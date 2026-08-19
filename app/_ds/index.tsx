@@ -8,10 +8,10 @@
  *
  * **Corrected 2026-08-18: this is NOT dev-only, and the sentence here said it was.**
  * `app/_layout.tsx` registers nothing — expo-router discovers routes from the filesystem,
- * and no file in the project mentions `__DEV__`. A web export was inspected to be sure:
- * this screen's copy is in the entry bundle. The gallery and its 2,178-line specimen file
- * ship to a learner today. Recorded in `docs/09`; fixing it is a decision about how the
- * group is excluded, not a comment change.
+ * and nothing gated them. A web export was inspected to be sure: this screen's copy is in
+ * the entry bundle. **Half-fixed 2026-08-19:** this group's `_layout.tsx` now redirects a
+ * production build to the journey, so a learner can no longer reach the gallery — but the
+ * 2,178-line specimen file still ships in the bundle. `docs/09` gap 18 tracks that half.
  */
 
 import {Link} from 'expo-router';

@@ -30,6 +30,41 @@ Every session that decides something appends here.*
 | O21 | ~~Check 53 gates a **handed, historical** board order~~ | — | **Closed** 2026-08-16: **retire the check.** The file it guards became a record of what was actually asked, and a gate that can only be silenced by damaging the record is not a gate. `validate_read` drops to 58 checks and goes fully green, so the next red result means something. `board_prompt.py` was never run to green it. |
 | O22 | ~~Where does the **card of the day** keep its daily entrance?~~ | — | **Closed** 2026-08-16 by removing the thing it asked about: **`T1` retires.** `Q1` and `G1` were both rejected as pollution, and Thosam declined a Journey row. A surface with no entrance cannot be "a reason to open it on a quiet day", so it is parked rather than left orphaned. Takes O8's widget with it. |
 
+## 2026-08-19 — The option-shuffle contract, recorded as implemented
+
+**Stored order is answer-first; presented order never is.** Every answer-bearing
+exercise record keeps its answer as the first option, and the engine shuffles
+per queue entry when the session is created (`src/engine/session.ts`), drawing
+from a seeded rng injected as a parameter (`src/engine/rng.ts` — mulberry32;
+`Math.random` appears nowhere in the layer, so a test can assert exact
+outcomes). The store seeds each real session from `Date.now()`
+(`src/store/session.ts`).
+
+**A re-queued miss is reshuffled, and so is a second-look retry**
+(`src/engine/commit.ts`). The shuffle is per instance, not per exercise, which
+is what defeats position memory: a learner who remembers where the answer sat
+last time remembers nothing useful. That is also why answer-first storage is
+safe — the stored order never reaches a screen. `docs/03` §2 now carries the
+option-order rule in one sentence.
+
+## 2026-08-19 — `RENDERABLE_PRESENTATIONS`: a fifth gate, recorded before its redesign
+
+**The state today** (`src/usecases/session-plan.ts`): after the audio
+substitutions, a drill whose presentation is not in `RENDERABLE_PRESENTATIONS`
+— `meaning-pick`, `meaning-pick-substitute`, `phrase-recognise-script`,
+`pair-match` — emits **no seed position at all**, so the progress bar never
+counts it and the stop simply shortens. A fifth gate beside the audio gate, not
+part of it: an exercise can clear audio and still hide because no renderer
+exists for it yet.
+
+The two gates compose into a trap worth naming: `listen-pick` runs today only
+*because* it is blocked on audio and substitutes to `meaning-pick-substitute`.
+The day a take lands, the substitution stops, `listen-pick` is its own
+presentation, and the drill vanishes from the plan — adding audio would remove
+exercises. **A redesign is planned — a presentation ladder** — to close that
+audio-landing trap; this entry records the standing behaviour so the ladder has
+something exact to replace.
+
 ## 2026-08-19 — CI runs a reduced gate; the full gate stays on pre-push
 
 GitHub Actions (`.github/workflows/ci.yml`) runs `validate:ci` on every PR and
