@@ -19,6 +19,7 @@ import {Platform} from 'react-native';
 
 import type {AudioSource, ContentSource, CuePlayer, ProgressStore, SettingsStore} from '../ports';
 import type {AppStateStore} from '../ports/app-state-store';
+import type {ReminderScheduler} from '../ports/reminder-scheduler';
 
 import {BundledAudioSource} from '../infra/audio/bundled-audio-source';
 import {createMmkvAppStateStore} from '../infra/state/mmkv-app-state-store';
@@ -35,6 +36,7 @@ type Registry = {
   cues: CuePlayer;
   settings: SettingsStore;
   appState: AppStateStore;
+  reminders: ReminderScheduler;
 };
 
 const memo = new Map<keyof Registry, Promise<Registry[keyof Registry]>>();
@@ -137,6 +139,26 @@ export function cues(): Promise<CuePlayer> {
     }
     const {createDeviceCuePlayer} = await import('../infra/cues/device-cue-player');
     return createDeviceCuePlayer();
+  });
+}
+
+/**
+ * The daily reminder window — real local notifications on a device, silence on web.
+ *
+ * The silent adapter is web's honest answer, not a fallback; its file says why. The
+ * device adapter is reached by dynamic import for the reason `cues` gives: importing
+ * the container must not drag `expo-notifications` in behind it, or every test file
+ * pays to load a notification module it never schedules with.
+ */
+export function reminders(): Promise<ReminderScheduler> {
+  return once('reminders', async () => {
+    if (Platform.OS === 'web') {
+      const {SilentReminderScheduler} =
+        await import('../infra/notifications/silent-reminder-scheduler');
+      return new SilentReminderScheduler();
+    }
+    const {ExpoReminderScheduler} = await import('../infra/notifications/expo-reminder-scheduler');
+    return new ExpoReminderScheduler();
   });
 }
 

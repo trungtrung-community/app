@@ -1,15 +1,17 @@
 import '../global.css';
 
 import {useFonts} from 'expo-font';
-import {Stack} from 'expo-router';
+import {Stack, useRouter} from 'expo-router';
 import {useEffect} from 'react';
-import {ActivityIndicator, View} from 'react-native';
+import {ActivityIndicator, AppState, View} from 'react-native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 
 import {configureAudioSession} from '../src/composition/audio-session';
+import {onReminderResponse, syncReminders} from '../src/composition/notifications';
 import {fonts} from '../src/theme/fonts.generated';
 
 export default function RootLayout() {
+  const router = useRouter();
   // The face list is generated from the same table as the family tokens
   // (scripts/token-map.ts), so a token can never name a face nobody loaded.
   const [fontsLoaded, fontError] = useFonts(fonts);
@@ -21,6 +23,30 @@ export default function RootLayout() {
   useEffect(() => {
     void configureAudioSession();
   }, []);
+
+  // The reminder window only rolls forward when the app is in hand — that is the
+  // whole 60-day silence design (src/usecases/reminder-plan.ts) — so it is replanned
+  // once here and again on every return to the foreground. Fire-and-forget for the
+  // audio session's reason: a failed schedule loses a nudge, never the app.
+  useEffect(() => {
+    void syncReminders().catch(() => {});
+    const subscription = AppState.addEventListener('change', state => {
+      if (state === 'active') {
+        void syncReminders().catch(() => {});
+      }
+    });
+    return () => subscription.remove();
+  }, []);
+
+  // A reminder tap lands on N2's pickup when it names a stop, and on the journey
+  // for the plain daily line — never an error surface from a notification.
+  useEffect(
+    () =>
+      onReminderResponse(stopId => {
+        router.push(stopId === null ? '/journey' : `/pickup/${stopId}`);
+      }),
+    [router],
+  );
 
   // Rendering Tibetan before its face is registered falls back to a system font
   // that may lack the script, which would make the spike report a false failure.
