@@ -69,9 +69,7 @@ describe('the shelves', () => {
     renderScreen(<Collection />);
 
     // Then
-    expect(
-      await screen.findByText('Found while walking through The Medicine Room.'),
-    ).toBeTruthy();
+    expect(await screen.findByText('Found while walking through The Medicine Room.')).toBeTruthy();
   });
 
   it('opens a collection from its row', async () => {

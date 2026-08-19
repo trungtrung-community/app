@@ -13,7 +13,10 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {EmptyState} from '../../../src/components/feedback/empty-state';
 import {Skeleton} from '../../../src/components/feedback/skeleton';
 import {ArtifactCard} from '../../../src/components/learning/artifact-card';
-import type {Collection as CollectionRecord, CollectionCard} from '../../../src/ports/content-model';
+import type {
+  Collection as CollectionRecord,
+  CollectionCard,
+} from '../../../src/ports/content-model';
 import type {Progress} from '../../../src/ports/progress-store';
 
 import {selectItemState, useProgress} from '../../../src/store/progress';

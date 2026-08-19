@@ -33,7 +33,13 @@ const END: SeedPosition = {kind: 'end', capabilities: []};
 describe('createSession', () => {
   it('mirrors the seed, one entry per position, all first asks', () => {
     // Given
-    const positions = [INTRO, CARD, {kind: 'exercise', exercise: exercise('ex.1', ['a', 'b'])} as const, MOMENT, END];
+    const positions = [
+      INTRO,
+      CARD,
+      {kind: 'exercise', exercise: exercise('ex.1', ['a', 'b'])} as const,
+      MOMENT,
+      END,
+    ];
 
     // When
     const state = createSession(seed(positions), seededRng(1));
@@ -53,7 +59,10 @@ describe('createSession', () => {
 
   it('shuffles each answer-bearing entry exactly as the rng dictates', () => {
     // Given — a scripted rng that always draws 0 walks Fisher–Yates to a known order
-    const positions = [{kind: 'exercise', exercise: exercise('ex.1', ['a', 'b', 'c', 'd'])} as const, END];
+    const positions = [
+      {kind: 'exercise', exercise: exercise('ex.1', ['a', 'b', 'c', 'd'])} as const,
+      END,
+    ];
 
     // When
     const state = createSession(seed(positions), () => 0);

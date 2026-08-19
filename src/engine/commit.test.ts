@@ -21,11 +21,7 @@ const LOW: Rng = () => 0;
 /** rng drawing just under 1: intBetween picks the ceiling. */
 const HIGH: Rng = () => 0.999999;
 
-function exercise(
-  id: string,
-  item: string,
-  overrides: Partial<SeedExercise> = {},
-): SeedExercise {
+function exercise(id: string, item: string, overrides: Partial<SeedExercise> = {}): SeedExercise {
   return {
     exerciseId: id,
     itemId: item,

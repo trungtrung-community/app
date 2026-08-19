@@ -84,9 +84,8 @@ describe('submitAnswer', () => {
     // Given — advance past the card to the exercise
     const store = memoryStore();
     let state = createSession(seed(), seededRng(1));
-    state = (
-      await submitAnswer({store}, EMPTY, state, {kind: 'continue'}, seededRng(1), TODAY)
-    ).state;
+    state = (await submitAnswer({store}, EMPTY, state, {kind: 'continue'}, seededRng(1), TODAY))
+      .state;
     const options = state.queue[state.index]?.options ?? [];
     const answer = options.find(option => option.isAnswer);
 
@@ -108,9 +107,8 @@ describe('submitAnswer', () => {
     // Given
     const store = memoryStore();
     let state = createSession(seed(), seededRng(1));
-    state = (
-      await submitAnswer({store}, EMPTY, state, {kind: 'continue'}, seededRng(1), TODAY)
-    ).state;
+    state = (await submitAnswer({store}, EMPTY, state, {kind: 'continue'}, seededRng(1), TODAY))
+      .state;
     const options = state.queue[state.index]?.options ?? [];
     const wrong = options.find(option => !option.isAnswer);
 

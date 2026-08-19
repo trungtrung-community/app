@@ -197,10 +197,9 @@ describe('the audio gate', () => {
     );
 
     // Then
-    expect(seed.positions.map(p => (p.kind === 'exercise' ? p.exercise.presentation : null))).toEqual([
-      'meaning-pick',
-      'pair-match',
-    ]);
+    expect(
+      seed.positions.map(p => (p.kind === 'exercise' ? p.exercise.presentation : null)),
+    ).toEqual(['meaning-pick', 'pair-match']);
   });
 
   it('hides what cannot run without a take, and the bar never counts it', () => {
@@ -213,10 +212,7 @@ describe('the audio gate', () => {
     );
 
     // When
-    const seed = planSession(
-      ['ex.1', 'ex.2', 'ex.3', 'ex.4'].map(exercisePosition),
-      exercises,
-    );
+    const seed = planSession(['ex.1', 'ex.2', 'ex.3', 'ex.4'].map(exercisePosition), exercises);
 
     // Then
     expect(seed.positions).toHaveLength(1);
@@ -239,7 +235,13 @@ describe('the other position kinds', () => {
       {...POSITION, kind: 'letter-card', itemId: item('letter.ka')},
       {...POSITION, kind: 'stack-card', itemId: item('stack.rka')},
       {...POSITION, kind: 'rule-card', ruleId: 'rule.deasp' as never, text: 'De-aspirate'},
-      {...POSITION, kind: 'rule-statement', ruleId: 'rule.deasp' as never, text: 'Rule', wantsACard: false},
+      {
+        ...POSITION,
+        kind: 'rule-statement',
+        ruleId: 'rule.deasp' as never,
+        text: 'Rule',
+        wantsACard: false,
+      },
       {...POSITION, kind: 'rule-reprise', ruleId: 'rule.deasp' as never, text: 'Again'},
       {...POSITION, kind: 'tip', text: 'A tip', covers: [], preview: null},
       {...POSITION, kind: 'moment'},
@@ -303,10 +305,7 @@ describe('the re-queue pool', () => {
     );
 
     // When
-    const seed = planSession(
-      ['ex.1', 'ex.2', 'ex.3', 'ex.4'].map(exercisePosition),
-      exercises,
-    );
+    const seed = planSession(['ex.1', 'ex.2', 'ex.3', 'ex.4'].map(exercisePosition), exercises);
 
     // Then — pairs boards do not stand in for a missed recognition drill
     expect(Object.keys(seed.poolByItem).sort()).toEqual(['vocab.cha', 'vocab.ja']);

@@ -261,8 +261,7 @@ function districtState(progress: Progress | null, district: District, unlock: Un
   }
   const previous = unlock.districts.find(candidate => candidate.number === district.number - 1);
   const previousStops = previous ? (unlock.stopsBySlug.get(previous.slug) ?? []) : [];
-  return previousStops.length > 0 &&
-    previousStops.every(stop => selectStopDone(progress, stop.id))
+  return previousStops.length > 0 && previousStops.every(stop => selectStopDone(progress, stop.id))
     ? 'open'
     : 'locked';
 }

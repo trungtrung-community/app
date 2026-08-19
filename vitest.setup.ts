@@ -17,6 +17,27 @@ import {afterEach} from 'vitest';
 
 afterEach(cleanup);
 
+// Reanimated's js fallback schedules one last animation frame while a component
+// unmounts, and the frame reads the dropped view ref: `Cannot convert undefined
+// or null to object` from deep inside react-native-reanimated, after every
+// assertion has passed. Swallow exactly that error at the frame boundary — any
+// other exception from any frame still fails the run.
+const frameScheduler = window.requestAnimationFrame.bind(window);
+window.requestAnimationFrame = callback =>
+  frameScheduler(time => {
+    try {
+      callback(time);
+    } catch (error) {
+      const isTornDownReanimatedFrame =
+        error instanceof TypeError &&
+        error.message.includes('Cannot convert undefined or null to object') &&
+        (error.stack ?? '').includes('react-native-reanimated');
+      if (!isTornDownReanimatedFrame) {
+        throw error;
+      }
+    }
+  });
+
 if (!window.matchMedia) {
   window.matchMedia = (query: string) =>
     ({

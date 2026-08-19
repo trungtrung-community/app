@@ -65,13 +65,15 @@ export async function startStop(deps: StartStopDeps, id: StopId, rng: Rng): Prom
   }
 
   const entries = await Promise.all(
-    [...kinds].map(async ([itemId, kind]): Promise<[ContentItemId, VocabularyItem | PhraseItem]> => {
-      const record =
-        kind === 'vocab'
-          ? await deps.dictionary.getVocabulary(itemId as VocabId)
-          : await deps.dictionary.getPhrase(itemId as PhraseId);
-      return [itemId as ContentItemId, record];
-    }),
+    [...kinds].map(
+      async ([itemId, kind]): Promise<[ContentItemId, VocabularyItem | PhraseItem]> => {
+        const record =
+          kind === 'vocab'
+            ? await deps.dictionary.getVocabulary(itemId as VocabId)
+            : await deps.dictionary.getPhrase(itemId as PhraseId);
+        return [itemId as ContentItemId, record];
+      },
+    ),
   );
 
   return {stop, state: createSession(seed, rng), itemsById: new Map(entries)};

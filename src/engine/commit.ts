@@ -101,11 +101,7 @@ function handleContinue(state: SessionState, rng: Rng): CommitOutcome {
  * Step forward one entry. Arriving at the closing boundary with misses in hand
  * is the one place the second look can splice in, and it does so exactly once.
  */
-function advance(
-  state: SessionState,
-  rng: Rng,
-  events: readonly SessionEvent[],
-): CommitOutcome {
+function advance(state: SessionState, rng: Rng, events: readonly SessionEvent[]): CommitOutcome {
   const index = state.index + 1;
   let next: SessionState = {...state, index};
   if (index === next.closingAt && !next.secondLookAdded && next.misses.length > 0) {
@@ -246,7 +242,9 @@ function pickReplacement(
       !state.revealed.includes(candidate.exerciseId) &&
       !asked.has(candidate.exerciseId),
   );
-  return candidates.find(candidate => !seenTypes.has(candidate.exerciseType)) ?? candidates[0] ?? null;
+  return (
+    candidates.find(candidate => !seenTypes.has(candidate.exerciseType)) ?? candidates[0] ?? null
+  );
 }
 
 function handleCheck(state: SessionState, picked: readonly string[]): CommitOutcome {

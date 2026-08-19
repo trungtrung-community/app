@@ -53,8 +53,7 @@ function isDistrictLocked(
     return false;
   }
   return (
-    previousStops.length === 0 ||
-    !previousStops.every(stop => selectStopDone(progress, stop.id))
+    previousStops.length === 0 || !previousStops.every(stop => selectStopDone(progress, stop.id))
   );
 }
 
@@ -107,7 +106,8 @@ export default function DistrictHub() {
         source.listPhrasesByDistrict(slug),
         source.listDistricts(),
       ]);
-      const previous = districts.find(candidate => candidate.number === district.number - 1) ?? null;
+      const previous =
+        districts.find(candidate => candidate.number === district.number - 1) ?? null;
       const previousStops =
         previous === null ? [] : await source.listStopsByDistrict(previous.slug);
       return {district, stops, vocabulary, phrases, previous, previousStops};

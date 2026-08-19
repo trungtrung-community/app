@@ -8,13 +8,7 @@ import {beforeEach, describe, expect, it} from 'vitest';
 
 import type {Exercise, ExerciseFamily} from '../ports/content-exercise';
 import type {ContentSource} from '../ports';
-import type {
-  ContentItemId,
-  ExerciseId,
-  StopId,
-  Track,
-  VocabId,
-} from '../ports/content-ids';
+import type {ContentItemId, ExerciseId, StopId, Track, VocabId} from '../ports/content-ids';
 import type {Stop, StopPosition, VocabularyItem} from '../ports/content-model';
 import type {Progress, ProgressStore} from '../ports/progress-store';
 

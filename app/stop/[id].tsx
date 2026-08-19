@@ -100,7 +100,11 @@ export default function Stop() {
         </ScrollView>
       )}
       {state?.answered && state.answered.verdict !== 'partial' ? (
-        <Band state={state} itemsById={slice.itemsById} onNext={() => void slice.commit({kind: 'continue'})} />
+        <Band
+          state={state}
+          itemsById={slice.itemsById}
+          onNext={() => void slice.commit({kind: 'continue'})}
+        />
       ) : null}
     </View>
   );
@@ -148,7 +152,9 @@ function Entry({state, itemsById, stopName, outcome, onCommit, onDone}: EntryPro
             roman={item?.roman}
             en={item?.en}
             eyebrow={position.card === 'phrase' ? 'New phrase' : 'New word'}
-            note={item !== undefined && 'usageNote' in item ? (item.usageNote ?? undefined) : undefined}
+            note={
+              item !== undefined && 'usageNote' in item ? (item.usageNote ?? undefined) : undefined
+            }
             registerMark={item?.register === 'honorific'}
             audio={item?.audio.available ?? false}
           />
@@ -164,13 +170,7 @@ function Entry({state, itemsById, stopName, outcome, onCommit, onDone}: EntryPro
         </View>
       );
     case 'exercise':
-      return (
-        <Exercise
-          state={state}
-          itemsById={itemsById}
-          onCommit={onCommit}
-        />
-      );
+      return <Exercise state={state} itemsById={itemsById} onCommit={onCommit} />;
     case 'second-look-intro':
       return (
         <View className="gap-6 py-6">
@@ -232,7 +232,8 @@ function Exercise({state, itemsById, onCommit}: ExerciseProps) {
     return null;
   }
   const exercise = entry.position.exercise;
-  const target = exercise.itemId === null ? undefined : itemsById.get(exercise.itemId as ContentItemId);
+  const target =
+    exercise.itemId === null ? undefined : itemsById.get(exercise.itemId as ContentItemId);
   const answered = state.answered;
 
   if (exercise.commitMode === 'pairs') {
@@ -331,7 +332,9 @@ function Pairs({state, itemsById, onCommit}: ExerciseProps) {
             return;
           }
           const otherId =
-            picked.side === 'left' ? options[picked.index]?.itemId : rightOrder[picked.index]?.itemId;
+            picked.side === 'left'
+              ? options[picked.index]?.itemId
+              : rightOrder[picked.index]?.itemId;
           setPicked(null);
           if (otherId !== undefined) {
             onCommit({kind: 'pair', a: otherId, b: itemId});

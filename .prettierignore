@@ -40,3 +40,7 @@ docs/08-glossary.md
 docs/09-backlog.md
 docs/10-illustrations.md
 docs/README.md
+
+# Agent-session scratch, git-ignored.
+.superpowers/
+.agents/

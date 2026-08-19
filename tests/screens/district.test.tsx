@@ -175,9 +175,7 @@ describe('the district hub', () => {
     renderScreen(<DistrictHub />);
 
     // Then
-    expect(
-      await screen.findByRole('button', {name: /Names, and where you are from/}),
-    ).toBeTruthy();
+    expect(await screen.findByRole('button', {name: /Names, and where you are from/})).toBeTruthy();
     expect(screen.queryByText(/to walk here/)).toBeNull();
   });
 });

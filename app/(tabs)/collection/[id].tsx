@@ -74,7 +74,9 @@ export default function CollectionDetail() {
                     bo={face.bo}
                     roman={face.roman}
                     found={found}
-                    onPress={found ? () => router.push(`/card/${id}/${face.card.ordinal}`) : undefined}
+                    onPress={
+                      found ? () => router.push(`/card/${id}/${face.card.ordinal}`) : undefined
+                    }
                   />
                 );
               })}
