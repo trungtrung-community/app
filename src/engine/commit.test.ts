@@ -58,6 +58,7 @@ function runwaySeed(pool: readonly SeedExercise[] = []): SessionSeed {
     stopId: 'stop.test',
     positions: [ex(exercise('ex.1', 'vocab.cha')), ...fillers, MOMENT, END],
     poolByItem: {'vocab.cha': [exercise('ex.1', 'vocab.cha'), ...pool]},
+    artifacts: [],
   };
 }
 
@@ -150,6 +151,7 @@ describe('tap', () => {
         END,
       ],
       poolByItem: {'vocab.cha': [exercise('ex.1', 'vocab.cha'), alt]},
+      artifacts: [],
     };
     const state = createSession(seed, seededRng(1));
 
@@ -415,7 +417,7 @@ describe('pair', () => {
         {itemId: 'vocab.b', isAnswer: false},
       ],
     });
-    return {stopId: 'stop.test', positions: [ex(board), END], poolByItem: {}};
+    return {stopId: 'stop.test', positions: [ex(board), END], poolByItem: {}, artifacts: []};
   }
 
   it('accumulates a matched pair while the board is uncleared', () => {
@@ -460,6 +462,7 @@ describe('pair', () => {
         END,
       ],
       poolByItem: {},
+      artifacts: [],
     };
     let state = createSession(seed, seededRng(1));
     state = commit(state, {kind: 'pair', a: 'vocab.a', b: 'vocab.a'}, LOW).state;
@@ -497,7 +500,7 @@ describe('check', () => {
         {itemId: 'vocab.c', isAnswer: false},
       ],
     });
-    return {stopId: 'stop.test', positions: [ex(multi), END], poolByItem: {}};
+    return {stopId: 'stop.test', positions: [ex(multi), END], poolByItem: {}, artifacts: []};
   }
 
   it('commits correct when every answer is picked and nothing else', () => {
@@ -522,5 +525,165 @@ describe('check', () => {
     expect(outcome.state.filled).toEqual(['vocab.a']);
     expect(outcome.state.answered).toBeNull();
     expect(outcome.state.index).toBe(0);
+  });
+});
+
+describe('check against an ordered answer', () => {
+  function arrangeSeed(): SessionSeed {
+    const arrange = exercise('ex.arr', 'phrase.p', {
+      commitMode: 'check',
+      options: [],
+      ordered: ['chunk.0', 'chunk.1', 'chunk.2'],
+    });
+    return {stopId: 'stop.test', positions: [ex(arrange), END], poolByItem: {}, artifacts: []};
+  }
+
+  it('commits correct only when the picked sequence IS the answer sequence', () => {
+    // Given
+    const state = createSession(arrangeSeed(), seededRng(1));
+
+    // When
+    const outcome = commit(state, {kind: 'check', picked: ['chunk.0', 'chunk.1', 'chunk.2']}, LOW);
+
+    // Then
+    expect(outcome.state.answered?.verdict).toBe('correct');
+    expect(outcome.events).toEqual([{kind: 'correct', itemId: 'phrase.p'}]);
+  });
+
+  it('stays active when the right chips arrive in the wrong order', () => {
+    // Given
+    const state = createSession(arrangeSeed(), seededRng(1));
+
+    // When — a set-semantics check would have committed this as correct
+    const outcome = commit(state, {kind: 'check', picked: ['chunk.1', 'chunk.0', 'chunk.2']}, LOW);
+
+    // Then
+    expect(outcome.state.answered).toBeNull();
+    expect(outcome.state.filled).toEqual([]);
+  });
+
+  it('fills the matching prefix on a partial sequence', () => {
+    // Given
+    const state = createSession(arrangeSeed(), seededRng(1));
+
+    // When
+    const outcome = commit(state, {kind: 'check', picked: ['chunk.0', 'chunk.2']}, LOW);
+
+    // Then — chunk.2 sits in the wrong slot, so only chunk.0 has filled
+    expect(outcome.state.filled).toEqual(['chunk.0']);
+    expect(outcome.state.answered).toBeNull();
+  });
+});
+
+describe('continue on a none-mode exercise', () => {
+  function noneSeed(): SessionSeed {
+    const produce = exercise('ex.say', 'phrase.p', {commitMode: 'none', options: []});
+    return {stopId: 'stop.test', positions: [ex(produce), END], poolByItem: {}, artifacts: []};
+  }
+
+  it('advances off "Got it" with no verdict, no event, and no re-queue', () => {
+    // Given
+    const state = createSession(noneSeed(), seededRng(1));
+
+    // When
+    const outcome = commit(state, {kind: 'continue'}, LOW);
+
+    // Then
+    expect(outcome.state.index).toBe(1);
+    expect(outcome.state.answered).toBeNull();
+    expect(outcome.state.misses).toEqual([]);
+    expect(outcome.events).toEqual([]);
+    expect(outcome.state.queue.length).toBe(state.queue.length);
+  });
+});
+
+describe('the consecutive-correct run', () => {
+  it('climbs on each correct commit and falls to zero on a wrong one', () => {
+    // Given — two tap exercises, then a wrong tap on a third
+    const seed: SessionSeed = {
+      stopId: 'stop.test',
+      positions: [
+        ex(exercise('ex.1', 'vocab.a')),
+        ex(exercise('ex.2', 'vocab.b')),
+        ex(exercise('ex.3', 'vocab.c')),
+        END,
+      ],
+      poolByItem: {},
+      artifacts: [],
+    };
+    let state = createSession(seed, seededRng(1));
+
+    // When
+    state = commit(state, tapAnswer(state), LOW).state;
+    state = commit(state, {kind: 'continue'}, LOW).state;
+    state = commit(state, tapAnswer(state), LOW).state;
+    const afterTwo = state.run;
+    state = commit(state, {kind: 'continue'}, LOW).state;
+    state = commit(state, tapWrong(state), LOW).state;
+
+    // Then
+    expect(afterTwo).toBe(2);
+    expect(state.run).toBe(0);
+  });
+
+  it('counts a cleared pair board and a complete check as correct commits', () => {
+    // Given — a check entry then a pair board
+    const multi = exercise('ex.multi', 'vocab.cha', {
+      commitMode: 'check',
+      options: [{itemId: 'vocab.a', isAnswer: true}],
+    });
+    const board = exercise('ex.pairs', 'vocab.cha', {
+      commitMode: 'pairs',
+      options: [{itemId: 'vocab.t', isAnswer: false}],
+    });
+    const seed: SessionSeed = {
+      stopId: 'stop.test',
+      positions: [ex(multi), ex(board), END],
+      poolByItem: {},
+      artifacts: [],
+    };
+    let state = createSession(seed, seededRng(1));
+
+    // When
+    state = commit(state, {kind: 'check', picked: ['vocab.a']}, LOW).state;
+    state = commit(state, {kind: 'continue'}, LOW).state;
+    state = commit(state, {kind: 'pair', a: 'vocab.t', b: 'vocab.t'}, LOW).state;
+
+    // Then
+    expect(state.run).toBe(2);
+  });
+
+  it('holds through continues and cards, which carry no verdict', () => {
+    // Given
+    let state = createSession(runwaySeed(), seededRng(1));
+    state = commit(state, tapAnswer(state), LOW).state;
+
+    // When — the band clears and two cards teach
+    state = commit(state, {kind: 'continue'}, LOW).state;
+    state = commit(state, {kind: 'continue'}, LOW).state;
+    state = commit(state, {kind: 'continue'}, LOW).state;
+
+    // Then
+    expect(state.run).toBe(1);
+  });
+});
+
+describe('a seed that opts out of the second look', () => {
+  it('never splices, and the miss still reaches the summary path', () => {
+    // Given — a missed exercise and a secondLook:false seed
+    const seed: SessionSeed = {...runwaySeed(), secondLook: false};
+    let state = createSession(seed, seededRng(1));
+    state = commit(state, tapWrong(state), LOW).state;
+    const total = state.queue.length;
+
+    // When — walk past the closing boundary
+    while (state.index < state.closingAt) {
+      state = commit(state, {kind: 'continue'}, LOW).state;
+    }
+
+    // Then
+    expect(state.queue.length).toBe(total);
+    expect(state.queue[state.index]?.position.kind).toBe('moment');
+    expect(state.secondLookAdded).toBe(true);
   });
 });

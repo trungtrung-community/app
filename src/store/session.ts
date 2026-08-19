@@ -17,10 +17,11 @@ import type {ContentItemId, StopId} from '../ports/content-ids';
 import type {PhraseItem, Stop, VocabularyItem} from '../ports/content-model';
 import type {Progress, ProgressStore} from '../ports/progress-store';
 
-import {content, progress as progressStore} from '../composition/container';
+import {audio, content, progress as progressStore} from '../composition/container';
 import {seededRng, startStop, type Rng, type SessionState} from '../usecases/start-stop';
 import {submitAnswer, type CommitInput} from '../usecases/submit-answer';
 import {useProgress} from './progress';
+import {useSettings} from './settings';
 
 /**
  * The fallback when hydration is unavailable (no native store on this
@@ -62,12 +63,19 @@ export const useStopSession = create<StopSessionSlice>()((set, get) => ({
       .catch(() => {});
     sessionRng = seededRng(Date.now());
     try {
-      const [source, progressPort] = await Promise.all([content(), progressStore()]);
+      const [source, progressPort, audioPort] = await Promise.all([
+        content(),
+        progressStore(),
+        audio(),
+      ]);
       store = progressPort;
+      // Settings pre-hydration reads null; the default keeps today's behaviour.
+      const audioFree = useSettings.getState().settings?.audioFree ?? false;
       const session = await startStop(
-        {walk: source, exercises: source, dictionary: source},
+        {walk: source, exercises: source, dictionary: source, audio: audioPort},
         id,
         sessionRng,
+        {audioFree},
       );
       set({
         status: 'ready',

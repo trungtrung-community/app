@@ -22,7 +22,7 @@ function exercise(id: string, optionItems: readonly string[]): SeedExercise {
 }
 
 function seed(positions: readonly SeedPosition[]): SessionSeed {
-  return {stopId: 'stop.core.c1.1', positions, poolByItem: {}};
+  return {stopId: 'stop.core.c1.1', positions, poolByItem: {}, artifacts: []};
 }
 
 const INTRO: SeedPosition = {kind: 'intro', text: 'Hello', outcome: 'Greet', capabilities: []};
@@ -93,5 +93,29 @@ describe('createSession', () => {
 
     // Then
     expect(state.closingAt).toBe(2);
+  });
+
+  it('starts the consecutive-correct run at zero', () => {
+    // When
+    const state = createSession(seed([INTRO, END]), seededRng(1));
+
+    // Then
+    expect(state.run).toBe(0);
+  });
+
+  it('leaves the second look armed by default', () => {
+    // When
+    const state = createSession(seed([INTRO, END]), seededRng(1));
+
+    // Then
+    expect(state.secondLookAdded).toBe(false);
+  });
+
+  it('reads a secondLook:false seed as already-added, so the splice never arms', () => {
+    // When
+    const state = createSession({...seed([INTRO, END]), secondLook: false}, seededRng(1));
+
+    // Then
+    expect(state.secondLookAdded).toBe(true);
   });
 });

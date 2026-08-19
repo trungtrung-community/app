@@ -25,6 +25,17 @@ export type StartStopDeps = {
   readonly walk: WalkSource;
   readonly exercises: ExerciseSource;
   readonly dictionary: DictionarySource;
+  /**
+   * One question, not the whole `AudioSource`: planning needs to know whether
+   * this build ships recordings, and nothing here plays one.
+   */
+  readonly audio: {isAvailable(): Promise<boolean>};
+};
+
+/** What the learner chose, read by the caller from settings. */
+export type StartStopOptions = {
+  /** The audio-free switch (A1). False before settings hydrate. */
+  readonly audioFree: boolean;
 };
 
 export type StopSession = {
@@ -33,14 +44,20 @@ export type StopSession = {
   readonly itemsById: ReadonlyMap<ContentItemId, VocabularyItem | PhraseItem>;
 };
 
-export async function startStop(deps: StartStopDeps, id: StopId, rng: Rng): Promise<StopSession> {
-  const [stop, script, exercises] = await Promise.all([
+export async function startStop(
+  deps: StartStopDeps,
+  id: StopId,
+  rng: Rng,
+  options: StartStopOptions,
+): Promise<StopSession> {
+  const [stop, script, exercises, audioAvailable] = await Promise.all([
     deps.walk.getStop(id),
     deps.walk.getStopScript(id),
     deps.exercises.listExercisesByStop(id),
+    deps.audio.isAvailable(),
   ]);
   const exercisesById = new Map(exercises.map(exercise => [exercise.id, exercise]));
-  const seed = planSession(script, exercisesById);
+  const seed = planSession(script, exercisesById, {audioAvailable, audioFree: options.audioFree});
 
   // The kind of every id: the stop's own items know theirs, and an option shares
   // its exercise's target kind, because distractors are drawn from the target's

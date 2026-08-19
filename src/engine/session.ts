@@ -41,6 +41,8 @@ export type SeedExercise = {
   readonly ordered?: readonly string[];
   /** Multi-select answers. */
   readonly answers?: readonly string[];
+  /** The position kind was `warm-up` — S11 draws its chip off this. */
+  readonly warmUp?: true;
 };
 
 export type SeedPosition =
@@ -66,6 +68,15 @@ export type SessionSeed = {
   readonly positions: readonly SeedPosition[];
   /** Runnable answer-bearing exercises per target item; the re-queue draws from here. */
   readonly poolByItem: Readonly<Record<string, readonly SeedExercise[]>>;
+  /**
+   * Artifact-card item ids the script placed where no queue position can render
+   * them. They never enter the queue, so the progress bar never counts them; a
+   * later task shows them over the summary (the G4→G3 beat). `planSession`
+   * always writes it; a hand-built seed without artifact cards may omit it.
+   */
+  readonly artifacts?: readonly string[];
+  /** Whether the second look may splice at the closing boundary. Default true. */
+  readonly secondLook?: boolean;
 };
 
 /** Why the entry is being asked. Drives the once rule, the badge, and the second look. */
@@ -108,6 +119,12 @@ export type SessionState = {
   readonly revealed: readonly string[];
   /** The total grew for the second look — it does so exactly once. */
   readonly secondLookAdded: boolean;
+  /**
+   * Consecutive correct commits: up on each correct, back to 0 on a wrong.
+   * Session-only — never persisted, never folded into `Progress`. Powers the
+   * S7·✓ "n in a row" pill, shown from 3 up.
+   */
+  readonly run: number;
   /** Item ids missed in the second look — S8's "worth another look". */
   readonly stillMissed: readonly string[];
   /** Card item ids committed; S8's met counts. */
@@ -148,7 +165,10 @@ export function createSession(seed: SessionSeed, rng: Rng): SessionState {
     misses: [],
     requeued: [],
     revealed: [],
-    secondLookAdded: false,
+    // A seed that opts out of the second look reads as already-added, which is
+    // the flag commit() checks before splicing — no second code path.
+    secondLookAdded: !(seed.secondLook ?? true),
+    run: 0,
     stillMissed: [],
     taught: [],
     matched: [],

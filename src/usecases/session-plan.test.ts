@@ -1,18 +1,27 @@
 /**
- * @fileoverview planSession — the stop script becomes a session seed: audio-blocked
- * drills substitute or hide per docs/03 §7, every position kind lands somewhere,
- * and the warm-up/assembly positions keep their exercises. Phases per docs/11.
+ * @fileoverview planSession — the stop script becomes a session seed: each drill
+ * walks the presentation ladder (audio form, silent sibling, hidden) under the
+ * build's audio context, every position kind lands somewhere, and the warm-up
+ * and assembly positions keep their exercises. Phases per docs/11. The
+ * fixture-wide ladder assertions live in `tests/integration/stop-session.test.ts`,
+ * because a use-case test may not import the infra fixture.
  */
 
 import {describe, expect, it} from 'vitest';
 
 import type {ContentItemId, ExerciseId, StopId, Track} from '../ports/content-ids';
-import type {Exercise, ExerciseFamily} from '../ports/content-exercise';
-import type {StopPosition} from '../ports/content-model';
+import type {Chunk, StopPosition} from '../ports/content-model';
+import type {Exercise, ExerciseChunkRef, ExerciseFamily} from '../ports/content-exercise';
 
-import {planSession} from './session-plan';
+import {phraseArrangeOrder, planSession, type PlanContext} from './session-plan';
 
 const STOP = 'stop.test' as StopId;
+
+/** Today's build: no recordings shipped, the audio-free switch off. */
+const TODAY: PlanContext = {audioAvailable: false, audioFree: false};
+
+/** The build the ladder exists for: recordings shipped, switch off. */
+const WITH_AUDIO: PlanContext = {audioAvailable: true, audioFree: false};
 
 function item(id: string): ContentItemId {
   return id as ContentItemId;
@@ -20,8 +29,10 @@ function item(id: string): ContentItemId {
 
 type CoreOverrides = {
   readonly target?: string | null;
+  readonly targetKind?: 'vocab' | 'phrase';
   readonly blockedOn?: 'audio' | null;
   readonly options?: readonly string[];
+  readonly chunks?: readonly ExerciseChunkRef[];
 };
 
 function core(id: string, over: CoreOverrides) {
@@ -33,7 +44,8 @@ function core(id: string, over: CoreOverrides) {
     track: 'speak' as Track,
     ordinal: 1,
     family: 'tap-select (text)' as ExerciseFamily,
-    target: target === null ? null : {id: item(target), kind: 'vocab' as const},
+    target:
+      target === null ? null : {id: item(target), kind: over.targetKind ?? ('vocab' as const)},
     answerId: target === null ? null : item(target),
     blockedOn: over.blockedOn ?? null,
     prompt: {audioPath: null, bo: null, roman: null, en: null},
@@ -45,7 +57,7 @@ function core(id: string, over: CoreOverrides) {
       label: null,
       isAnswer: i === 0,
     })),
-    chunks: [],
+    chunks: over.chunks ?? [],
   };
 }
 
@@ -77,6 +89,10 @@ function phraseCloze(id: string, over: CoreOverrides = {}): Exercise {
   return {...core(id, over), type: 'phrase-cloze', blank: 0};
 }
 
+function seeItSayIt(id: string, over: CoreOverrides = {}): Exercise {
+  return {...core(id, over), type: 'see-it-say-it', glyph: 'ཨེ'};
+}
+
 function buildTheStack(id: string, over: CoreOverrides = {}): Exercise {
   return {
     ...core(id, over),
@@ -101,6 +117,27 @@ function buildTheStack(id: string, over: CoreOverrides = {}): Exercise {
   };
 }
 
+function chunkRef(
+  phraseId: string,
+  ordinal: number,
+  role: 'candidate' | 'decoy',
+): ExerciseChunkRef {
+  const chunk: Chunk = {
+    id: `${phraseId}#${ordinal}` as Chunk['id'],
+    phraseId: phraseId as Chunk['phraseId'],
+    ordinal,
+    bo: 'ཇ',
+    wylie: 'ja',
+    roman: null,
+    thl: null,
+    gloss: null,
+    vocabRef: null,
+    copula: false,
+    tappable: true,
+  };
+  return {ordinal, role, chunk};
+}
+
 const POSITION = {stopId: STOP, n: 1, screen: null};
 
 function exercisePosition(exerciseId: string): StopPosition {
@@ -111,6 +148,10 @@ function byId(...exercises: readonly Exercise[]): ReadonlyMap<ExerciseId, Exerci
   return new Map(exercises.map(exercise => [exercise.id, exercise]));
 }
 
+function presentations(seed: ReturnType<typeof planSession>): readonly (string | null)[] {
+  return seed.positions.map(p => (p.kind === 'exercise' ? p.exercise.presentation : null));
+}
+
 describe('the warm-up and assembly trap', () => {
   it('keeps the exercises that hang off warm-up and assembly positions', () => {
     // Given — exercises sit on these kinds in the full data, not only on 'exercise'
@@ -119,7 +160,7 @@ describe('the warm-up and assembly trap', () => {
     const exercises = byId(meaningPick('ex.warm'), meaningPick('ex.asm'));
 
     // When
-    const seed = planSession([warm, asm], exercises);
+    const seed = planSession([warm, asm], exercises, TODAY);
 
     // Then
     expect(seed.positions).toEqual([
@@ -133,15 +174,29 @@ describe('the warm-up and assembly trap', () => {
       }),
     ]);
   });
+
+  it('flags a warm-up exercise for the S11 chip, and only that one', () => {
+    // Given
+    const warm: StopPosition = {...POSITION, kind: 'warm-up', exerciseId: 'ex.warm' as ExerciseId};
+    const exercises = byId(meaningPick('ex.warm'), meaningPick('ex.plain'));
+
+    // When
+    const seed = planSession([warm, exercisePosition('ex.plain')], exercises, TODAY);
+
+    // Then
+    const [first, second] = seed.positions;
+    expect(first?.kind === 'exercise' ? first.exercise.warmUp : null).toBe(true);
+    expect(second?.kind === 'exercise' ? second.exercise.warmUp : null).toBeUndefined();
+  });
 });
 
-describe('the audio gate', () => {
+describe('the presentation ladder', () => {
   it('substitutes a blocked listen-pick to its meaning-pick sibling over the same options', () => {
     // Given
     const exercises = byId(listenPick('ex.1', {blockedOn: 'audio'}));
 
     // When
-    const seed = planSession([exercisePosition('ex.1')], exercises);
+    const seed = planSession([exercisePosition('ex.1')], exercises, TODAY);
 
     // Then
     const planned = seed.positions[0];
@@ -160,23 +215,28 @@ describe('the audio gate', () => {
     );
   });
 
-  it('hides an unblocked listen-pick until a player exists', () => {
-    // When
-    const seed = planSession([exercisePosition('ex.1')], byId(listenPick('ex.1')));
+  it('falls an unblocked listen-pick through to the substitute while no player renders it', () => {
+    // Given — the regression the ladder fixes: recordings landed, blockedOn null
+    const exercises = byId(listenPick('ex.1', {blockedOn: null}));
 
-    // Then — the prompt IS the audio; the target script would show the answer
-    expect(seed.positions).toHaveLength(0);
+    // When
+    const seed = planSession([exercisePosition('ex.1')], exercises, WITH_AUDIO);
+
+    // Then — the drill does not vanish; the position count holds
+    expect(seed.positions).toHaveLength(1);
+    expect(presentations(seed)).toEqual(['meaning-pick-substitute']);
   });
 
-  it('hides the drill types the screen has no renderer for', () => {
-    // Given — check-mode and none-mode drills, none of them audio-blocked
-    const exercises = byId(phraseArrange('ex.1'), buildTheStack('ex.2'), phraseProduce('ex.3'));
-
+  it('runs the silent sibling when the learner flips audio-free, whatever the build ships', () => {
     // When
-    const seed = planSession(['ex.1', 'ex.2', 'ex.3'].map(exercisePosition), exercises);
+    const seed = planSession(
+      [exercisePosition('ex.1'), exercisePosition('ex.2')],
+      byId(listenPick('ex.1', {blockedOn: null}), phraseRecognise('ex.2', {blockedOn: null})),
+      {audioAvailable: true, audioFree: true},
+    );
 
     // Then
-    expect(seed.positions).toHaveLength(0);
+    expect(presentations(seed)).toEqual(['meaning-pick-substitute', 'phrase-recognise-script']);
   });
 
   it('substitutes a blocked phrase-recognise to the script-prompted variant', () => {
@@ -184,6 +244,7 @@ describe('the audio gate', () => {
     const seed = planSession(
       [exercisePosition('ex.1')],
       byId(phraseRecognise('ex.1', {blockedOn: 'audio'})),
+      TODAY,
     );
 
     // Then
@@ -195,39 +256,105 @@ describe('the audio gate', () => {
     );
   });
 
-  it('leaves the already-silent drills alone', () => {
+  it('leaves the already-silent drills alone, whatever the audio context', () => {
     // When
     const seed = planSession(
       [exercisePosition('ex.1'), exercisePosition('ex.2')],
       byId(meaningPick('ex.1', {blockedOn: 'audio'}), pairMatch('ex.2', {blockedOn: 'audio'})),
+      TODAY,
+    );
+    const withAudio = planSession(
+      [exercisePosition('ex.1'), exercisePosition('ex.2')],
+      byId(meaningPick('ex.1'), pairMatch('ex.2')),
+      WITH_AUDIO,
     );
 
     // Then
-    expect(
-      seed.positions.map(p => (p.kind === 'exercise' ? p.exercise.presentation : null)),
-    ).toEqual(['meaning-pick', 'pair-match']);
+    expect(presentations(seed)).toEqual(['meaning-pick', 'pair-match']);
+    expect(presentations(withAudio)).toEqual(['meaning-pick', 'pair-match']);
   });
 
-  it('hides what cannot run without a take, and the bar never counts it', () => {
-    // Given — the prompt IS the audio for these; nothing can substitute
+  it('hides the siblingless audio drills in every context, and the bar never counts them', () => {
+    // Given — the prompt IS the audio (or the answer is spoken); nothing substitutes
     const exercises = byId(
-      phraseArrange('ex.1', {blockedOn: 'audio'}),
-      phraseCloze('ex.2', {blockedOn: 'audio'}),
-      phraseProduce('ex.3', {blockedOn: 'audio'}),
+      phraseCloze('ex.1', {blockedOn: 'audio'}),
+      phraseProduce('ex.2', {blockedOn: 'audio'}),
+      buildTheStack('ex.3', {blockedOn: null}),
       meaningPick('ex.4'),
     );
+    const script = ['ex.1', 'ex.2', 'ex.3', 'ex.4'].map(exercisePosition);
 
     // When
-    const seed = planSession(['ex.1', 'ex.2', 'ex.3', 'ex.4'].map(exercisePosition), exercises);
+    const today = planSession(script, exercises, TODAY);
+    const withAudio = planSession(script, exercises, WITH_AUDIO);
 
     // Then
-    expect(seed.positions).toHaveLength(1);
+    expect(presentations(today)).toEqual(['meaning-pick']);
+    expect(presentations(withAudio)).toEqual(['meaning-pick']);
+  });
+
+  it('renders see-it-say-it as itself: a tap over four sounds, per the RB7 dossier', () => {
+    // When
+    const seed = planSession([exercisePosition('ex.1')], byId(seeItSayIt('ex.1')), TODAY);
+
+    // Then — "the answer is a tap — the mic is RB13's job"
     expect(seed.positions[0]).toEqual(
       expect.objectContaining({
         kind: 'exercise',
-        exercise: expect.objectContaining({exerciseId: 'ex.4'}),
+        exercise: expect.objectContaining({presentation: 'see-it-say-it', commitMode: 'tap'}),
       }),
     );
+  });
+});
+
+describe('the phrase-arrange exclusion', () => {
+  it('hides phrase-arrange in every context while REVIEW-2 stands', () => {
+    // Given — even the friendliest context: audio shipped, nothing blocked
+    const exercises = byId(phraseArrange('ex.1', {blockedOn: null}));
+
+    // When
+    const today = planSession([exercisePosition('ex.1')], exercises, TODAY);
+    const withAudio = planSession([exercisePosition('ex.1')], exercises, WITH_AUDIO);
+
+    // Then — 178 chunk boundaries are unconfirmed; nothing may drill them
+    expect(today.positions).toHaveLength(0);
+    expect(withAudio.positions).toHaveLength(0);
+  });
+});
+
+describe('the arrange answer order', () => {
+  it('orders the target phrase chunks by their own ordinal and drops the decoys', () => {
+    // Given — answer chunks arriving scrambled among decoys
+    const exercise = phraseArrange('ex.1', {
+      target: 'phrase.p',
+      targetKind: 'phrase',
+      options: [],
+      chunks: [
+        chunkRef('phrase.other', 0, 'decoy'),
+        chunkRef('phrase.p', 2, 'candidate'),
+        chunkRef('phrase.p', 0, 'candidate'),
+        chunkRef('phrase.p', 1, 'candidate'),
+      ],
+    });
+
+    // When
+    const ordered = phraseArrangeOrder(exercise);
+
+    // Then
+    expect(ordered).toEqual(['phrase.p#0', 'phrase.p#1', 'phrase.p#2']);
+  });
+
+  it('stays undefined while the content ships no answer chunks', () => {
+    // Given — today's rows: decoys only
+    const exercise = phraseArrange('ex.1', {
+      target: 'phrase.p',
+      targetKind: 'phrase',
+      options: [],
+      chunks: [chunkRef('phrase.other', 0, 'decoy')],
+    });
+
+    // Then — an empty sequence would commit an empty tray as correct
+    expect(phraseArrangeOrder(exercise)).toBeUndefined();
   });
 });
 
@@ -251,12 +378,11 @@ describe('the other position kinds', () => {
       {...POSITION, kind: 'rule-reprise', ruleId: 'rule.deasp' as never, text: 'Again'},
       {...POSITION, kind: 'tip', text: 'A tip', covers: [], preview: null},
       {...POSITION, kind: 'moment'},
-      {...POSITION, kind: 'card', itemId: item('vocab.churn')},
       {...POSITION, kind: 'end', capabilities: ['Greet'], recap: null},
     ];
 
     // When
-    const seed = planSession(positions, byId());
+    const seed = planSession(positions, byId(), TODAY);
 
     // Then
     expect(seed.positions.map(p => p.kind)).toEqual([
@@ -270,25 +396,43 @@ describe('the other position kinds', () => {
       'note',
       'note',
       'moment',
-      'card',
       'end',
     ]);
     expect(seed.positions[1]).toEqual({kind: 'card', card: 'word', itemId: 'vocab.cha'});
-    expect(seed.positions[10]).toEqual({kind: 'card', card: 'artifact', itemId: 'vocab.churn'});
+  });
+
+  it('lifts an artifact card into the seed instead of the queue, off the bar count', () => {
+    // Given — the fixture places the artifact card after `end`
+    const positions: StopPosition[] = [
+      {...POSITION, kind: 'word-card', itemId: item('vocab.cha') as never},
+      {...POSITION, kind: 'end', capabilities: ['Greet'], recap: null},
+      {...POSITION, kind: 'card', itemId: item('vocab.churn')},
+    ];
+
+    // When
+    const seed = planSession(positions, byId(), TODAY);
+
+    // Then
+    expect(seed.artifacts).toEqual(['vocab.churn']);
+    expect(seed.positions.map(p => p.kind)).toEqual(['card', 'end']);
   });
 });
 
 describe('commit modes', () => {
   it('decides how each planned drill commits, once', () => {
     // Given
-    const exercises = byId(meaningPick('ex.pick'), pairMatch('ex.pairs'));
+    const exercises = byId(meaningPick('ex.pick'), pairMatch('ex.pairs'), seeItSayIt('ex.say'));
 
     // When
-    const seed = planSession(['ex.pick', 'ex.pairs'].map(exercisePosition), exercises);
+    const seed = planSession(
+      ['ex.pick', 'ex.pairs', 'ex.say'].map(exercisePosition),
+      exercises,
+      TODAY,
+    );
 
-    // Then
+    // Then — see-it-say-it taps per docs/03 §1; the mic is RB13's job
     const modes = seed.positions.map(p => (p.kind === 'exercise' ? p.exercise.commitMode : null));
-    expect(modes).toEqual(['tap', 'pairs']);
+    expect(modes).toEqual(['tap', 'pairs', 'tap']);
   });
 });
 
@@ -303,7 +447,11 @@ describe('the re-queue pool', () => {
     );
 
     // When
-    const seed = planSession(['ex.1', 'ex.2', 'ex.3', 'ex.4'].map(exercisePosition), exercises);
+    const seed = planSession(
+      ['ex.1', 'ex.2', 'ex.3', 'ex.4'].map(exercisePosition),
+      exercises,
+      TODAY,
+    );
 
     // Then — pairs boards do not stand in for a missed recognition drill
     expect(Object.keys(seed.poolByItem).sort()).toEqual(['vocab.cha', 'vocab.ja']);

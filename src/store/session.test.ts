@@ -7,7 +7,7 @@
 import {beforeEach, describe, expect, it} from 'vitest';
 
 import type {Exercise, ExerciseFamily} from '../ports/content-exercise';
-import type {ContentSource} from '../ports';
+import type {AudioSource, ContentSource} from '../ports';
 import type {ContentItemId, ExerciseId, StopId, Track, VocabId} from '../ports/content-ids';
 import type {Stop, StopPosition, VocabularyItem} from '../ports/content-model';
 import type {Progress, ProgressStore} from '../ports/progress-store';
@@ -98,6 +98,19 @@ const CONTENT = {
   },
 } as unknown as ContentSource;
 
+/** A silent build whose availability checks are countable. */
+function countingAudio(): AudioSource & {calls: () => number} {
+  let calls = 0;
+  return {
+    resolve: async () => null,
+    isAvailable: async () => {
+      calls += 1;
+      return false;
+    },
+    calls: () => calls,
+  };
+}
+
 function memoryStore(): ProgressStore {
   let last = EMPTY;
   return {
@@ -120,6 +133,7 @@ beforeEach(() => {
   resetContainer();
   override('content', CONTENT);
   override('progress', memoryStore());
+  override('audio', countingAudio());
   useProgress.setState({progress: null});
   useStopSession.getState().reset();
 });
@@ -139,6 +153,19 @@ describe('start', () => {
       'end',
     ]);
     expect(slice.itemsById.get('vocab.cha' as ContentItemId)?.roman).toBe('vocab.cha');
+  });
+
+  it('consults the container audio port for availability, pre-hydration defaults holding', async () => {
+    // Given — settings never hydrated: audioFree reads null and defaults false
+    const audio = countingAudio();
+    override('audio', audio);
+
+    // When
+    await useStopSession.getState().start(STOP_ID);
+
+    // Then
+    expect(audio.calls()).toBe(1);
+    expect(useStopSession.getState().status).toBe('ready');
   });
 });
 

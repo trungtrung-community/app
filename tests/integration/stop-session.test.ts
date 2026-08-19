@@ -4,6 +4,10 @@
  *
  * Real fixture, real JSON adapter, a memory ProgressStore, a seeded rng — the
  * whole loop with no doubles inside the boundary. Phases per docs/11.
+ *
+ * The fixture-wide planner assertions live here too, not beside `planSession`:
+ * they cross the planner, the adapter and the shipped fixture, and the
+ * dependency rules bar a use-case test from importing infra.
  */
 
 import {describe, expect, it} from 'vitest';
@@ -16,8 +20,10 @@ import {isoDate} from '../../src/domain/date';
 import {seededRng} from '../../src/engine/rng';
 import type {SessionState} from '../../src/engine/session';
 import type {CommitInput} from '../../src/engine/commit';
+import type {Exercise} from '../../src/ports/content-exercise';
 import type {StopId} from '../../src/ports/content-ids';
 import type {Progress, ProgressStore} from '../../src/ports/progress-store';
+import {planSession, type PlanContext} from '../../src/usecases/session-plan';
 import {startStop} from '../../src/usecases/start-stop';
 import {submitAnswer} from '../../src/usecases/submit-answer';
 
@@ -80,9 +86,10 @@ async function walk(
 ): Promise<Walked> {
   const source = new JsonContentSource(fixture as unknown as ContentFixture);
   const session = await startStop(
-    {walk: source, exercises: source, dictionary: source},
+    {walk: source, exercises: source, dictionary: source, audio: {isAvailable: async () => false}},
     STOP_ID,
     seededRng(42),
+    {audioFree: false},
   );
   let state = session.state;
   let progress = EMPTY;
@@ -158,5 +165,158 @@ describe('walking stop.core.c1.1 end to end', () => {
     const missedId = state.stillMissed[0] ?? '';
     expect(progress.items[missedId]?.missedOn).toEqual([TODAY]);
     expect(progress.completedStops).toEqual([STOP_ID]);
+  });
+});
+
+describe('planning the whole fixture', () => {
+  const source = new JsonContentSource(fixture as unknown as ContentFixture);
+  const stopIds = (fixture as unknown as ContentFixture).stop.map(row => row.id as StopId);
+
+  /** Today's build: no recordings shipped, the audio-free switch off. */
+  const TODAY_CTX: PlanContext = {audioAvailable: false, audioFree: false};
+
+  /** What the stop screen rendered before the ladder landed. */
+  const PRE_LADDER_RENDERABLE: ReadonlySet<string> = new Set([
+    'meaning-pick',
+    'meaning-pick-substitute',
+    'phrase-recognise-script',
+    'pair-match',
+  ]);
+
+  /** The pre-ladder rule, verbatim: substitute only while blockedOn says audio. */
+  function preLadderPresentation(exercise: Exercise): string | null {
+    const substituted =
+      exercise.blockedOn === 'audio'
+        ? exercise.type === 'listen-pick'
+          ? 'meaning-pick-substitute'
+          : exercise.type === 'phrase-recognise'
+            ? 'phrase-recognise-script'
+            : exercise.type
+        : exercise.type;
+    return PRE_LADDER_RENDERABLE.has(substituted) ? substituted : null;
+  }
+
+  type Decision = {readonly exerciseId: string; readonly presentation: string};
+
+  /** Every stop's planned drills, in script order, under `ctx`. */
+  async function planned(
+    ctx: PlanContext,
+    adjust: (exercise: Exercise) => Exercise = exercise => exercise,
+  ): Promise<{decisions: Decision[]; byExercise: Map<string, Exercise>}> {
+    const decisions: Decision[] = [];
+    const byExercise = new Map<string, Exercise>();
+    for (const stopId of stopIds) {
+      const [script, exercises] = await Promise.all([
+        source.getStopScript(stopId),
+        source.listExercisesByStop(stopId),
+      ]);
+      const adjusted = exercises.map(adjust);
+      for (const exercise of adjusted) {
+        byExercise.set(exercise.id, exercise);
+      }
+      const seed = planSession(script, new Map(adjusted.map(e => [e.id, e])), ctx);
+      for (const position of seed.positions) {
+        if (position.kind === 'exercise') {
+          decisions.push({
+            exerciseId: position.exercise.exerciseId,
+            presentation: position.exercise.presentation,
+          });
+        }
+      }
+    }
+    return {decisions, byExercise};
+  }
+
+  it('plans today byte-identically to the pre-ladder rule, the see-it-say-it correction aside', async () => {
+    // When
+    const {decisions, byExercise} = await planned(TODAY_CTX);
+
+    // Then — 430 drills: 363 as before, plus the four corrected see-it-say-it
+    expect(decisions.length).toBe(367);
+    for (const {exerciseId, presentation} of decisions) {
+      const exercise = byExercise.get(exerciseId);
+      expect(exercise).toBeDefined();
+      if (exercise === undefined) {
+        continue;
+      }
+      const expected =
+        exercise.type === 'see-it-say-it' ? 'see-it-say-it' : preLadderPresentation(exercise);
+      expect(`${exerciseId}:${presentation}`).toBe(`${exerciseId}:${expected}`);
+    }
+  });
+
+  it('keeps every drill on screen when recordings land and blockedOn goes null', async () => {
+    // Given — the day the pre-ladder rule would have vanished 184 drills
+    const unblock = (exercise: Exercise): Exercise => ({...exercise, blockedOn: null});
+
+    // When
+    const {decisions, byExercise} = await planned(
+      {audioAvailable: true, audioFree: false},
+      unblock,
+    );
+
+    // Then — nothing vanished, and the audio types run their silent siblings
+    expect(decisions.length).toBe(367);
+    for (const {exerciseId, presentation} of decisions) {
+      const type = byExercise.get(exerciseId)?.type;
+      if (type === 'listen-pick') {
+        expect(presentation).toBe('meaning-pick-substitute');
+      }
+      if (type === 'phrase-recognise') {
+        expect(presentation).toBe('phrase-recognise-script');
+      }
+    }
+  });
+
+  it('renders the four see-it-say-it drills the commit-mode correction unhid', async () => {
+    // When
+    const {decisions, byExercise} = await planned(TODAY_CTX);
+
+    // Then
+    const seen = decisions.filter(d => byExercise.get(d.exerciseId)?.type === 'see-it-say-it');
+    expect(seen.map(d => d.exerciseId).sort()).toEqual([
+      'ex.1.1.005',
+      'ex.1.1.006',
+      'ex.1.1.007',
+      'ex.1.1.008',
+    ]);
+    expect(seen.every(d => d.presentation === 'see-it-say-it')).toBe(true);
+  });
+
+  it('never surfaces phrase-arrange while REVIEW-2 stands, even unblocked with audio', async () => {
+    // When
+    const {decisions, byExercise} = await planned(
+      {audioAvailable: true, audioFree: false},
+      exercise => ({...exercise, blockedOn: null}),
+    );
+
+    // Then — 20 arrange drills in the fixture, none on screen
+    const arranged = decisions.filter(d => byExercise.get(d.exerciseId)?.type === 'phrase-arrange');
+    expect(arranged).toEqual([]);
+  });
+
+  it('lifts the artifact cards into the seed, off the queue and the bar', async () => {
+    // Given — the two G4 cards sit after `end`, where no queue position renders
+    const stopsWithCards: readonly [StopId, string][] = [
+      ['stop.meeting.c1.5' as StopId, 'vocab.tibet'],
+      ['stop.meeting.c1.6' as StopId, 'vocab.lhasa'],
+    ];
+
+    for (const [stopId, itemId] of stopsWithCards) {
+      // When
+      const [script, exercises] = await Promise.all([
+        source.getStopScript(stopId),
+        source.listExercisesByStop(stopId),
+      ]);
+      const seed = planSession(script, new Map(exercises.map(e => [e.id, e])), TODAY_CTX);
+
+      // Then — the card is the only non-drill script position missing from the queue
+      expect(seed.artifacts).toEqual([itemId]);
+      expect(seed.positions.some(p => p.kind === 'card' && p.card === 'artifact')).toBe(false);
+      const drillKinds = ['exercise', 'warm-up', 'assembly'];
+      const nonDrillScript = script.filter(p => !drillKinds.includes(p.kind) && p.kind !== 'card');
+      const drillsPlanned = seed.positions.filter(p => p.kind === 'exercise').length;
+      expect(seed.positions.length).toBe(nonDrillScript.length + drillsPlanned);
+    }
   });
 });

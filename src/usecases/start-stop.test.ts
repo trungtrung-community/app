@@ -119,8 +119,23 @@ const EXERCISE: Exercise = {
   type: 'meaning-pick',
 };
 
-function deps(): StartStopDeps {
+/** Counts availability checks so the once rule is assertable. */
+function countingAudio(): {audio: StartStopDeps['audio']; calls: () => number} {
+  let calls = 0;
   return {
+    audio: {
+      isAvailable: async () => {
+        calls += 1;
+        return false;
+      },
+    },
+    calls: () => calls,
+  };
+}
+
+function deps(audio: StartStopDeps['audio'] = countingAudio().audio): StartStopDeps {
+  return {
+    audio,
     walk: {
       listSections: async () => [],
       listDistricts: async () => [],
@@ -150,7 +165,7 @@ function deps(): StartStopDeps {
 describe('startStop', () => {
   it('loads the stop, plans the script, and creates the session', async () => {
     // When
-    const session = await startStop(deps(), STOP_ID, seededRng(1));
+    const session = await startStop(deps(), STOP_ID, seededRng(1), {audioFree: false});
 
     // Then
     expect(session.stop.name).toBe('Hello, and a way out');
@@ -166,7 +181,7 @@ describe('startStop', () => {
 
   it('resolves every card item and every option item for display', async () => {
     // When
-    const session = await startStop(deps(), STOP_ID, seededRng(1));
+    const session = await startStop(deps(), STOP_ID, seededRng(1), {audioFree: false});
 
     // Then — the distractor is fetched by the target's kind, since distractors
     // share it
@@ -175,5 +190,16 @@ describe('startStop', () => {
     expect(session.itemsById.get('vocab.distractor' as ContentItemId)?.roman).toBe(
       'vocab.distractor',
     );
+  });
+
+  it('asks the build for audio availability exactly once per start', async () => {
+    // Given
+    const counting = countingAudio();
+
+    // When
+    await startStop(deps(counting.audio), STOP_ID, seededRng(1), {audioFree: false});
+
+    // Then
+    expect(counting.calls()).toBe(1);
   });
 });

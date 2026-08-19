@@ -2,8 +2,12 @@
  * @fileoverview commit() — the answer state machine.
  *
  * docs/03 §2 in one reducer: single-target commits on tap and multi-part on
- * Check; a miss re-enters once, 3–5 positions later, as a different record whose
- * answer was never revealed; a revealed answer returns only in the second look.
+ * Check — against a set, or against `ordered` as a sequence where the exercise
+ * carries one; a record-compare entry (`commitMode: 'none'`) advances on
+ * continue with no verdict at all; a miss re-enters once, 3–5 positions later,
+ * as a different record whose answer was never revealed; a revealed answer
+ * returns only in the second look. The `run` counter rides along: up on each
+ * correct verdict, zero on a wrong one, never persisted.
  * §4.4's second look splices at the closing boundary — every miss, in the order
  * missed, the original exercise — and its misses go to the summary, never back
  * into the queue. A session always ends: there is no fail state anywhere below.
@@ -91,8 +95,14 @@ function handleContinue(state: SessionState, rng: Rng): CommitOutcome {
     case 'moment':
     case 'second-look-intro':
       return advance(state, rng, []);
+    case 'exercise':
+      // Record-compare: "Got it" is a continue, not a verdict — no correct or
+      // missed event, no re-queue. Any other unanswered exercise does not skip.
+      return entry.position.exercise.commitMode === 'none'
+        ? advance(state, rng, [])
+        : UNCHANGED(state);
     default:
-      // An unanswered exercise does not skip, and the end takes `finish`.
+      // The end takes `finish`, never `continue`.
       return UNCHANGED(state);
   }
 }
@@ -150,6 +160,7 @@ function handleTap(state: SessionState, tapped: string, rng: Rng): CommitOutcome
     const next: SessionState = {
       ...state,
       answered: {key: entry.key, verdict: 'correct', answerItemId: answer.itemId},
+      run: state.run + 1,
     };
     const events: SessionEvent[] =
       exercise.itemId === null ? [] : [{kind: 'correct', itemId: exercise.itemId}];
@@ -174,6 +185,7 @@ function handleMiss(
     revealed: state.revealed.includes(exercise.exerciseId)
       ? state.revealed
       : [...state.revealed, exercise.exerciseId],
+    run: 0,
   };
 
   if (itemId === null) {
@@ -258,25 +270,67 @@ function handleCheck(state: SessionState, picked: readonly string[]): CommitOutc
   if (exercise.commitMode !== 'check') {
     return UNCHANGED(state);
   }
+  if (exercise.ordered !== undefined) {
+    return checkOrdered(state, entry, exercise, exercise.ordered, picked);
+  }
   const answers =
     exercise.answers ??
     exercise.options.filter(option => option.isAnswer).map(option => option.itemId);
   const pickedSet = new Set(picked);
   const complete = answers.every(a => pickedSet.has(a)) && picked.length === answers.length;
   if (complete) {
-    const next: SessionState = {
-      ...state,
-      answered: {key: entry.key, verdict: 'correct', answerItemId: exercise.itemId},
-    };
-    const events: SessionEvent[] =
-      exercise.itemId === null ? [] : [{kind: 'correct', itemId: exercise.itemId}];
-    return {state: next, events};
+    return checkCorrect(state, entry, exercise);
   }
   // Right picks fill and stay; wrong picks simply are not kept. The entry stays
   // active, so the learner completes it rather than being advanced past it.
   const right = picked.filter(p => answers.includes(p));
   const filled = [...new Set([...state.filled, ...right])];
   return {state: {...state, filled}, events: []};
+}
+
+/**
+ * The sequence check: an arrange entry commits only when the picked order IS
+ * the answer order. `filled` keeps its meaning — the picks that fill and stay
+ * — which for a sequence is the matching prefix: a right chip in a wrong slot
+ * has not filled anything.
+ */
+function checkOrdered(
+  state: SessionState,
+  entry: QueueEntry,
+  exercise: SeedExercise,
+  ordered: readonly string[],
+  picked: readonly string[],
+): CommitOutcome {
+  const complete =
+    picked.length === ordered.length && ordered.every((itemId, i) => picked[i] === itemId);
+  if (complete) {
+    return checkCorrect(state, entry, exercise);
+  }
+  const filled: string[] = [];
+  for (let i = 0; i < picked.length; i++) {
+    const itemId = ordered[i];
+    if (itemId === undefined || picked[i] !== itemId) {
+      break;
+    }
+    filled.push(itemId);
+  }
+  return {state: {...state, filled}, events: []};
+}
+
+/** A complete check, set or sequence: the correct band and the correct event. */
+function checkCorrect(
+  state: SessionState,
+  entry: QueueEntry,
+  exercise: SeedExercise,
+): CommitOutcome {
+  const next: SessionState = {
+    ...state,
+    answered: {key: entry.key, verdict: 'correct', answerItemId: exercise.itemId},
+    run: state.run + 1,
+  };
+  const events: SessionEvent[] =
+    exercise.itemId === null ? [] : [{kind: 'correct', itemId: exercise.itemId}];
+  return {state: next, events};
 }
 
 function handlePair(state: SessionState, a: string, b: string, rng: Rng): CommitOutcome {
@@ -302,7 +356,7 @@ function handlePair(state: SessionState, a: string, b: string, rng: Rng): Commit
   // raising a band over an empty board.
   const events: SessionEvent[] =
     exercise.itemId === null ? [] : [{kind: 'correct', itemId: exercise.itemId}];
-  return advance({...state, matched}, rng, events);
+  return advance({...state, matched, run: state.run + 1}, rng, events);
 }
 
 function handleFinish(state: SessionState): CommitOutcome {
