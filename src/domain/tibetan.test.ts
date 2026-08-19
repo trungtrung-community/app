@@ -17,6 +17,7 @@ import {describe, expect, it} from 'vitest';
 import {
   advanceUnits,
   hasTibetan,
+  lettersOf,
   lineLetters,
   needsTsheg,
   splitRuns,
@@ -298,6 +299,63 @@ describe('withTsheg', () => {
 
     // Then
     expect(closed).toBe('ཀ');
+  });
+});
+
+describe('lettersOf', () => {
+  it('reads a plain CV syllable as its one consonant', () => {
+    // Given
+    const value = 'བོ';
+
+    // When
+    const letters = lettersOf(value);
+
+    // Then
+    expect(letters).toEqual(['བ']);
+  });
+
+  it('maps a stack to the base letters it is built from', () => {
+    // Given
+    const value = 'སྒྲ';
+
+    // When
+    const letters = lettersOf(value);
+
+    // Then
+    expect(letters).toEqual(['ས', 'ག', 'ར']);
+  });
+
+  it('strips a vowel mark, which is not a letter', () => {
+    // Given
+    const value = 'སྐུ';
+
+    // When
+    const letters = lettersOf(value);
+
+    // Then
+    expect(letters).toEqual(['ས', 'ཀ']);
+  });
+
+  it('reads across a tsheg, keeping every syllable and dropping the separator', () => {
+    // Given
+    const value = 'བཀྲ་ཤིས';
+
+    // When
+    const letters = lettersOf(value);
+
+    // Then
+    expect(letters).toEqual(['བ', 'ཀ', 'ར', 'ཤ', 'ས']);
+  });
+
+  it('tolerates a trailing tsheg', () => {
+    // Given
+    const value = 'བོད་';
+
+    // When
+    const letters = lettersOf(value);
+
+    // Then
+    expect(letters).toEqual(['བ', 'ད']);
   });
 });
 

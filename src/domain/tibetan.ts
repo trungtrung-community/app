@@ -129,6 +129,59 @@ export function withTsheg(value: string, unit: TibetanUnit): string {
 }
 
 /**
+ * The subjoined consonants that mirror a base letter at a fixed distance.
+ *
+ * Unicode lays U+0F90–U+0FB8 out parallel to the base block, so subtracting this
+ * offset turns a subjoined letter into the letter it is a form of: ྒ (U+0F92)
+ * becomes ག (U+0F42).
+ */
+const SUBJOINED_FIRST = 0x0f90;
+const SUBJOINED_LAST = 0x0fb8;
+const SUBJOINED_TO_BASE = 0x50;
+
+/**
+ * The three fixed-form subjoined letters sit past the parallel run, so the offset
+ * would land them on the wrong base. Each is named here with the letter it writes.
+ */
+const FIXED_FORM_BASE: ReadonlyMap<string, string> = new Map([
+  ['\u0FBA', '\u0F5D'], // fixed-form wa → ཝ
+  ['\u0FBB', '\u0F61'], // fixed-form ya → ཡ
+  ['\u0FBC', '\u0F62'], // fixed-form ra → ར
+]);
+
+/** A base consonant: the block's on-the-line letters, U+0F40–U+0F6C. */
+const TIB_BASE = /[\u0F40-\u0F6C]/;
+
+/**
+ * Every base letter a word uses, in writing order, duplicates kept.
+ *
+ * This is the decomposition the Read track's crossing is computed from: a word is
+ * only readable once each of these letters has been met. Subjoined letters map to
+ * the base letter they are a form of, because meeting ར is meeting ྲ. Vowel signs
+ * and marks are not letters and are dropped, and so are the tsheg and the shad —
+ * only consonants survive, so no separate splitting step is needed. Prefixes,
+ * suffixes and superscripts are already plain letters and pass through unchanged.
+ *
+ * @example lettersOf('སྒྲ') // ['ས', 'ག', 'ར'] — the subjoined pair mapped to base
+ * @example lettersOf('བཀྲ་ཤིས') // ['བ', 'ཀ', 'ར', 'ཤ', 'ས'] — the tsheg drops out
+ */
+export function lettersOf(bo: string): readonly string[] {
+  const letters: string[] = [];
+  for (const character of Array.from(bo)) {
+    const code = character.codePointAt(0) ?? 0;
+    const fixedForm = FIXED_FORM_BASE.get(character);
+    if (code >= SUBJOINED_FIRST && code <= SUBJOINED_LAST) {
+      letters.push(String.fromCodePoint(code - SUBJOINED_TO_BASE));
+    } else if (fixedForm !== undefined) {
+      letters.push(fixedForm);
+    } else if (TIB_BASE.test(character)) {
+      letters.push(character);
+    }
+  }
+  return letters;
+}
+
+/**
  * Split a mixed string into its Tibetan and Latin runs, in order.
  *
  * For strings that arrive as props and cannot be wrapped at the call site — a
