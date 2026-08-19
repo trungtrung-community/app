@@ -1,9 +1,14 @@
 /**
- * @fileoverview B2 — the district hub: Stops, Words, Phrases and Cards for one
+ * @fileoverview The district hub (D1): Stops, Words, Phrases and Cards for one
  * place on the Speak map.
  *
  * One route, four views: the segment picked is local UI state, never navigation
  * state, since switching between Stops and Words does not go anywhere.
+ *
+ * District 23 carries one more thing: B3, the Printing House hook — the designed
+ * entry into the Read track, offered once and never nagged. The card shows only
+ * while the district is reached and the Read track is untouched, and starting or
+ * simply starting to read retires it for good.
  */
 
 import {useLocalSearchParams, useRouter} from 'expo-router';
@@ -12,19 +17,23 @@ import {ScrollView, Text, View, type ViewStyle} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {Button} from '../../../../src/components/core/button';
+import {Card} from '../../../../src/components/core/card';
 import {IconButton} from '../../../../src/components/core/icon-button';
 import {ListRow} from '../../../../src/components/core/list-row';
 import {SegmentedControl, type Segment} from '../../../../src/components/core/segmented-control';
 import {EmptyState} from '../../../../src/components/feedback/empty-state';
 import {Sheet} from '../../../../src/components/feedback/sheet';
 import {Skeleton} from '../../../../src/components/feedback/skeleton';
+import {TibetanText} from '../../../../src/components/learning/tibetan-text';
 import {WordRow} from '../../../../src/components/learning/word-row';
 import type {District, PhraseItem, Stop, VocabularyItem} from '../../../../src/ports/content-model';
 import type {Progress} from '../../../../src/ports/progress-store';
 
 import {previousDistrict} from '../../../../src/domain/district';
+import {orderReadStops} from '../../../../src/domain/read-walk';
 import {selectItemState, selectStopDone, useProgress} from '../../../../src/store/progress';
 import {useContent} from '../../../../src/store/use-content';
+import {deriveReadState} from '../../../../src/usecases/read-progress';
 import {poolParam} from '../../../../src/usecases/drill-pool';
 
 const SEGMENTS: readonly Segment[] = [
@@ -35,6 +44,9 @@ const SEGMENTS: readonly Segment[] = [
 ];
 
 const DIMMED: ViewStyle = {opacity: 0.5};
+
+/** The district whose hub carries B3, the designed entry into the Read track. */
+const PRINTING_HOUSE = 23;
 
 /**
  * Whether a district is out of reach yet.
@@ -248,6 +260,9 @@ function Hub({
       </View>
       <ScrollView>
         <View className="gap-2 px-5 pb-8">
+          {district.number === PRINTING_HOUSE && !locked ? (
+            <ReadInvite slug={district.slug} progress={progress} onStart={onStop} />
+          ) : null}
           {segment === 0 ? (
             <StopsView
               stops={stops}
@@ -268,6 +283,83 @@ function Hub({
         </View>
       </ScrollView>
     </>
+  );
+}
+
+/** What B3 needs: where the Read walk starts, and the district's own last phrase. */
+type InviteData = {
+  readonly firstReadStopId: string;
+  readonly lastPhrase: PhraseItem | null;
+} | null;
+
+/**
+ * B3 — the Printing House hook (board frame B3).
+ *
+ * Shown while the Read track has zero progress: no letter met, no rule taught.
+ * Starting to read retires it by that same rule, which is what "offered once"
+ * can honestly mean without a stored flag — `AppState` holds no seen-marker for
+ * it, and widening the store is not this card's call. The gap: "Not now"
+ * dismisses for this visit only, and the card returns on the next one until the
+ * learner reads. The board routes the declined offer onward via Q1.
+ */
+function ReadInvite({
+  slug,
+  progress,
+  onStart,
+}: {
+  slug: string;
+  progress: Progress | null;
+  onStart: (stopId: string) => void;
+}) {
+  const [dismissed, setDismissed] = useState(false);
+  const load = useContent<InviteData>(
+    async source => {
+      const state = await deriveReadState({walk: source, script: source}, progress);
+      if (state.metLetterBos.size > 0 || state.taughtRuleIds.size > 0) {
+        return null;
+      }
+      const sections = await source.listSections('read');
+      const stopsPerSection = await Promise.all(
+        sections.map(section => source.listStopsBySection(section.id)),
+      );
+      const ordered = orderReadStops(
+        sections,
+        new Map(sections.map((section, i) => [section.id, stopsPerSection[i] ?? []])),
+      );
+      const first = ordered[0];
+      if (first === undefined) {
+        return null;
+      }
+      const phrases = await source.listPhrasesByDistrict(slug);
+      return {firstReadStopId: first.id, lastPhrase: phrases.at(-1) ?? null};
+    },
+    [slug, progress],
+  );
+
+  if (dismissed || load.status !== 'ready' || load.data === null) {
+    return null;
+  }
+  const {firstReadStopId, lastPhrase} = load.data;
+
+  return (
+    <Card>
+      <View className="gap-3">
+        {lastPhrase !== null ? (
+          <TibetanText size="lg" roman={lastPhrase.roman}>
+            {lastPhrase.bo}
+          </TibetanText>
+        ) : null}
+        <Text className="type-body text-fg-body">
+          The writing has been on every card you&apos;ve collected. Want to learn to read it?
+        </Text>
+        <Button fullWidth onPress={() => onStart(firstReadStopId)}>
+          Start the script
+        </Button>
+        <Button variant="ghost" fullWidth onPress={() => setDismissed(true)}>
+          Not now
+        </Button>
+      </View>
+    </Card>
   );
 }
 

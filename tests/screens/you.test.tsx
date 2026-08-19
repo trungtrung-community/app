@@ -182,3 +182,89 @@ describe('the about screen', () => {
     expect(await screen.findByText(new RegExp(fixture.content_version))).toBeTruthy();
   });
 });
+
+/**
+ * The fixture teaches no R-ROW anywhere, so B4's readable count would sit at
+ * zero. One added rule-card on stop.1.1 makes word.ja (ཇ, rules R-ROW) readable
+ * once letter.ja is met — the numbers below are derived, never typed here first.
+ */
+const CROSSING_FIXTURE = {
+  ...(fixture as unknown as ContentFixture),
+  stop_position: [
+    ...(fixture as unknown as ContentFixture).stop_position,
+    {
+      stop_id: 'stop.1.1',
+      n: 20,
+      kind: 'rule-card',
+      screen: 'C1',
+      item_id: null,
+      exercise_id: null,
+      rule_id: 'R-ROW',
+      text: 'Same row, same sound family.',
+      payload_json: '{}',
+    },
+  ],
+} as unknown as ContentFixture;
+
+describe('the combined-progress block (B4)', () => {
+  it('is absent entirely while the Read track is untouched', async () => {
+    // Given
+    useProgress.setState({progress: {...EMPTY, completedStops: ['stop.core.c1.1']}});
+
+    // When
+    renderScreen(<You />);
+    await flushMicrotasks();
+
+    // Then
+    expect(screen.queryByText('The walk')).toBeNull();
+  });
+
+  it('draws the two bands and the crossing, every number computed', async () => {
+    // Given — one speak stop done, the Read rule stop done, one letter met, and
+    // the letter's word already said (vocab.tea, home district teahouse)
+    override('content', new JsonContentSource(CROSSING_FIXTURE));
+    useProgress.setState({
+      progress: {
+        walkedOn: [],
+        items: {
+          ['letter.ja' as ItemId]: markTaught(newItem('letter.ja' as ItemId)),
+          ['vocab.tea' as ItemId]: markTaught(newItem('vocab.tea' as ItemId)),
+        },
+        completedStops: ['stop.core.c1.1', 'stop.1.1'],
+        version: 2,
+      },
+    });
+
+    // When
+    renderScreen(<You />);
+
+    // Then — 1 of 20 speak stops, 1 of 55 letters, one crossed district
+    expect(await screen.findByText('The walk')).toBeTruthy();
+    expect(screen.getByText('Speak')).toBeTruthy();
+    expect(screen.getByText('1/20')).toBeTruthy();
+    expect(screen.getByText('Read')).toBeTruthy();
+    expect(screen.getByText('1/55')).toBeTruthy();
+    expect(screen.getByText('1 district sits under both bands.')).toBeTruthy();
+  });
+
+  it('binds the readable count and opens the journey from it', async () => {
+    // Given
+    override('content', new JsonContentSource(CROSSING_FIXTURE));
+    useProgress.setState({
+      progress: {
+        walkedOn: [],
+        items: {['letter.ja' as ItemId]: markTaught(newItem('letter.ja' as ItemId))},
+        completedStops: ['stop.1.1'],
+        version: 2,
+      },
+    });
+    renderScreen(<You />);
+    const read = await screen.findByRole('button', {name: 'Read the 1'});
+
+    // When
+    fireEvent.click(read);
+
+    // Then
+    expect(push).toHaveBeenCalledWith('/journey');
+  });
+});
