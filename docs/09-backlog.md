@@ -81,7 +81,9 @@ gaps are named so they read as decisions, not oversights.*
    actual 1:1 and 9:16 export rendering (and whether a share links back)
    is unbuilt.
 6. **Mascot/logo assets** — no drawn logo; wordmark stands in. Crane pose
-   set is small (rest, flight for J4).
+   set is small (rest, flight for J4). 2026-08-19: the J4 route ships with a
+   fixed-size neutral placeholder block where the crane-in-flight belongs,
+   until the flight pose exists.
 7. **Curriculum v3 merge** — **done 2026-08-06**: additions folded into the
    content spec, §4 counts contract updated, reuse manifest extended, stops
    regenerated, §3 coverage refreshed. What survives of it is gap #0: the §3
