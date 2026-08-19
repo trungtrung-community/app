@@ -9,7 +9,7 @@
 
 import {beforeEach, describe, expect, it} from 'vitest';
 
-import type {Settings} from '../../ports/settings-store';
+import {DEFAULT_SETTINGS, type Settings} from '../../ports/settings-store';
 import {MmkvSettingsStore, type KeyValueStore} from './mmkv-settings-store';
 
 class FakeKeyValueStore implements KeyValueStore {
@@ -33,8 +33,6 @@ class FakeKeyValueStore implements KeyValueStore {
   }
 }
 
-const DEFAULTS: Settings = {wylie: false};
-
 let storage: FakeKeyValueStore;
 let store: MmkvSettingsStore;
 
@@ -44,17 +42,35 @@ beforeEach(() => {
 });
 
 describe('load', () => {
-  it('returns the defaults on a first launch', async () => {
+  it('returns the defaults on a first launch, with wylie off', async () => {
     // When
     const loaded = await store.load();
 
-    // Then
-    expect(loaded).toEqual(DEFAULTS);
+    // Then — spelled out, so a changed default fails here rather than shipping
+    expect(loaded).toEqual({
+      version: 2,
+      wylie: false,
+      sound: true,
+      haptics: true,
+      audioFree: false,
+      track: 'speak',
+      pace: 'p5',
+      reminder: {enabled: false, hour: 19, minute: 0},
+      onboardedOn: null,
+    });
   });
 
-  it('round-trips what was saved', async () => {
+  it('round-trips what was saved, version included', async () => {
     // Given
-    const settings: Settings = {wylie: true};
+    const settings: Settings = {
+      ...DEFAULT_SETTINGS,
+      wylie: true,
+      sound: false,
+      track: 'both',
+      pace: 'p15',
+      reminder: {enabled: true, hour: 7, minute: 30},
+      onboardedOn: '2026-08-19',
+    };
 
     // When
     await store.save(settings);
@@ -62,6 +78,7 @@ describe('load', () => {
 
     // Then
     expect(loaded).toEqual(settings);
+    expect(JSON.parse(storage.getString('settings') ?? '{}')).toMatchObject({version: 2});
   });
 
   it('returns the defaults rather than throwing when the stored value is corrupt', async () => {
@@ -72,6 +89,17 @@ describe('load', () => {
     const loaded = await store.load();
 
     // Then
-    expect(loaded).toEqual(DEFAULTS);
+    expect(loaded).toEqual(DEFAULT_SETTINGS);
+  });
+
+  it('migrates an unversioned record as v1, keeping wylie and gaining the v2 defaults', async () => {
+    // Given
+    storage.plant('settings', JSON.stringify({wylie: true}));
+
+    // When
+    const loaded = await store.load();
+
+    // Then
+    expect(loaded).toEqual({...DEFAULT_SETTINGS, wylie: true});
   });
 });

@@ -13,6 +13,7 @@ import {override, resetContainer} from '../../src/composition/container';
 import fixture from '../../src/infra/content/content.fixture.json';
 import {JsonContentSource} from '../../src/infra/content/json-content-source';
 import type {ContentFixture} from '../../src/infra/content/rows.generated';
+import {DEFAULT_SETTINGS} from '../../src/ports/settings-store';
 
 import {useSettings} from '../../src/store/settings';
 
@@ -71,7 +72,7 @@ describe('the word sheet', () => {
 
   it('shows the Wylie spelling only when the setting is on', async () => {
     // Given
-    useSettings.setState({settings: {wylie: false}});
+    useSettings.setState({settings: {...DEFAULT_SETTINGS, wylie: false}});
 
     // When
     const {unmount} = renderScreen(<Word />);
@@ -82,7 +83,7 @@ describe('the word sheet', () => {
 
     // When
     unmount();
-    useSettings.setState({settings: {wylie: true}});
+    useSettings.setState({settings: {...DEFAULT_SETTINGS, wylie: true}});
     renderScreen(<Word />);
 
     // Then

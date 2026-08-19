@@ -11,11 +11,20 @@
 
 import {create} from 'zustand';
 
-import type {Settings} from '../ports/settings-store';
+import {DEFAULT_SETTINGS, type Settings} from '../ports/settings-store';
 
 import {settings as settingsStore} from '../composition/container';
+import {setCuePreferences} from '../composition/cue';
 
-const DEFAULTS: Settings = {wylie: false};
+/**
+ * Mirror the sound and vibration switches into the cue player.
+ *
+ * The single wire point: the boot hydrate and every later `set` both pass through
+ * here, so the player and the slice cannot disagree about the learner's switches.
+ */
+function forwardCuePreferences(settings: Settings): Promise<void> {
+  return setCuePreferences({sound: settings.sound, haptics: settings.haptics});
+}
 
 type SettingsSlice = {
   /** The hydrated settings, or null until `hydrate` resolves. */
@@ -40,9 +49,11 @@ export const useSettings = create<SettingsSlice>()((set, get) => ({
         const store = await settingsStore();
         const snapshot = await store.load();
         // A `set` may have landed while the load ran; the learner's change is
-        // newer than what the store held, so it wins.
+        // newer than what the store held, so it wins — and has already forwarded
+        // its own switches, so the stale snapshot's are not applied either.
         if (get().settings === null) {
           set({settings: snapshot});
+          await forwardCuePreferences(snapshot);
         }
       } finally {
         loading = null;
@@ -51,9 +62,10 @@ export const useSettings = create<SettingsSlice>()((set, get) => ({
     return loading;
   },
   async set(next) {
-    const merged = {...(get().settings ?? DEFAULTS), ...next};
+    const merged = {...(get().settings ?? DEFAULT_SETTINGS), ...next};
     set({settings: merged});
     const store = await settingsStore();
     await store.save(merged);
+    await forwardCuePreferences(merged);
   },
 }));

@@ -9,6 +9,7 @@
  * this file cannot break a client that never saves a setting.
  */
 
+import {DEFAULT_SETTINGS, SETTINGS_VERSION} from '../../ports/settings-store';
 import type {Settings, SettingsStore} from '../../ports/settings-store';
 import type {KeyValueStore} from '../progress/mmkv-progress-store';
 
@@ -16,7 +17,8 @@ export type {KeyValueStore} from '../progress/mmkv-progress-store';
 
 const KEY = 'settings';
 
-const DEFAULTS: Settings = {wylie: false};
+/** What a load may find: any past shape, so every field is optional. */
+type StoredSettings = Partial<Omit<Settings, 'version'>> & {readonly version?: number};
 
 export class MmkvSettingsStore implements SettingsStore {
   constructor(private readonly storage: KeyValueStore) {}
@@ -24,20 +26,37 @@ export class MmkvSettingsStore implements SettingsStore {
   async load(): Promise<Settings> {
     const raw = this.storage.getString(KEY);
     if (raw === undefined) {
-      return DEFAULTS;
+      return DEFAULT_SETTINGS;
     }
     // A parse failure falls back to the defaults rather than throwing — a bad
     // stored value must not stop the app from rendering a settings screen.
     try {
-      return {...DEFAULTS, ...(JSON.parse(raw) as Partial<Settings>)};
+      return migrate(JSON.parse(raw) as StoredSettings);
     } catch {
-      return DEFAULTS;
+      return DEFAULT_SETTINGS;
     }
   }
 
   async save(settings: Settings): Promise<void> {
     this.storage.set(KEY, JSON.stringify(settings));
   }
+}
+
+/**
+ * Bring a stored record up to the current shape.
+ *
+ * Unversioned records predate the field and are treated as version 1, which held
+ * only `wylie`.
+ */
+function migrate(stored: StoredSettings): Settings {
+  const version = stored.version ?? 1;
+  if (version === SETTINGS_VERSION) {
+    return {...DEFAULT_SETTINGS, ...stored, version: SETTINGS_VERSION};
+  }
+  // A version-1 record keeps its `wylie` and takes the default for every field it
+  // predates. Later migrations stack here, stepwise, so a learner two versions
+  // behind is carried through each step rather than reset.
+  return {...DEFAULT_SETTINGS, wylie: stored.wylie ?? DEFAULT_SETTINGS.wylie};
 }
 
 /**

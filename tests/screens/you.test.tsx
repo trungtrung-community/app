@@ -20,7 +20,7 @@ import {JsonContentSource} from '../../src/infra/content/json-content-source';
 import {markTaught, newItem, type ItemId} from '../../src/domain/item';
 import type {ContentFixture} from '../../src/infra/content/rows.generated';
 import type {Progress, ProgressStore} from '../../src/ports/progress-store';
-import type {Settings, SettingsStore} from '../../src/ports/settings-store';
+import {DEFAULT_SETTINGS, type Settings, type SettingsStore} from '../../src/ports/settings-store';
 
 import {useProgress} from '../../src/store/progress';
 import {useSettings} from '../../src/store/settings';
@@ -31,7 +31,6 @@ vi.mock('expo-router', () => ({
 }));
 
 const EMPTY: Progress = {walkedOn: [], items: {}, completedStops: [], version: 2};
-const DEFAULT_SETTINGS: Settings = {wylie: false};
 
 /** Drains pending promise chains without a real timer. */
 async function flushMicrotasks(): Promise<void> {
@@ -138,7 +137,7 @@ describe('the settings screen', () => {
     // no real timers in it, so a handful of microtask flushes clears it.
     expect(toggle.getAttribute('aria-checked')).toBe('true');
     await flushMicrotasks();
-    expect(store.saved()).toEqual([{wylie: true}]);
+    expect(store.saved()).toEqual([{...DEFAULT_SETTINGS, wylie: true}]);
   });
 });
 
