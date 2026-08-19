@@ -92,6 +92,29 @@ describe('the settings screen', () => {
     expect(store.saved()).toEqual([{...DEFAULT_SETTINGS, audioFree: true}]);
   });
 
+  it('shows Off on the nudge row while the reminder is off', async () => {
+    // When
+    renderScreen(<SettingsScreen />);
+
+    // Then
+    expect(screen.getByText('Off')).toBeTruthy();
+  });
+
+  it('shows the reminder time on the nudge row and opens the reminder screen', async () => {
+    // Given
+    useSettings.setState({
+      settings: {...DEFAULT_SETTINGS, reminder: {enabled: true, hour: 19, minute: 0}},
+    });
+    renderScreen(<SettingsScreen />);
+    expect(screen.getByText('19:00')).toBeTruthy();
+
+    // When
+    fireEvent.click(screen.getByRole('button', {name: /^A nudge once a day/}));
+
+    // Then
+    expect(push).toHaveBeenCalledWith('/you/reminders');
+  });
+
   it('shows the current track on its row and opens the chooser', async () => {
     // Given
     renderScreen(<SettingsScreen />);

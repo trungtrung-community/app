@@ -2,11 +2,11 @@
  * @fileoverview You — settings (P2).
  *
  * Only what changes how the app behaves lives here. Sound and vibration share
- * one row, exactly as the board draws them. The reminder row (N3) is not drawn
- * yet; it lands with notifications. Rows whose flows are unbuilt are absent,
- * never greyed. Hydrates on mount the same way the tab layout hydrates
- * progress, so each control reflects a setting saved in an earlier session
- * rather than the default.
+ * one row, exactly as the board draws them. The nudge row carries the state —
+ * Off, or the time — and the screen behind it (N3) carries the controls. Rows
+ * whose flows are unbuilt are absent, never greyed. Hydrates on mount the same
+ * way the tab layout hydrates progress, so each control reflects a setting
+ * saved in an earlier session rather than the default.
  */
 
 import {useRouter} from 'expo-router';
@@ -25,6 +25,15 @@ const TRACK_VALUES: Record<Settings['track'], string> = {
   read: 'Read',
   both: 'Both',
 };
+
+/** What the nudge row already knows: Off, or the wall-clock time it fires at. */
+function reminderValue(reminder: Settings['reminder']): string {
+  if (!reminder.enabled) {
+    return 'Off';
+  }
+  const pad = (value: number): string => String(value).padStart(2, '0');
+  return `${pad(reminder.hour)}:${pad(reminder.minute)}`;
+}
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -45,6 +54,11 @@ export default function SettingsScreen() {
     <ScrollView className="flex-1 bg-surface-app">
       <View className="px-5 pb-8" style={{paddingTop: insets.top}}>
         <View className="gap-2">
+          <ListRow
+            label="A nudge once a day"
+            value={reminderValue(current.reminder)}
+            onPress={() => router.push('/you/reminders')}
+          />
           <Switch
             label="Spelled out (Wylie)"
             description="Show the Wylie spelling line on word and phrase sheets."

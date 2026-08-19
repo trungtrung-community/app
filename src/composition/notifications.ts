@@ -45,6 +45,16 @@ export async function syncReminders(): Promise<void> {
 }
 
 /**
+ * Show the one system permission prompt — the O4/N3 flows' ask.
+ *
+ * Kept apart from `syncReminders`, which never asks, so a background sync can
+ * never surprise the learner with a dialog.
+ */
+export async function requestReminderPermission(): Promise<'granted' | 'denied'> {
+  return (await reminders()).requestPermission();
+}
+
+/**
  * The stop id a notification response carries, or null for the plain daily line.
  *
  * Exported for the seam's own tests: the response object is the only part of the
