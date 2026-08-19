@@ -10,7 +10,7 @@
  * the engine must never see a database row.
  *
  * schema_version  4
- * content_version 835a802ae2efe552
+ * content_version ab663531dfe680c8
  */
 
 /**
@@ -30,7 +30,7 @@ export const CONTENT_SCHEMA_VERSION = 4;
  * against what the copied file reports and re-imports when they differ, which
  * is safe because progress lives in MMKV and never in the content database.
  */
-export const CONTENT_VERSION = "835a802ae2efe552";
+export const CONTENT_VERSION = "ab663531dfe680c8";
 
 /** Every value `collection.complete_when` holds in this build. */
 export type CollectionCompleteWhen = "all";
@@ -313,6 +313,15 @@ export type PlacementRow = {
   role: PlacementRole;
 };
 
+/** read_cue — 6 rows in this build. */
+export type ReadCueRow = {
+  id: string;
+  n: number;
+  headline: string;
+  emphasis: string;
+  sentence: string;
+};
+
 /** read_rule — 19 rows in this build. */
 export type ReadRuleRow = {
   id: string;
@@ -539,6 +548,7 @@ export type ExercisePayload =
       type: "find-the-root";
       answer_bo: string;
       answer_index: number;
+      cue: string;
       option_kind: string;
       prompt: {
         glyph: string;
@@ -738,4 +748,16 @@ export type ContentFixture = {
   letter_confusable: LetterConfusableRow[];
   read_rule: ReadRuleRow[];
   read_rule_requires: ReadRuleRequiresRow[];
+  read_cue: ReadCueRow[];
+  stack: StackRow[];
+  stack_rule: StackRuleRow[];
+  syllable: SyllableRow[];
+  syllable_rule: SyllableRuleRow[];
+  syllable_form: SyllableFormRow[];
+  affix: AffixRow[];
+  combiner: CombinerRow[];
+  combiner_stack: CombinerStackRow[];
+  mark: MarkRow[];
+  read_word: ReadWordRow[];
+  read_word_rule: ReadWordRuleRow[];
 };

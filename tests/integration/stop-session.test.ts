@@ -342,8 +342,11 @@ describe('planning the whole fixture', () => {
     // When
     const {decisions, byExercise} = await planned(TODAY_CTX);
 
-    // Then — 430 drills: 363 as before, plus the four corrected see-it-say-it
-    expect(decisions.length).toBe(367);
+    // Then — 410 drills: 363 as before (139 meaning-pick + 139 substituted
+    // listen-pick + 40 pair-match + 45 phrase-recognise-script), plus the 47
+    // corrected see-it-say-it — 4 in §1 and 43 across §6/§7 now that the
+    // fixture carries the Read stops.
+    expect(decisions.length).toBe(410);
     for (const {exerciseId, presentation} of decisions) {
       const exercise = byExercise.get(exerciseId);
       expect(exercise).toBeDefined();
@@ -367,10 +370,10 @@ describe('planning the whole fixture', () => {
     );
 
     // Then — nothing vanished, and the audio types run their silent siblings.
-    // 386 = the 367 planned today plus the 19 audio-gated drills the shell
-    // renderers unhid (4 hear-it-find-it, 13 phrase-produce, 2 read-it-aloud):
+    // 488 = the 410 planned today plus the 78 audio-gated drills the shell
+    // renderers unhid (47 hear-it-find-it, 13 phrase-produce, 18 read-it-aloud):
     // unblocked with audio, they run as themselves.
-    expect(decisions.length).toBe(386);
+    expect(decisions.length).toBe(488);
     for (const {exerciseId, presentation} of decisions) {
       const type = byExercise.get(exerciseId)?.type;
       if (type === 'listen-pick') {
@@ -382,17 +385,60 @@ describe('planning the whole fixture', () => {
     }
   });
 
-  it('renders the four see-it-say-it drills the commit-mode correction unhid', async () => {
+  it('renders the 47 see-it-say-it drills the commit-mode correction unhid', async () => {
     // When
     const {decisions, byExercise} = await planned(TODAY_CTX);
 
-    // Then
+    // Then — 47 = the 4 §1 drills plus the 43 the §6/§7 Read stops brought in
     const seen = decisions.filter(d => byExercise.get(d.exerciseId)?.type === 'see-it-say-it');
     expect(seen.map(d => d.exerciseId).sort()).toEqual([
       'ex.1.1.005',
       'ex.1.1.006',
       'ex.1.1.007',
       'ex.1.1.008',
+      'ex.6.1.009',
+      'ex.6.1.010',
+      'ex.6.1.011',
+      'ex.6.1.012',
+      'ex.6.1.013',
+      'ex.6.1.014',
+      'ex.6.1.015',
+      'ex.6.1.016',
+      'ex.6.2.009',
+      'ex.6.2.010',
+      'ex.6.2.011',
+      'ex.6.2.012',
+      'ex.6.2.013',
+      'ex.6.2.014',
+      'ex.6.2.015',
+      'ex.6.2.016',
+      'ex.6.3.009',
+      'ex.6.3.010',
+      'ex.6.3.011',
+      'ex.6.3.012',
+      'ex.6.3.013',
+      'ex.6.3.014',
+      'ex.6.3.015',
+      'ex.6.3.016',
+      'ex.7.1.009',
+      'ex.7.1.010',
+      'ex.7.1.011',
+      'ex.7.1.012',
+      'ex.7.1.013',
+      'ex.7.1.014',
+      'ex.7.1.015',
+      'ex.7.3.008',
+      'ex.7.3.009',
+      'ex.7.3.010',
+      'ex.7.3.011',
+      'ex.7.3.012',
+      'ex.7.3.013',
+      'ex.7.5.008',
+      'ex.7.5.009',
+      'ex.7.5.010',
+      'ex.7.5.011',
+      'ex.7.5.012',
+      'ex.7.5.013',
     ]);
     expect(seen.every(d => d.presentation === 'see-it-say-it')).toBe(true);
   });
