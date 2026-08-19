@@ -77,6 +77,11 @@ const ELEMENTS = [
   {type: 'theme', pattern: 'src/theme/**', partialMatch: false},
   {type: 'components', pattern: 'src/components/**', partialMatch: false},
   {type: 'app', pattern: 'app/**', partialMatch: false},
+  // Cross-cutting suites: tests/integration crosses several architectural pieces by
+  // definition, and tests/screens renders route screens against the real fixture.
+  // Both may name concrete adapters — that is what they are for — so the element
+  // exists to say so explicitly rather than leaving the files unclassified.
+  {type: 'tests', pattern: 'tests/**', partialMatch: false},
 ];
 
 /** `from` may reach `to`, and — because the default is disallow — nothing else. */
@@ -164,6 +169,22 @@ module.exports = [
 
             // Generated tokens. They import nothing.
             allow('theme', ['theme']),
+
+            // Cross-cutting suites reach everything: an integration test's job is to
+            // cross the layers, and a screen test feeds a route the real fixture.
+            allow('tests', [
+              'tests',
+              'app',
+              'components',
+              'store',
+              'composition',
+              'infra',
+              'usecases',
+              'engine',
+              'ports',
+              'domain',
+              'theme',
+            ]),
           ],
         },
       ],

@@ -36,7 +36,7 @@ export default defineConfig({
     // dependency array. Passing those arrays by hand would be test-driven damage — the
     // components would carry an argument that exists only because the runner is not Metro.
     babel({
-      include: /src[\\/].*\.tsx$/,
+      include: /(src|app|tests)[\\/].*\.tsx$/,
       babelConfig: {
         babelrc: false,
         configFile: false,
@@ -50,6 +50,12 @@ export default defineConfig({
       // The ESM build. The `main` field is CommonJS that requires React Native's Flow
       // source, which Node loads directly and cannot parse.
       {find: /^react-native-svg$/, replacement: 'react-native-svg/lib/module/index.js'},
+      // Same shape as react-native-svg: the `main` field is CommonJS whose require
+      // chain reaches React Native's Flow source, which Node cannot parse.
+      {
+        find: /^react-native-safe-area-context$/,
+        replacement: 'react-native-safe-area-context/lib/module/index.js',
+      },
       {find: /^react-native$/, replacement: 'react-native-web'},
     ],
     // `.web.js` first, which is how Metro picks a platform file and how these packages
@@ -82,7 +88,12 @@ export default defineConfig({
         extends: true,
         test: {
           name: 'components',
-          include: ['src/**/*.test.tsx'],
+          // Route screens are tested from `tests/screens/`, not beside their routes:
+          // expo-router discovers routes from the filesystem, so a `.test.tsx` inside
+          // `app/` would itself become a route. Out there they also sit outside the
+          // boundaries element map, like `tests/integration`, so they may render a
+          // screen against the real fixture. expo-router is mocked at the module seam.
+          include: ['src/**/*.test.tsx', 'tests/screens/**/*.test.tsx'],
           environment: 'jsdom',
           setupFiles: ['./vitest.setup.ts'],
           // Transformed by Vite rather than required by Node: each of these ships either
@@ -91,6 +102,7 @@ export default defineConfig({
             deps: {
               inline: [
                 /react-native-svg/,
+                /react-native-safe-area-context/,
                 /lucide-react-native/,
                 /react-native-reanimated/,
                 /react-native-worklets/,
