@@ -81,6 +81,8 @@ export type QueueEntry = {
 };
 
 export type SessionState = {
+  /** Carried from the seed: the re-queue draws replacements from here. */
+  readonly poolByItem: Readonly<Record<string, readonly SeedExercise[]>>;
   /** Only ever grows, so the progress total never shrinks. */
   readonly queue: readonly QueueEntry[];
   /** Only ever increments, so the bar never moves backwards. */
@@ -135,6 +137,7 @@ export function createSession(seed: SessionSeed, rng: Rng): SessionState {
   const closingAt = momentAt !== -1 ? momentAt : endAt !== -1 ? endAt : seed.positions.length;
 
   return {
+    poolByItem: seed.poolByItem,
     queue,
     index: 0,
     closingAt,
